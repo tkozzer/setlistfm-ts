@@ -1,0 +1,59 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+---
+description: Requires well-structured, multi-line git commit messages summarizing all staged changes with semantic prefixes and descriptive body.
+globs:
+alwaysApply: true
+---
+
+- When asked to generate a git commit message:
+  1. First, execute and review `git status` and `git diff` to understand what is staged and what is changing.
+  2. DO NOT USE TERMINAL TOOL.
+  3. Based on the changes, create a well-structured commit message following this format:
+
+     ```md
+     <type>(<scope>): <short summary>
+
+     Detailed description of what changed, why, and how.
+     Mention any implementation details, refactoring decisions, or linked issues.
+
+     Refs: #issue-number (if applicable)
+     BREAKING CHANGE: <description> (if applicable)
+     ```
+
+     - `type`: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+     - `scope`: the affected folder or module (e.g., client, artists, ci, shared, utils)
+     - `summary`: imperative sentence summarizing the change (max 72 characters)
+     - Leave one blank line between the summary and the description body.
+     - Use Markdown-style bullet points for multiple changes if needed.
+
+  3. Output a full Git command block:
+     - `git commit -m` with a **multi-line** message using proper escaping (e.g., `\n` for newline if needed)
+     - Do not execute any commands—**just return them for review**
+
+- Example Output:
+
+```bash
+git commit -m "feat(artists): add getArtistSetlists endpoint
+
+* Created API function for fetching artist setlists by MBID
+* Validated inputs using Zod schemas
+* Added tests to verify pagination and 404 cases
+
+Refs: #14
+"
+```
+
+- If the commit involves many files or a first commit, summarize major themes or groups of changes instead of listing every single line.
+
+- Use present tense and third person ("Adds support for...", not "Added..." or "I added...").
+
+- Do not include HTML; use plain Markdown for formatting in body.
+
+- Be honest: If something was confusing or partially incomplete, note it in the message.
+
+- Do not run `git commit` or `git add`—only show the commands.
+

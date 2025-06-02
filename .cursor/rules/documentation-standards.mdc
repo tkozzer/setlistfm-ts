@@ -1,0 +1,117 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Standards for inline documentation in TypeScript SDK/client libraries
+globs:
+  - "src/**/*.ts"
+alwaysApply: true
+---
+
+# Documentation Standards for TypeScript SDK Libraries
+
+This rule defines how files, functions, types, and constants in the SDK must be documented to ensure clarity and maintainability.
+
+---
+
+### File Header
+
+Each `.ts` file must start with a documentation block:
+
+```typescript
+/**
+ * @file <filename.ts>
+ * @description Brief description of the file’s role in the SDK.
+ * @author tkozzer
+ * @module <moduleName>
+ */
+```
+
+---
+
+### Functions & Methods
+
+Add JSDoc immediately before each exported function or method:
+
+```ts
+/**
+ * Fetches data from the Setlist.fm API using the given parameters.
+ *
+ * @param {string} mbid - MusicBrainz ID of the artist.
+ * @returns {Promise<Setlist[]>} A promise that resolves to an array of setlists.
+ * @throws {APIError} If the request fails or returns an unexpected response.
+ */
+export async function getSetlistsByArtist(mbid: string): Promise<Setlist[]> {
+  // ...
+}
+```
+
+Use `@example` for functions with non-trivial usage:
+
+```ts
+/**
+ * @example
+ * ```ts
+ * const setlists = await getSetlistsByArtist("1234-mbid");
+ * console.log(setlists.length);
+ * ```
+ */
+
+```
+
+---
+
+### Classes & Interfaces
+
+Document their purpose and each key property:
+
+```ts
+/**
+ * Represents an artist object returned by the Setlist.fm API.
+ */
+export interface Artist {
+  /** Unique MusicBrainz identifier */
+  mbid: string;
+  /** Display name of the artist */
+  name: string;
+}
+```
+
+---
+
+### Constants & Variables
+
+Document all exported constants or any internal ones with non-obvious logic:
+
+```ts
+/** Maximum results allowed per Setlist.fm API page */
+export const MAX_PAGE_SIZE = 50;
+```
+
+---
+
+### Inline Comments
+
+* Use `//` comments to explain *why* something is done a certain way — not what is being done.
+* Avoid obvious comments or duplicating function names.
+* Keep comments concise and to the point.
+
+---
+
+### Formatting & Tone
+
+* Present tense, third-person voice ("Returns a promise…" instead of "This function will…").
+* Focus on the *purpose* or *effect*, not just the implementation.
+* Use plain Markdown syntax inside JSDoc — **no HTML**.
+
+---
+
+### Maintenance
+
+* Update documentation when modifying function signatures or behavior.
+* Remove outdated comments — misleading docs are worse than none.
+* Strive for clarity above all — readers of your SDK should never have to guess what something does.
+
+---

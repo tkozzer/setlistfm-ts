@@ -1,0 +1,60 @@
+{
+  "name": "setlistfm-ts",
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.11.1",
+  "description": "A TypeScript client for the setlist.fm API",
+  "author": "tkozzer <tkoz.dev@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/tkozzer/setlistfm-ts#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tkozzer/setlistfm-ts"
+  },
+  "bugs": {
+    "url": "https://github.com/tkozzer/setlistfm-ts/issues"
+  },
+  "keywords": [
+    "setlist.fm",
+    "api",
+    "music",
+    "client",
+    "sdk",
+    "typescript"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "LICENSE",
+    "README.md",
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "check": "pnpm type-check && pnpm lint && pnpm test",
+    "prepare": "pnpm build",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "axios": "^1.9.0",
+    "zod": "^3.25.48"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^4.13.2",
+    "@types/node": "^22.15.29",
+    "eslint": "^9.28.0",
+    "eslint-plugin-format": "^1.0.1",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.0"
+  }
+}
