@@ -16,6 +16,7 @@ export default antfu({
     "dist/**",
     "coverage/**",
     "node_modules/**",
+    "pnpm-lock.yaml",
     ".git/**",
     ".vscode/**",
     "*.env",
