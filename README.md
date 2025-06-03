@@ -25,7 +25,7 @@ yarn add setlistfm-ts
 
 ## 🚧 Project Status
 
-This project is currently in **early development**. The core infrastructure is now in place, including the main client implementation and foundational utilities. API endpoint implementations are the next priority.
+This project is in **active development** with working implementations for core endpoints. The infrastructure is complete and several endpoint groups are fully functional with comprehensive tests and examples.
 
 ### Core Infrastructure
 
@@ -55,7 +55,8 @@ This project is currently in **early development**. The core infrastructure is n
 ### API Coverage
 
 - [x] Artist endpoints (3/3 complete) - **WORKING**
-- [ ] Remaining endpoint implementations (3/18 complete)
+- [x] Cities endpoints (2/2 complete) - **WORKING**
+- [ ] Remaining endpoint implementations (5/18 complete)
 - [x] Type definitions for API responses
 - [x] Input validation (Zod schemas)
 - [x] Rate limiting
@@ -68,6 +69,7 @@ This project is currently in **early development**. The core infrastructure is n
 ```ts
 import { createSetlistFMClient } from "setlistfm-ts";
 import { getArtist, getArtistSetlists, searchArtists } from "setlistfm-ts/endpoints/artists";
+import { getCityByGeoId, searchCities } from "setlistfm-ts/endpoints/cities";
 
 const client = createSetlistFMClient({
   apiKey: "your-api-key-here",
@@ -85,12 +87,25 @@ const artist = await getArtist(client.getHttpClient(), "a74b1b7f-71a5-4011-9441-
 // Example: Get artist setlists
 const setlists = await getArtistSetlists(client.getHttpClient(), "a74b1b7f-71a5-4011-9441-d0b5e4122711");
 
+// Example: Search cities
+const cityResults = await searchCities(client.getHttpClient(), {
+  name: "London",
+  country: "GB" // ISO 3166-1 alpha-2 country code
+});
+
+// Example: Get city details
+const city = await getCityByGeoId(client.getHttpClient(), "2643743");
+
 // eslint-disable-next-line no-console
 console.log(searchResults.artist);
 // eslint-disable-next-line no-console
 console.log(artist.name);
 // eslint-disable-next-line no-console
 console.log(setlists.setlist);
+// eslint-disable-next-line no-console
+console.log(cityResults.cities);
+// eslint-disable-next-line no-console
+console.log(city.name, city.country.name);
 ```
 
 ---
@@ -105,6 +120,8 @@ console.log(setlists.setlist);
 - [x] Tree-shakable modular endpoints
 - [x] Rate limiting support
 - [x] Comprehensive logging utilities
+- [x] ISO standard validation (country codes, etc.)
+- [x] Comprehensive examples and documentation
 
 ---
 
@@ -130,8 +147,8 @@ console.log(setlists.setlist);
 
 ### Cities
 
-- [ ] `searchCities` - Search for cities
-- [ ] `getCityByGeoId` - Get city by geographical ID
+- [x] `searchCities` - Search for cities ✅
+- [x] `getCityByGeoId` - Get city by geographical ID ✅
 
 ### Countries
 
@@ -143,7 +160,41 @@ console.log(setlists.setlist);
 - [ ] `getUserAttended` - Get setlists attended by user
 - [ ] `getUserEdited` - Get setlists edited by user
 
-> **Note:** All endpoints have scaffolded files but implementations are pending.
+> **Note:** Artists and Cities endpoints are fully implemented with comprehensive tests and examples. Remaining endpoints have scaffolded files with implementations pending.
+
+---
+
+## 📖 Examples
+
+Comprehensive examples are available for all implemented endpoints:
+
+### Artists Examples
+
+- `basicArtistLookup.ts` - Search and retrieve artist information
+- `searchArtists.ts` - Advanced artist search with filtering
+- `completeExample.ts` - Full workflow with setlist analysis
+
+### Cities Examples
+
+- `basicCityLookup.ts` - City search and lookup workflow
+- `searchCities.ts` - Geographic search with country codes and pagination
+- `completeExample.ts` - Advanced geographic data analysis
+
+Run examples:
+
+```bash
+# Artists examples
+pnpm dlx tsx examples/artists/basicArtistLookup.ts
+pnpm dlx tsx examples/artists/searchArtists.ts
+pnpm dlx tsx examples/artists/completeExample.ts
+
+# Cities examples
+pnpm dlx tsx examples/cities/basicCityLookup.ts
+pnpm dlx tsx examples/cities/searchCities.ts
+pnpm dlx tsx examples/cities/completeExample.ts
+```
+
+> **Note:** Examples require a valid API key in `.env` file. See example README files for setup instructions.
 
 ---
 
@@ -167,10 +218,12 @@ pnpm test:watch
 
 - [x] Test framework setup
 - [x] Basic test structure for all endpoints
-- [ ] Unit tests for endpoint implementations
-- [ ] Integration tests with API
-- [ ] Error handling tests
-- [ ] Type safety tests
+- [x] Unit tests for artists endpoints (52 tests)
+- [x] Unit tests for cities endpoints (52 tests)
+- [x] Error handling tests
+- [x] Validation tests
+- [ ] Integration tests with live API
+- [ ] Type safety tests for remaining endpoints
 
 ---
 
