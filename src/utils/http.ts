@@ -31,8 +31,8 @@ export type HttpClientConfig = {
   timeout?: number;
   /** Language code for internationalization (e.g., 'en', 'es', 'fr') */
   language?: string;
-  /** Rate limiting configuration */
-  rateLimit?: RateLimitConfig;
+  /** Rate limiting configuration (required) */
+  rateLimit: RateLimitConfig;
 };
 
 /**
@@ -50,11 +50,11 @@ export class SetlistFMError extends Error {
 }
 
 /**
- * HTTP client for the setlist.fm API with built-in authentication and error handling.
+ * HTTP client for the setlist.fm API with built-in authentication, error handling, and rate limiting.
  */
 export class HttpClient {
   private readonly client: AxiosInstance;
-  private readonly rateLimiter?: RateLimiter;
+  private readonly rateLimiter: RateLimiter;
 
   constructor(config: HttpClientConfig) {
     this.client = axios.create({
@@ -68,10 +68,8 @@ export class HttpClient {
       },
     });
 
-    // Initialize rate limiter if configuration provided
-    if (config.rateLimit) {
-      this.rateLimiter = new RateLimiter(config.rateLimit);
-    }
+    // Initialize rate limiter with provided configuration
+    this.rateLimiter = new RateLimiter(config.rateLimit);
 
     this.setupResponseInterceptor();
   }
@@ -119,9 +117,7 @@ export class HttpClient {
    */
   async get<T = any>(endpoint: string, params?: Record<string, any>): Promise<T> {
     // Apply rate limiting if configured
-    if (this.rateLimiter) {
-      await this.rateLimiter.waitForNextSlot();
-    }
+    await this.rateLimiter.waitForNextSlot();
 
     const config: AxiosRequestConfig = {};
     if (params) {
@@ -131,9 +127,7 @@ export class HttpClient {
     const response = await this.client.get<T>(endpoint, config);
 
     // Record the request for rate limiting
-    if (this.rateLimiter) {
-      this.rateLimiter.recordRequest();
-    }
+    this.rateLimiter.recordRequest();
 
     return response.data;
   }
@@ -157,20 +151,20 @@ export class HttpClient {
   }
 
   /**
-   * Gets the rate limiter instance if configured.
+   * Gets the rate limiter instance.
    *
-   * @returns {RateLimiter | undefined} The rate limiter instance.
+   * @returns {RateLimiter} The rate limiter instance.
    */
-  getRateLimiter(): RateLimiter | undefined {
+  getRateLimiter(): RateLimiter {
     return this.rateLimiter;
   }
 
   /**
    * Gets the current rate limit status.
    *
-   * @returns {object | null} Rate limit status or null if not configured.
+   * @returns {object} Rate limit status.
    */
-  getRateLimitStatus(): ReturnType<RateLimiter["getStatus"]> | null {
-    return this.rateLimiter ? this.rateLimiter.getStatus() : null;
+  getRateLimitStatus(): ReturnType<RateLimiter["getStatus"]> {
+    return this.rateLimiter.getStatus();
   }
 }

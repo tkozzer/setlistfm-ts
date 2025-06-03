@@ -2,15 +2,15 @@
   "compilerOptions": {
     "target": "ES2020",
     "lib": ["ES2020"],
-    "baseUrl": "./src",
-    "rootDir": "./src",
+    "baseUrl": ".",
+    "rootDir": ".",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "paths": {
-      "@/*": ["*"],
-      "@shared/*": ["shared/*"],
-      "@utils/*": ["utils/*"],
-      "@endpoints/*": ["endpoints/*"]
+      "@/*": ["src/*"],
+      "@shared/*": ["src/shared/*"],
+      "@utils/*": ["src/utils/*"],
+      "@endpoints/*": ["src/endpoints/*"]
     },
     "resolveJsonModule": true,
     "strict": true,
@@ -24,6 +24,6 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
   },
-  "include": ["src"],
+  "include": ["src", "examples"],
   "exclude": ["dist", "node_modules"]
 }

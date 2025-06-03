@@ -1,14 +1,12 @@
-/* eslint-disable no-console */
 /**
  * @file completeExample.ts
  * @description Complete workflow example demonstrating countries endpoint usage and integration.
  * @author tkozzer
  */
 
+import { createSetlistFMClient } from "../../src/client";
 import { searchCities } from "../../src/endpoints/cities";
 import { searchCountries } from "../../src/endpoints/countries";
-
-import { HttpClient } from "../../src/utils/http";
 import "dotenv/config";
 
 /**
@@ -26,15 +24,23 @@ async function completeExample(): Promise<void> {
   console.log("=".repeat(60));
   console.log("This example demonstrates comprehensive usage of the countries endpoint\n");
 
-  // Create HTTP client with API key from environment
-  const httpClient = new HttpClient({
-    // eslint-disable-next-line node/no-process-env
+  // Create SetlistFM client with automatic STANDARD rate limiting
+  const client = createSetlistFMClient({
+
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
     timeout: 10000, // 10 second timeout
   });
 
+  // Get the HTTP client for making requests
+  const httpClient = client.getHttpClient();
+
   try {
+    // Display rate limiting information
+    const rateLimitStatus = client.getRateLimitStatus();
+    console.log(`📊 Rate Limiting: ${rateLimitStatus.profile.toUpperCase()} profile`);
+    console.log(`📈 Requests: ${rateLimitStatus.requestsThisSecond}/${rateLimitStatus.secondLimit} this second, ${rateLimitStatus.requestsThisDay}/${rateLimitStatus.dayLimit} today\n`);
+
     // Step 1: Retrieve all countries
     console.log("🔍 Step 1: Retrieving complete countries list");
     console.log("-".repeat(40));
@@ -48,6 +54,10 @@ async function completeExample(): Promise<void> {
     console.log(`📄 Page ${countriesResult.page} of results`);
     console.log(`📦 ${countriesResult.country.length} countries in response`);
     console.log(`🔢 ${countriesResult.itemsPerPage} items per page\n`);
+
+    // Display rate limiting status after first request
+    const afterStep1 = client.getRateLimitStatus();
+    console.log(`📊 Rate Limiting Status: ${afterStep1.requestsThisSecond}/${afterStep1.secondLimit} requests this second\n`);
 
     // Step 2: Data quality validation
     console.log("✅ Step 2: Data quality validation");
@@ -167,6 +177,10 @@ async function completeExample(): Promise<void> {
             console.log(`   🏙️  Top cities: ${topCities.map(c => c.name).join(", ")}`);
           }
 
+          // Display rate limiting status during integration testing
+          const duringIntegration = client.getRateLimitStatus();
+          console.log(`   📊 Rate Limiting: ${duringIntegration.requestsThisSecond}/${duringIntegration.secondLimit} requests this second`);
+
           // Respectful delay
           await new Promise(resolve => setTimeout(resolve, 300));
         }
@@ -249,6 +263,13 @@ async function completeExample(): Promise<void> {
     console.log(`   ✅ Precompute validations: Build validation sets once`);
     console.log(`   ✅ Consider CDN: Static-like data benefits from caching`);
 
+    // Final rate limiting status
+    const finalStatus = client.getRateLimitStatus();
+    console.log(`\n📊 Final Rate Limiting Status:`);
+    console.log(`Profile: ${finalStatus.profile.toUpperCase()}`);
+    console.log(`Requests this second: ${finalStatus.requestsThisSecond}/${finalStatus.secondLimit}`);
+    console.log(`Requests today: ${finalStatus.requestsThisDay}/${finalStatus.dayLimit}`);
+
     // Final summary
     console.log("\n🎉 Step 8: Complete example summary");
     console.log("-".repeat(40));
@@ -266,6 +287,7 @@ async function completeExample(): Promise<void> {
     console.log(`   • API integration testing`);
     console.log(`   • Practical use case implementation`);
     console.log(`   • Performance optimization strategies`);
+    console.log(`   • Rate limiting awareness and management`);
   }
   catch (error) {
     console.error("\n❌ Error in complete example:", error);

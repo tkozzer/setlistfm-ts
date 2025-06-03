@@ -9,6 +9,7 @@ import type { HttpClientConfig } from "./utils/http";
 import type { RateLimitConfig } from "./utils/rateLimiter";
 
 import { HttpClient } from "./utils/http";
+import { RateLimitProfile } from "./utils/rateLimiter";
 
 /**
  * Configuration options for the SetlistFM client.
@@ -22,7 +23,7 @@ export type SetlistFMClientConfig = {
   timeout?: number;
   /** Language code for internationalization (e.g., 'en', 'es', 'fr', 'de', 'pt', 'tr', 'it', 'pl') */
   language?: string;
-  /** Rate limiting configuration */
+  /** Rate limiting configuration (defaults to STANDARD profile if not provided) */
   rateLimit?: RateLimitConfig;
 };
 
@@ -31,17 +32,25 @@ export type SetlistFMClientConfig = {
  *
  * Provides access to all API endpoints through organized modules for artists,
  * setlists, venues, cities, countries, and users.
+ *
+ * Rate limiting is enabled by default using the STANDARD profile (2 req/sec, 1440 req/day).
+ * To use a different profile or disable rate limiting, explicitly set the rateLimit configuration.
  */
 export class SetlistFMClient {
   private readonly httpClient: HttpClient;
 
   constructor(config: SetlistFMClientConfig) {
+    // Apply default STANDARD rate limiting if none provided
+    const rateLimit = config.rateLimit ?? {
+      profile: RateLimitProfile.STANDARD,
+    };
+
     const httpConfig: HttpClientConfig = {
       apiKey: config.apiKey,
       userAgent: config.userAgent,
       timeout: config.timeout,
       language: config.language,
-      rateLimit: config.rateLimit,
+      rateLimit,
     };
 
     this.httpClient = new HttpClient(httpConfig);
@@ -82,7 +91,7 @@ export class SetlistFMClient {
   /**
    * Gets the current rate limit status.
    *
-   * @returns {object | null} Rate limit status or null if rate limiting is disabled.
+   * @returns {object} Rate limit status information.
    */
   getRateLimitStatus(): ReturnType<HttpClient["getRateLimitStatus"]> {
     return this.httpClient.getRateLimitStatus();
@@ -92,16 +101,33 @@ export class SetlistFMClient {
 /**
  * Creates a new SetlistFM client instance.
  *
+ * Rate limiting is enabled by default using the STANDARD profile (2 req/sec, 1440 req/day).
+ * To use a different profile, explicitly provide a rateLimit configuration.
+ *
  * @param {SetlistFMClientConfig} config - Configuration options for the client.
  * @returns {SetlistFMClient} A new SetlistFM client instance.
  * @throws {Error} If required configuration is missing or invalid.
  *
  * @example
  * ```ts
+ * // Default rate limiting (STANDARD profile)
  * const client = createSetlistFMClient({
  *   apiKey: 'your-api-key-here',
  *   userAgent: 'your-app-name (your-email@example.com)',
- *   language: 'en'
+ * });
+ *
+ * // Premium rate limiting
+ * const premiumClient = createSetlistFMClient({
+ *   apiKey: 'your-api-key-here',
+ *   userAgent: 'your-app-name (your-email@example.com)',
+ *   rateLimit: { profile: RateLimitProfile.PREMIUM }
+ * });
+ *
+ * // Disable rate limiting
+ * const noLimitClient = createSetlistFMClient({
+ *   apiKey: 'your-api-key-here',
+ *   userAgent: 'your-app-name (your-email@example.com)',
+ *   rateLimit: { profile: RateLimitProfile.DISABLED }
  * });
  * ```
  */
@@ -115,3 +141,6 @@ export function createSetlistFMClient(config: SetlistFMClientConfig): SetlistFMC
 
   return new SetlistFMClient(config);
 }
+
+// Re-export for convenience
+export { RateLimitProfile } from "./utils/rateLimiter";

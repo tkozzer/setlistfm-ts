@@ -1,13 +1,11 @@
-/* eslint-disable no-console */
 /**
  * @file searchVenues.ts
  * @description Comprehensive example of searching venues with various parameters.
  * @author tkozzer
  */
 
+import { createSetlistFMClient } from "../../src/client";
 import { searchVenues } from "../../src/endpoints/venues";
-
-import { HttpClient } from "../../src/utils/http";
 import "dotenv/config";
 
 /**
@@ -17,15 +15,25 @@ import "dotenv/config";
  * various parameters and combinations.
  */
 async function searchVenuesExample(): Promise<void> {
-  // Create HTTP client with API key from environment
+  // Create SetlistFM client with automatic STANDARD rate limiting
+  const client = createSetlistFMClient({
 
-  const httpClient = new HttpClient({
-    // eslint-disable-next-line node/no-process-env
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
 
+  // Get the HTTP client for making requests
+  const httpClient = client.getHttpClient();
+
   try {
+    console.log("🔍 Comprehensive Venue Search Examples");
+    console.log("======================================\n");
+
+    // Display rate limiting information
+    const rateLimitStatus = client.getRateLimitStatus();
+    console.log(`📊 Rate Limiting: ${rateLimitStatus.profile.toUpperCase()} profile`);
+    console.log(`📈 Requests: ${rateLimitStatus.requestsThisSecond}/${rateLimitStatus.secondLimit} this second, ${rateLimitStatus.requestsThisDay}/${rateLimitStatus.dayLimit} today\n`);
+
     // Example 1: Search by venue name
     console.log("🔍 Example 1: Search by venue name");
     console.log("Searching for venues named 'Arena'...\n");
@@ -38,8 +46,12 @@ async function searchVenuesExample(): Promise<void> {
     console.log(`✅ Found ${arenaSearch.total} venues with "Arena" in the name`);
     console.log(`📄 Page ${arenaSearch.page} of ${Math.ceil(arenaSearch.total / arenaSearch.itemsPerPage)} (${arenaSearch.itemsPerPage} per page)`);
 
+    // Display rate limiting status after first request
+    const afterExample1 = client.getRateLimitStatus();
+    console.log(`📊 Rate Limiting Status: ${afterExample1.requestsThisSecond}/${afterExample1.secondLimit} requests this second\n`);
+
     if (arenaSearch.venue.length > 0) {
-      console.log("\n📋 First 5 Arena venues:");
+      console.log("📋 First 5 Arena venues:");
       arenaSearch.venue.slice(0, 5).forEach((venue, index) => {
         console.log(`${index + 1}. ${venue.name}`);
         if (venue.city) {
@@ -60,8 +72,12 @@ async function searchVenuesExample(): Promise<void> {
 
     console.log(`✅ Found ${londonSearch.total} venues in London, UK`);
 
+    // Display rate limiting status after second request
+    const afterExample2 = client.getRateLimitStatus();
+    console.log(`📊 Rate Limiting Status: ${afterExample2.requestsThisSecond}/${afterExample2.secondLimit} requests this second\n`);
+
     if (londonSearch.venue.length > 0) {
-      console.log("\n📋 London venues:");
+      console.log("📋 London venues:");
       londonSearch.venue.slice(0, 5).forEach((venue, index) => {
         console.log(`${index + 1}. ${venue.name}`);
         if (venue.city) {
@@ -83,6 +99,16 @@ async function searchVenuesExample(): Promise<void> {
 
     console.log(`✅ Found ${californiaSearch.total} venues in California`);
 
+    // Display rate limiting status after third request (hitting per-second limit)
+    const afterExample3 = client.getRateLimitStatus();
+    console.log(`📊 Rate Limiting Status: ${afterExample3.requestsThisSecond}/${afterExample3.secondLimit} requests this second`);
+    if (afterExample3.requestsThisSecond >= (afterExample3.secondLimit || 2)) {
+      console.log(`⚠️  Rate limit reached (${afterExample3.requestsThisSecond}/${afterExample3.secondLimit}), subsequent requests will be queued\n`);
+    }
+    else {
+      console.log();
+    }
+
     if (californiaSearch.venue.length > 0) {
       // Group venues by city
       const venuesByCity = new Map<string, any[]>();
@@ -94,7 +120,7 @@ async function searchVenuesExample(): Promise<void> {
         venuesByCity.get(cityName)!.push(venue);
       });
 
-      console.log("\n📋 California venues by city:");
+      console.log("📋 California venues by city:");
       Array.from(venuesByCity.entries())
         .sort(([, a], [, b]) => b.length - a.length)
         .slice(0, 10)
@@ -231,7 +257,18 @@ async function searchVenuesExample(): Promise<void> {
           console.log(`   Location: ${topVenue.city.name}`);
         }
       }
+
+      // Display rate limiting status during international comparison
+      const duringComparison = client.getRateLimitStatus();
+      console.log(`   📊 Rate Limiting: ${duringComparison.requestsThisSecond}/${duringComparison.secondLimit} requests this second`);
     }
+
+    // Final rate limiting status
+    const finalStatus = client.getRateLimitStatus();
+    console.log(`\n📊 Final Rate Limiting Status:`);
+    console.log(`Profile: ${finalStatus.profile.toUpperCase()}`);
+    console.log(`Requests this second: ${finalStatus.requestsThisSecond}/${finalStatus.secondLimit}`);
+    console.log(`Requests today: ${finalStatus.requestsThisDay}/${finalStatus.dayLimit}`);
 
     // Summary statistics
     console.log("\n📊 Search Summary:");
@@ -242,6 +279,8 @@ async function searchVenuesExample(): Promise<void> {
     console.log(`- NYC venues (by geoId): ${nycSearch.total}`);
     console.log(`- NY state theaters: ${theaterSearch.total}`);
     console.log(`- Festival venues: ${festivalSearch.total}`);
+
+    console.log("\n✅ Comprehensive venue search examples completed successfully!");
   }
   catch (error) {
     console.error("❌ Error searching venues:", error);

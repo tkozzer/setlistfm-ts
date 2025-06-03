@@ -1,13 +1,11 @@
-/* eslint-disable no-console */
 /**
  * @file basicCityLookup.ts
  * @description Basic example of looking up a city by GeoNames geoId.
  * @author tkozzer
  */
 
+import { createSetlistFMClient } from "../../src/client";
 import { getCityByGeoId, searchCities } from "../../src/endpoints/cities";
-
-import { HttpClient } from "../../src/utils/http";
 import "dotenv/config";
 
 /**
@@ -17,15 +15,25 @@ import "dotenv/config";
  * using their GeoNames identifier (geoId).
  */
 async function basicCityLookup(): Promise<void> {
-  // Create HTTP client with API key from environment
+  // Create SetlistFM client with automatic STANDARD rate limiting
+  const client = createSetlistFMClient({
 
-  const httpClient = new HttpClient({
-    // eslint-disable-next-line node/no-process-env
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
 
+  // Get the HTTP client for making requests
+  const httpClient = client.getHttpClient();
+
   try {
+    console.log("🌍 Basic City Lookup Examples");
+    console.log("============================\n");
+
+    // Display rate limiting information
+    const rateLimitStatus = client.getRateLimitStatus();
+    console.log(`📊 Rate Limiting: ${rateLimitStatus.profile.toUpperCase()} profile`);
+    console.log(`📈 Requests: ${rateLimitStatus.requestsThisSecond}/${rateLimitStatus.secondLimit} this second, ${rateLimitStatus.requestsThisDay}/${rateLimitStatus.dayLimit} today\n`);
+
     // Example 1: Search for Paris and then lookup a specific one
     console.log("🔍 Example 1: Search and lookup workflow");
     console.log("Searching for cities named 'Paris'...\n");
@@ -58,6 +66,10 @@ async function basicCityLookup(): Promise<void> {
       console.log(`Country: ${parisDetails.country.name} (${parisDetails.country.code})`);
       console.log(`Coordinates: ${parisDetails.coords.lat}, ${parisDetails.coords.long}`);
     }
+
+    // Display updated rate limiting status
+    const updatedStatus = client.getRateLimitStatus();
+    console.log(`\n📊 Rate Limiting Status: ${updatedStatus.requestsThisSecond}/${updatedStatus.secondLimit} requests this second`);
 
     // Example 2: Search for London and get the UK one
     console.log("\n🔍 Example 2: Finding London, UK");
@@ -155,6 +167,15 @@ async function basicCityLookup(): Promise<void> {
       console.log(`\n✅ Los Angeles details:`);
       console.log(`Coordinates: ${laDetails.coords.lat}°N, ${Math.abs(laDetails.coords.long)}°W`);
     }
+
+    // Final rate limiting status
+    const finalStatus = client.getRateLimitStatus();
+    console.log(`\n📊 Final Rate Limiting Status:`);
+    console.log(`Profile: ${finalStatus.profile.toUpperCase()}`);
+    console.log(`Requests this second: ${finalStatus.requestsThisSecond}/${finalStatus.secondLimit}`);
+    console.log(`Requests today: ${finalStatus.requestsThisDay}/${finalStatus.dayLimit}`);
+
+    console.log("\n✅ Basic city lookup examples completed successfully!");
   }
   catch (error) {
     console.error("❌ Error looking up city:", error);

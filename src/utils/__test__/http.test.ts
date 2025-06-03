@@ -10,6 +10,27 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { API_BASE_URL, DEFAULT_TIMEOUT, HttpClient, SetlistFMError } from "../http";
 import { RateLimitProfile } from "../rateLimiter";
 
+// Create a shared test configuration with required rate limiting
+const defaultTestConfig = {
+  apiKey: "test-key",
+  userAgent: "test-app",
+  rateLimit: {
+    profile: RateLimitProfile.STANDARD,
+  },
+};
+
+// Helper function to create test config with rate limiting
+function createTestConfig(overrides: any = {}) {
+  return {
+    apiKey: "test-key",
+    userAgent: "test-app",
+    rateLimit: {
+      profile: RateLimitProfile.STANDARD,
+    },
+    ...overrides,
+  };
+}
+
 // Create mock functions that we'll reuse
 const mockGet = vi.fn();
 const mockInterceptorsUse = vi.fn();
@@ -87,12 +108,7 @@ describe("HTTP Client", () => {
 
   describe("HttpClient Configuration", () => {
     it("should create client with minimal config", () => {
-      const config = {
-        apiKey: "test-key",
-        userAgent: "test-app",
-      };
-
-      const client = new HttpClient(config);
+      const client = new HttpClient(defaultTestConfig);
 
       expect(client).toBeInstanceOf(HttpClient);
       expect(client.getBaseUrl()).toBe(API_BASE_URL);
@@ -104,6 +120,9 @@ describe("HTTP Client", () => {
         userAgent: "test-app",
         timeout: 5000,
         language: "es",
+        rateLimit: {
+          profile: RateLimitProfile.STANDARD,
+        },
       };
 
       const client = new HttpClient(config);
@@ -131,12 +150,15 @@ describe("HTTP Client", () => {
       const config = {
         apiKey: "test-key",
         userAgent: "test-app",
+        rateLimit: {
+          profile: RateLimitProfile.DISABLED,
+        },
       };
 
       const client = new HttpClient(config);
 
-      expect(client.getRateLimiter()).toBeUndefined();
-      expect(client.getRateLimitStatus()).toBeNull();
+      expect(client.getRateLimiter()).toBeDefined();
+      expect(client.getRateLimitStatus()).toBeDefined();
     });
   });
 
@@ -144,6 +166,9 @@ describe("HTTP Client", () => {
     const config = {
       apiKey: "test-key",
       userAgent: "test-app",
+      rateLimit: {
+        profile: RateLimitProfile.STANDARD,
+      },
     };
 
     it("should have get method", () => {
@@ -314,12 +339,7 @@ describe("HTTP Client", () => {
     it("should handle successful GET request without rate limiting", async () => {
       mockGet.mockResolvedValue({ data: { success: true } });
 
-      const config = {
-        apiKey: "test-key",
-        userAgent: "test-app",
-      };
-
-      const client = new HttpClient(config);
+      const client = new HttpClient(createTestConfig());
       const result = await client.get("/test");
 
       expect(result).toEqual({ success: true });
@@ -329,12 +349,7 @@ describe("HTTP Client", () => {
     it("should handle successful GET request with parameters", async () => {
       mockGet.mockResolvedValue({ data: { results: [] } });
 
-      const config = {
-        apiKey: "test-key",
-        userAgent: "test-app",
-      };
-
-      const client = new HttpClient(config);
+      const client = new HttpClient(createTestConfig());
       const params = { page: 1, limit: 10 };
       const result = await client.get("/search", params);
 
@@ -345,12 +360,7 @@ describe("HTTP Client", () => {
     it("should handle successful GET request without parameters", async () => {
       mockGet.mockResolvedValue({ data: { data: "test" } });
 
-      const config = {
-        apiKey: "test-key",
-        userAgent: "test-app",
-      };
-
-      const client = new HttpClient(config);
+      const client = new HttpClient(createTestConfig());
       const result = await client.get("/test");
 
       expect(result).toEqual({ data: "test" });
@@ -387,12 +397,7 @@ describe("HTTP Client", () => {
     });
 
     it("should handle error with response data.error", async () => {
-      const config = {
-        apiKey: "test-key",
-        userAgent: "test-app",
-      };
-
-      const _client = new HttpClient(config);
+      const _client = new HttpClient(createTestConfig());
 
       // Get the error handler that was passed to interceptors.response.use
       const errorHandler = mockInterceptorsUse.mock.calls[0][1];
@@ -417,12 +422,7 @@ describe("HTTP Client", () => {
     });
 
     it("should handle error with response but no data.error (fallback to error.message)", async () => {
-      const config = {
-        apiKey: "test-key",
-        userAgent: "test-app",
-      };
-
-      const _client = new HttpClient(config);
+      const _client = new HttpClient(createTestConfig());
 
       // Get the error handler that was passed to interceptors.response.use
       const errorHandler = mockInterceptorsUse.mock.calls[0][1];
@@ -447,12 +447,7 @@ describe("HTTP Client", () => {
     });
 
     it("should handle request error (no response received)", async () => {
-      const config = {
-        apiKey: "test-key",
-        userAgent: "test-app",
-      };
-
-      const _client = new HttpClient(config);
+      const _client = new HttpClient(createTestConfig());
 
       // Get the error handler that was passed to interceptors.response.use
       const errorHandler = mockInterceptorsUse.mock.calls[0][1];
@@ -473,12 +468,7 @@ describe("HTTP Client", () => {
     });
 
     it("should handle generic network error", async () => {
-      const config = {
-        apiKey: "test-key",
-        userAgent: "test-app",
-      };
-
-      const _client = new HttpClient(config);
+      const _client = new HttpClient(createTestConfig());
 
       // Get the error handler that was passed to interceptors.response.use
       const errorHandler = mockInterceptorsUse.mock.calls[0][1];
@@ -498,14 +488,10 @@ describe("HTTP Client", () => {
     });
 
     it("should configure axios instance correctly with all options", () => {
-      const config = {
-        apiKey: "test-api-key",
-        userAgent: "test-app (test@example.com)",
+      const _client = new HttpClient(createTestConfig({
         timeout: 5000,
         language: "es",
-      };
-
-      const _client = new HttpClient(config);
+      }));
 
       // We can't directly test axios.create call params with our current mock setup
       // But we can test that the client was created successfully
@@ -513,12 +499,7 @@ describe("HTTP Client", () => {
     });
 
     it("should configure axios instance with default timeout when not provided", () => {
-      const config = {
-        apiKey: "test-key",
-        userAgent: "test-app",
-      };
-
-      const _client = new HttpClient(config);
+      const _client = new HttpClient(createTestConfig());
 
       // We can't directly test axios.create call params with our current mock setup
       // But we can test that the client was created successfully
