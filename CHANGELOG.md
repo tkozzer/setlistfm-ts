@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.5] - 2025-06-03
+
+### Added
+
+- **Venues endpoints**: Complete implementation of all three venues endpoints with comprehensive functionality:
+  - `getVenue()` - Retrieve venue details by venue ID with full geographic and contact information
+  - `getVenueSetlists()` - Get paginated setlists for a specific venue with artist and date metadata
+  - `searchVenues()` - Search venues by name, city, country, state, and state code with advanced filtering
+- **Venues examples directory**: Four comprehensive example files demonstrating real-world usage:
+  - `basicVenueLookup.ts` - Basic venue search and lookup workflow with famous venues (MSG, Wembley, Red Rocks)
+  - `searchVenues.ts` - Advanced search functionality with 8 different scenarios and geographic filtering
+  - `getVenueSetlists.ts` - Venue setlist analysis with multi-page data collection and artist statistics
+  - `completeExample.ts` - Comprehensive 4-phase workflow with city discovery and statistical insights
+- **Enhanced data validation**: Robust venue ID validation using 8-character hexadecimal format with regex filtering
+- **Comprehensive testing**: 52 unit tests covering all venues functionality, validation, error handling, and edge cases
+- **Real-world data handling**: Examples handle API data quality issues including invalid venue IDs and empty venue names
+- **Rate limiting integration**: Removed manual delays in favor of built-in SDK rate limiting capabilities
+
+### Enhanced
+
+- **Documentation**: Updated main README.md with venues examples, usage patterns, and complete API coverage tracking
+- **API coverage**: Increased completion from 6/18 to 9/18 endpoints (50% API coverage)
+- **Type safety**: Complete TypeScript types for venues data, responses, and validation schemas with proper geographic data types
+- **Error handling**: Comprehensive error handling patterns for venues endpoint edge cases and data quality issues
+- **Performance optimization**: Efficient venue data processing with filtering for valid records and rate limiting respect
+
+### Changed
+
+- **Version**: Bumped to 0.1.5 for venues endpoints implementation
+- **Project status**: Updated to reflect venues endpoints as fully implemented and tested alongside artists, cities, and countries
+- **Examples structure**: Added venues examples following established patterns with enhanced real-world data handling
+- **Main exports**: Enhanced src/endpoints/index.ts to include all venues endpoints for easy importing
+
+### Fixed
+
+- **Rate limiting**: Replaced manual delay() functions with proper SDK rate limiting configuration support
+- **Data validation**: Added venue ID format validation to handle real setlist.fm API data inconsistencies
+- **Example reliability**: Enhanced examples to gracefully handle invalid venue data and API rate limits
+
+---
+
 ## [0.1.4] - 2025-06-03
 
 ### Added
