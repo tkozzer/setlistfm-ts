@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.4] - 2025-06-03
+
+### Added
+
+- **Countries endpoint**: Complete implementation of the countries endpoint with comprehensive functionality:
+  - `searchCountries()` - Retrieve complete list of all supported countries from setlist.fm API
+- **Countries examples directory**: Three comprehensive example files demonstrating real-world usage:
+  - `basicCountriesLookup.ts` - Countries retrieval and data exploration with regional groupings
+  - `countriesAnalysis.ts` - Advanced analysis with cities integration and statistical insights
+  - `completeExample.ts` - Production-ready workflow with data validation and performance testing
+- **Enhanced validation**: ISO 3166-1 alpha-2 country code validation with strict schema enforcement
+- **Comprehensive testing**: 40 unit tests covering all countries functionality, validation, error handling, and edge cases
+- **Cross-endpoint integration**: Examples demonstrate integration with cities endpoint for geographic analysis
+- **Performance optimization**: Caching strategies and efficiency recommendations for country data usage
+
+### Enhanced
+
+- **Documentation**: Updated main README.md with countries examples, usage patterns, and progress tracking
+- **API coverage**: Increased completion from 5/18 to 6/18 endpoints (33% API coverage)
+- **Type safety**: Complete TypeScript types for countries data, responses, and validation schemas
+- **Error handling**: Comprehensive error handling patterns for countries endpoint edge cases
+
+### Changed
+
+- **Version**: Bumped to 0.1.4 for countries endpoint implementation
+- **Project status**: Updated to reflect countries endpoint as fully implemented and tested
+- **Examples structure**: Added countries examples following established patterns from artists and cities
+
+---
+
 ## [0.1.3] - 2025-06-03
 
 ### Added
