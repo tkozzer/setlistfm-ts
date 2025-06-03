@@ -5,7 +5,6 @@
  */
 
 import { createSetlistFMClient } from "../../src/client";
-import { searchCities } from "../../src/endpoints/cities";
 import "dotenv/config";
 
 /**
@@ -17,13 +16,9 @@ import "dotenv/config";
 async function searchCitiesExample(): Promise<void> {
   // Create SetlistFM client with automatic STANDARD rate limiting
   const client = createSetlistFMClient({
-
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
-
-  // Get the HTTP client for making requests
-  const httpClient = client.getHttpClient();
 
   try {
     console.log("🔍 Cities Search Examples");
@@ -38,7 +33,7 @@ async function searchCitiesExample(): Promise<void> {
     console.log("🔍 Example 1: Search by city name");
     console.log("Searching for cities named 'Paris'...\n");
 
-    const nameSearch = await searchCities(httpClient, {
+    const nameSearch = await client.searchCities({
       name: "Paris",
     });
 
@@ -61,7 +56,7 @@ async function searchCitiesExample(): Promise<void> {
     console.log("🔍 Example 2: Search by country code");
     console.log("Searching for cities in Germany (DE)...\n");
 
-    const countrySearch = await searchCities(httpClient, {
+    const countrySearch = await client.searchCities({
       country: "DE",
       p: 1,
     });
@@ -80,7 +75,7 @@ async function searchCitiesExample(): Promise<void> {
     console.log("🔍 Example 3: Search by state name");
     console.log("Searching for cities in California...\n");
 
-    const stateSearch = await searchCities(httpClient, {
+    const stateSearch = await client.searchCities({
       state: "California",
       p: 1,
     });
@@ -99,7 +94,7 @@ async function searchCitiesExample(): Promise<void> {
     console.log("🔍 Example 4: Search by state code");
     console.log("Searching for cities with state code 'NY'...\n");
 
-    const stateCodeSearch = await searchCities(httpClient, {
+    const stateCodeSearch = await client.searchCities({
       stateCode: "NY",
       p: 1,
     });
@@ -122,7 +117,7 @@ async function searchCitiesExample(): Promise<void> {
     console.log("🔍 Example 5: Combined search parameters");
     console.log("Searching for cities named 'Springfield' in the United States...\n");
 
-    const combinedSearch = await searchCities(httpClient, {
+    const combinedSearch = await client.searchCities({
       name: "Springfield",
       country: "US",
     });
@@ -143,7 +138,7 @@ async function searchCitiesExample(): Promise<void> {
     console.log("🔍 Example 6: Search in the United Kingdom");
     console.log("Searching for cities in the UK (GB)...\n");
 
-    const ukSearch = await searchCities(httpClient, {
+    const ukSearch = await client.searchCities({
       country: "GB",
       p: 1,
     });
@@ -162,7 +157,7 @@ async function searchCitiesExample(): Promise<void> {
     console.log("🔍 Example 7: Pagination");
     console.log("Getting multiple pages of cities in the United States...\n");
 
-    const page1 = await searchCities(httpClient, {
+    const page1 = await client.searchCities({
       country: "US",
       p: 1,
     });
@@ -171,7 +166,7 @@ async function searchCitiesExample(): Promise<void> {
     console.log(`📄 Showing ${page1.cities.length} cities on page ${page1.page}`);
 
     if (page1.total > page1.itemsPerPage) {
-      const page2 = await searchCities(httpClient, {
+      const page2 = await client.searchCities({
         country: "US",
         p: 2,
       });
@@ -186,7 +181,7 @@ async function searchCitiesExample(): Promise<void> {
     console.log("\n🔍 Example 8: Handle empty search results");
     console.log("Searching for a non-existent city...\n");
 
-    const emptySearch = await searchCities(httpClient, {
+    const emptySearch = await client.searchCities({
       name: "ThisCityDoesNotExistForSure123456",
     });
 
@@ -200,7 +195,7 @@ async function searchCitiesExample(): Promise<void> {
     console.log("\n🔍 Example 9: Search with no parameters");
     console.log("Getting cities without specific search criteria...\n");
 
-    const allCitiesSearch = await searchCities(httpClient, {
+    const allCitiesSearch = await client.searchCities({
       p: 1,
     });
 
@@ -218,7 +213,7 @@ async function searchCitiesExample(): Promise<void> {
     console.log("🔍 Example 10: Search by country and state combination");
     console.log("Searching for cities in Texas, US...\n");
 
-    const texasSearch = await searchCities(httpClient, {
+    const texasSearch = await client.searchCities({
       country: "US",
       state: "Texas",
       p: 1,

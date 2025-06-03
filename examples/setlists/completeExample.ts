@@ -5,32 +5,27 @@
  */
 
 import { createSetlistFMClient } from "../../src/client";
-import { getSetlist, searchSetlists } from "../../src/endpoints/setlists";
 import "dotenv/config";
 
 /**
  * Example: Complete setlist workflow
  *
  * This example demonstrates a real-world workflow combining
- * search functionality with detailed setlist analysis.
+ * search functionality with detailed setlist analysis using the type-safe client.
  */
 async function completeSetlistExample(): Promise<void> {
-  // Create SetlistFM client with API key from environment
-  // The client automatically uses STANDARD rate limiting (2 req/sec, 1440 req/day)
+  // Create SetlistFM client with automatic STANDARD rate limiting
   const client = createSetlistFMClient({
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
-
-  // Get the HTTP client for making requests
-  const httpClient = client.getHttpClient();
 
   try {
     // Step 1: Search for setlists by a specific artist and tour
     console.log("🔍 Step 1: Finding Radiohead setlists from recent tours");
     console.log("Searching for Radiohead setlists...\n");
 
-    const radioheadSearch = await searchSetlists(httpClient, {
+    const radioheadSearch = await client.searchSetlists({
       artistName: "Radiohead",
       year: 2023,
       p: 1,
@@ -88,7 +83,7 @@ async function completeSetlistExample(): Promise<void> {
       console.log(`\n🎵 Step 3: Detailed analysis of most recent show`);
       console.log(`Getting detailed setlist for ${latestSetlist.artist.name} on ${latestSetlist.eventDate}...\n`);
 
-      const detailedSetlist = await getSetlist(httpClient, latestSetlist.id);
+      const detailedSetlist = await client.getSetlist(latestSetlist.id);
 
       console.log("✅ Detailed setlist retrieved!");
       console.log(`🎤 Artist: ${detailedSetlist.artist.name}`);
@@ -183,7 +178,7 @@ async function completeSetlistExample(): Promise<void> {
     console.log(`\n🔍 Step 4: Comparing Radiohead across different years`);
     console.log("Getting setlists from 2022 for comparison...\n");
 
-    const radiohead2022 = await searchSetlists(httpClient, {
+    const radiohead2022 = await client.searchSetlists({
       artistName: "Radiohead",
       year: 2022,
       p: 1,
