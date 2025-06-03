@@ -5,25 +5,20 @@
  */
 
 import { createSetlistFMClient } from "../../src/client";
-import { getSetlist } from "../../src/endpoints/setlists";
 import "dotenv/config";
 
 /**
  * Example: Basic setlist lookup by ID
  *
  * This example demonstrates how to retrieve a specific setlist
- * using its unique identifier.
+ * using its unique identifier with the type-safe client.
  */
 async function basicSetlistLookup(): Promise<void> {
-  // Create SetlistFM client with API key from environment
-  // The client automatically uses STANDARD rate limiting (2 req/sec, 1440 req/day)
+  // Create SetlistFM client with automatic STANDARD rate limiting
   const client = createSetlistFMClient({
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
-
-  // Get the HTTP client for making requests
-  const httpClient = client.getHttpClient();
 
   try {
     // Example: Get The Beatles setlist from Hollywood Bowl (1964)
@@ -31,7 +26,7 @@ async function basicSetlistLookup(): Promise<void> {
     const setlistId = "63de4613";
     console.log(`Looking up setlist (ID: ${setlistId})...\n`);
 
-    const setlist = await getSetlist(httpClient, setlistId);
+    const setlist = await client.getSetlist(setlistId);
 
     console.log("✅ Setlist found!");
     console.log(`Artist: ${setlist.artist.name}`);

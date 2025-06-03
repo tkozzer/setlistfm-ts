@@ -5,25 +5,20 @@
  */
 
 import { createSetlistFMClient } from "../../src/client";
-import { searchVenues } from "../../src/endpoints/venues";
 import "dotenv/config";
 
 /**
  * Example: Comprehensive venue search functionality
  *
  * This example demonstrates how to search for venues using
- * various parameters and combinations.
+ * various parameters and combinations with the type-safe client.
  */
 async function searchVenuesExample(): Promise<void> {
   // Create SetlistFM client with automatic STANDARD rate limiting
   const client = createSetlistFMClient({
-
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
-
-  // Get the HTTP client for making requests
-  const httpClient = client.getHttpClient();
 
   try {
     console.log("🔍 Comprehensive Venue Search Examples");
@@ -38,7 +33,7 @@ async function searchVenuesExample(): Promise<void> {
     console.log("🔍 Example 1: Search by venue name");
     console.log("Searching for venues named 'Arena'...\n");
 
-    const arenaSearch = await searchVenues(httpClient, {
+    const arenaSearch = await client.searchVenues({
       name: "Arena",
       p: 1,
     });
@@ -65,7 +60,7 @@ async function searchVenuesExample(): Promise<void> {
     console.log("\n🔍 Example 2: Search by city and country");
     console.log("Searching for venues in London, UK...\n");
 
-    const londonSearch = await searchVenues(httpClient, {
+    const londonSearch = await client.searchVenues({
       cityName: "London",
       country: "GB",
     });
@@ -91,7 +86,7 @@ async function searchVenuesExample(): Promise<void> {
     console.log("\n🔍 Example 3: Search by state");
     console.log("Searching for venues in California...\n");
 
-    const californiaSearch = await searchVenues(httpClient, {
+    const californiaSearch = await client.searchVenues({
       state: "California",
       stateCode: "CA",
       country: "US",
@@ -139,7 +134,7 @@ async function searchVenuesExample(): Promise<void> {
     console.log("\n🔍 Example 4: Search with pagination");
     console.log("Getting multiple pages of Stadium venues...\n");
 
-    const stadiumSearch1 = await searchVenues(httpClient, {
+    const stadiumSearch1 = await client.searchVenues({
       name: "Stadium",
       p: 1,
     });
@@ -148,7 +143,7 @@ async function searchVenuesExample(): Promise<void> {
     console.log(`📄 Page 1: ${stadiumSearch1.venue.length} venues`);
 
     if (stadiumSearch1.total > stadiumSearch1.itemsPerPage) {
-      const stadiumSearch2 = await searchVenues(httpClient, {
+      const stadiumSearch2 = await client.searchVenues({
         name: "Stadium",
         p: 2,
       });
@@ -169,7 +164,7 @@ async function searchVenuesExample(): Promise<void> {
     console.log("\n🔍 Example 5: Search by city geoId");
     console.log("Searching for venues in New York City (geoId: 5128581)...\n");
 
-    const nycSearch = await searchVenues(httpClient, {
+    const nycSearch = await client.searchVenues({
       cityId: "5128581", // New York City geoId
     });
 
@@ -189,7 +184,7 @@ async function searchVenuesExample(): Promise<void> {
     console.log("\n🔍 Example 6: Complex search");
     console.log("Searching for 'Theater' venues in New York state...\n");
 
-    const theaterSearch = await searchVenues(httpClient, {
+    const theaterSearch = await client.searchVenues({
       name: "Theater",
       state: "New York",
       stateCode: "NY",
@@ -212,7 +207,7 @@ async function searchVenuesExample(): Promise<void> {
     console.log("\n🔍 Example 7: Handling venues without cities");
     console.log("Searching for 'Festival' venues...\n");
 
-    const festivalSearch = await searchVenues(httpClient, {
+    const festivalSearch = await client.searchVenues({
       name: "Festival",
     });
 
@@ -243,7 +238,7 @@ async function searchVenuesExample(): Promise<void> {
     ];
 
     for (const country of countries) {
-      const countrySearch = await searchVenues(httpClient, {
+      const countrySearch = await client.searchVenues({
         name: "Garden",
         country: country.code,
       });

@@ -5,7 +5,6 @@
  */
 
 import { createSetlistFMClient } from "../../src/client";
-import { searchArtists } from "../../src/endpoints/artists";
 import "dotenv/config";
 
 /**
@@ -18,20 +17,16 @@ async function searchArtistsExample(): Promise<void> {
   // Create SetlistFM client with API key from environment
   // The client automatically uses STANDARD rate limiting (2 req/sec, 1440 req/day)
   const client = createSetlistFMClient({
-
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
-
-  // Get the HTTP client for making requests
-  const httpClient = client.getHttpClient();
 
   try {
     // Example 1: Search by artist name
     console.log("🔍 Example 1: Search by artist name");
     console.log("Searching for 'Radiohead'...\n");
 
-    const nameSearch = await searchArtists(httpClient, {
+    const nameSearch = await client.searchArtists({
       artistName: "Radiohead",
     });
 
@@ -51,7 +46,7 @@ async function searchArtistsExample(): Promise<void> {
     console.log("🔍 Example 2: Search with pagination and sorting");
     console.log("Searching for 'Beatles' with relevance sorting...\n");
 
-    const paginatedSearch = await searchArtists(httpClient, {
+    const paginatedSearch = await client.searchArtists({
       artistName: "Beatles",
       p: 1,
       sort: "relevance",
@@ -72,7 +67,7 @@ async function searchArtistsExample(): Promise<void> {
     const beatlesMbid = "b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d";
     console.log(`Searching by MBID: ${beatlesMbid}...\n`);
 
-    const mbidSearch = await searchArtists(httpClient, {
+    const mbidSearch = await client.searchArtists({
       artistMbid: beatlesMbid,
     });
 
@@ -91,7 +86,7 @@ async function searchArtistsExample(): Promise<void> {
     console.log("Searching for a non-existent artist...\n");
 
     try {
-      const emptySearch = await searchArtists(httpClient, {
+      const emptySearch = await client.searchArtists({
         artistName: "ThisArtistDoesNotExistForSure123456",
       });
 

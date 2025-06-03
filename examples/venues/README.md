@@ -1,6 +1,6 @@
 # Venues Endpoints Examples
 
-This directory contains practical examples demonstrating how to use the setlistfm-ts venues endpoints with automatic rate limiting protection.
+This directory contains practical examples demonstrating how to use the setlistfm-ts venues endpoints with the new type-safe client and automatic rate limiting protection.
 
 ## Prerequisites
 
@@ -17,6 +17,16 @@ Create a `.env` file in the project root (`setlistfm-ts/.env`):
 SETLISTFM_API_KEY=your-api-key-here
 ```
 
+## Key Features
+
+These examples showcase the **new type-safe client API** with significant improvements:
+
+- **Cleaner syntax**: `client.searchVenues(params)` instead of `searchVenues(httpClient, params)`
+- **Type safety**: Full TypeScript intellisense and compile-time validation
+- **Simplified setup**: No need to manually extract `httpClient`
+- **Better error handling**: More descriptive error messages and validation
+- **Automatic rate limiting**: Built-in protection with real-time status monitoring
+
 ## Rate Limiting Protection
 
 All examples use the new `createSetlistFMClient` which automatically applies **STANDARD rate limiting** (2 requests/second, 1440 requests/day) to protect against accidental API limit violations. The examples display real-time rate limiting status showing:
@@ -32,7 +42,6 @@ All examples use the new `createSetlistFMClient` which automatically applies **S
 
 ```typescript
 const client = createSetlistFMClient({
-
   apiKey: process.env.SETLISTFM_API_KEY!,
   userAgent: "your-app-name (your-email@example.com)",
   // Automatically uses STANDARD profile: 2 req/sec, 1440 req/day
@@ -43,7 +52,6 @@ const client = createSetlistFMClient({
 
 ```typescript
 const client = createSetlistFMClient({
-
   apiKey: process.env.SETLISTFM_API_KEY!,
   userAgent: "your-app-name (your-email@example.com)",
   rateLimit: { profile: RateLimitProfile.PREMIUM }
@@ -54,7 +62,6 @@ const client = createSetlistFMClient({
 
 ```typescript
 const client = createSetlistFMClient({
-
   apiKey: process.env.SETLISTFM_API_KEY!,
   userAgent: "your-app-name (your-email@example.com)",
   rateLimit: { profile: RateLimitProfile.DISABLED }
@@ -71,8 +78,8 @@ const client = createSetlistFMClient({
 
 - Creating a SetlistFM client with automatic STANDARD rate limiting
 - Real-time rate limiting status monitoring throughout operations
-- Searching for venues by name and geographic criteria
-- Looking up specific venue details by venue ID
+- **Type-safe venue search**: `client.searchVenues(params)` with full IntelliSense
+- **Type-safe venue lookup**: `client.getVenue(id)` with compile-time validation
 - Finding famous venues (Madison Square Garden, Wembley Stadium, Red Rocks)
 - Working with venue geographic data and city information
 - Filtering venues by location criteria (city, state, country)
@@ -85,7 +92,7 @@ const client = createSetlistFMClient({
 pnpm dlx tsx examples/venues/basicVenueLookup.ts
 ```
 
-**Key features**: Shows rate limiting status progression (6-7 total requests), demonstrates famous venue lookup workflows.
+**Key features**: Shows rate limiting status progression (6-7 total requests), demonstrates famous venue lookup workflows with clean syntax.
 
 ### 2. `searchVenues.ts`
 
@@ -94,6 +101,7 @@ pnpm dlx tsx examples/venues/basicVenueLookup.ts
 **What it demonstrates**:
 
 - Rate limiting monitoring during extensive search operations
+- **Type-safe search parameters**: Full TypeScript support for all search criteria
 - Searching venues by name, city, country, state, and state code
 - Using proper ISO country codes (US, GB, DE, CA) for filtering
 - Using pagination parameters for large result sets (1,000+ venues)
@@ -109,7 +117,7 @@ pnpm dlx tsx examples/venues/basicVenueLookup.ts
 pnpm dlx tsx examples/venues/searchVenues.ts
 ```
 
-**Key features**: Shows rate limiting protection in action (12+ requests, hitting 2/2 limit), demonstrates comprehensive search patterns.
+**Key features**: Shows rate limiting protection in action (12+ requests, hitting 2/2 limit), demonstrates comprehensive search patterns with type safety.
 
 ### 3. `getVenueSetlists.ts`
 
@@ -118,12 +126,11 @@ pnpm dlx tsx examples/venues/searchVenues.ts
 **What it demonstrates**:
 
 - Rate limiting awareness during multi-endpoint workflows
+- **Type-safe setlist retrieval**: `client.getVenueSetlists(id)` with full type information
 - Getting setlists for specific venues by venue ID
-- Pagination through large setlist collections (1,000+ setlists)
 - Analyzing venue performance data and artist statistics
 - Processing setlist data for insights (years, artists, song counts)
 - Comparing setlist activity between famous venues
-- Multi-page data collection with rate limiting protection
 - Recent venue activity discovery and analysis
 - Rate limiting status during intensive data processing
 
@@ -133,7 +140,7 @@ pnpm dlx tsx examples/venues/searchVenues.ts
 pnpm dlx tsx examples/venues/getVenueSetlists.ts
 ```
 
-**Key features**: Shows complex workflows with rate limiting (20+ requests), analyzes thousands of setlists with protection.
+**Key features**: Shows complex workflows with rate limiting, analyzes thousands of setlists with type-safe methods.
 
 ### 4. `completeExample.ts`
 
@@ -157,7 +164,7 @@ pnpm dlx tsx examples/venues/getVenueSetlists.ts
 pnpm dlx tsx examples/venues/completeExample.ts
 ```
 
-**Key features**: Demonstrates enterprise workflows with rate limiting (30+ requests), analyzes thousands of venues and setlists.
+**Key features**: Demonstrates enterprise workflows with rate limiting (30+ requests), analyzes thousands of venues and setlists with type-safe client methods.
 
 ## Example Output
 
@@ -166,7 +173,6 @@ When you run these examples, you'll see formatted output with:
 - 📊 **Rate limiting status**: Shows profile, current usage, and limits throughout
 - 🔍 Search operations and venue discovery
 - ✅ Successful data retrieval confirmations
-- 📄 Pagination information and navigation
 - 🏛️ Venue information and geographic data
 - 🎵 Setlist counts and music activity statistics
 - 📊 Statistical analysis and venue comparisons
@@ -176,203 +182,101 @@ When you run these examples, you'll see formatted output with:
 
 ## Code Structure
 
-Each example follows a consistent pattern with automatic rate limiting:
+Each example follows a consistent pattern with the type-safe client:
 
 ```typescript
 import { createSetlistFMClient } from "../../src/client";
-import { getVenue, getVenueSetlists, searchVenues } from "../../src/endpoints/venues";
 import "dotenv/config";
 
 async function exampleFunction(): Promise<void> {
   // Create client with automatic STANDARD rate limiting
   const client = createSetlistFMClient({
-
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
 
-  // Get HTTP client for endpoint functions
-  const httpClient = client.getHttpClient();
-
   try {
     // Display rate limiting status
     const status = client.getRateLimitStatus();
-
     console.log(`📊 Rate Limiting: ${status.profile.toUpperCase()} profile`);
 
-    console.log(`📈 Requests: ${status.requestsThisSecond}/${status.secondLimit} this second`);
+    // Type-safe venue search
+    const venues = await client.searchVenues({
+      name: "Arena",
+      country: "US",
+    });
 
-    // Example implementation with rate limiting protection
-    const venues = await searchVenues(httpClient, { name: "Arena" });
+    // Type-safe venue lookup
+    if (venues.venue.length > 0) {
+      const venueDetails = await client.getVenue(venues.venue[0].id);
+      console.log(`Found: ${venueDetails.name}`);
 
-    // Show updated rate limiting status
-    const updated = client.getRateLimitStatus();
-
-    console.log(`📊 After request: ${updated.requestsThisSecond}/${updated.secondLimit} requests`);
+      // Type-safe setlist retrieval
+      const setlists = await client.getVenueSetlists(venues.venue[0].id);
+      console.log(`Setlists: ${setlists.total}`);
+    }
   }
   catch (error) {
-    // Error handling including rate limit protection
+    console.error("Error:", error);
   }
 }
 ```
 
-## Learning Path
+## API Methods Used
 
-We recommend running the examples in this order:
+The examples demonstrate these type-safe client methods:
 
-1. **Start with `basicVenueLookup.ts`** - Learn venue search and lookup fundamentals with rate limiting
-2. **Try `searchVenues.ts`** - Understand comprehensive search capabilities and rate limiting during extensive operations
-3. **Explore `getVenueSetlists.ts`** - See setlist retrieval and analysis with rate limiting management
-4. **Complete with `completeExample.ts`** - Experience advanced workflows and production patterns with intelligent rate limiting
+### Venue Search
 
-## Key Features Demonstrated
+- `client.searchVenues(params)` - Search venues with type-safe parameters
+- Full TypeScript intellisense for search criteria
+- Automatic validation of country codes and parameters
 
-### Rate Limiting Protection
+### Venue Details
 
-The examples show the automatic rate limiting features:
+- `client.getVenue(id)` - Get detailed venue information
+- Type-safe venue response with city, coordinates, and metadata
+- Compile-time validation of venue ID format
 
-- **Default STANDARD profile**: 2 requests/second, 1440 requests/day
-- **Real-time monitoring**: Current usage vs. limits displayed throughout workflows
-- **Automatic protection**: Prevents accidental API limit violations
-- **Queue management**: Handles request pacing automatically when limits are reached
-- **Status demonstrations**: Shows 2/2 requests hitting per-second limit, queue activation
+### Venue Setlists
 
-### Venue Discovery
+- `client.getVenueSetlists(id)` - Get setlists for a venue
+- Returns paginated setlist data with full type information
+- Note: Client method returns first page only (use direct endpoint for pagination)
 
-The examples show how to work with:
+### Rate Limiting
 
-- **Name searches**: Find venues by partial or exact names (10,000+ Arena venues)
-- **Geographic filters**: Search by city name, country code (US, GB, DE), state, or state code
-- **City ID searches**: Use GeoNames IDs for precise city-based searches (5,000+ NYC venues)
-- **Combined criteria**: Use multiple parameters together for refined results
-- **Pagination**: Navigate through large result sets efficiently (50+ pages of results)
+- `client.getRateLimitStatus()` - Get current rate limiting status
+- Real-time monitoring of request counts and limits
+- Automatic queue management and request throttling
 
-### Venue Information
+## Running the Examples
 
-Learn about venue data structure:
+To run any example:
 
-- **Basic info**: Name, ID, setlist.fm URL for attribution
-- **Geographic data**: City information with coordinates and country details
-- **Optional fields**: Some venues may not have city information attached
-- **Venue types**: Theaters (2,000+ venues), arenas (1,500+ venues), stadiums (800+ venues)
+1. Set up your environment with API key
+2. Navigate to the project root
+3. Run with tsx:
 
-### Setlist Analysis
+```bash
+# Basic venue lookup
+pnpm dlx tsx examples/venues/basicVenueLookup.ts
 
-The examples demonstrate:
+# Comprehensive search
+pnpm dlx tsx examples/venues/searchVenues.ts
 
-- Retrieving setlists for specific venues with pagination (Madison Square Garden: 1,000+ setlists)
-- Analyzing artist performance patterns and frequency
-- Processing temporal data (years, dates, tours)
-- Song count statistics and show length analysis (average 15-20 songs per show)
-- Comparing venues by activity levels and historical data
+# Setlist analysis
+pnpm dlx tsx examples/venues/getVenueSetlists.ts
 
-### Data Analysis Techniques
+# Complete workflow
+pnpm dlx tsx examples/venues/completeExample.ts
+```
 
-Advanced processing includes:
+## Learn More
 
-- Grouping and categorizing venues by type and location
-- Statistical analysis of venue distribution and activity
-- Cross-referencing between search and detailed lookup operations
-- Multi-page data collection for comprehensive analysis with rate limiting
-- Geographic distribution and market analysis
+- [Setlist.fm API Documentation](https://api.setlist.fm/docs/1.0/index.html)
+- [TypeScript Client Documentation](../../README.md)
+- [Rate Limiting Documentation](../../docs/rate-limiting.md)
+- [Other Examples](../README.md)
 
-## Error Handling
-
-All examples include comprehensive error handling for:
-
-- **Rate limiting errors** (429 status) - demonstrates protection working correctly
-- Validation errors (invalid venue IDs, missing parameters)
-- API errors (authentication, not found responses)
-- Network errors (connection issues, timeouts)
-- Data processing errors and empty result sets
-
-## Real Venue Data
-
-These examples use real venues from the setlist.fm database, including:
-
-- **Famous venues** - Madison Square Garden (1,000+ setlists), Wembley Stadium (500+ setlists), Red Rocks Amphitheatre (1,500+ setlists)
-- **Music cities** - Nashville (1,200+ venues), Austin (800+ venues), New York (2,500+ venues), Los Angeles (1,800+ venues)
-- **Venue types** - Theaters (2,000+ venues), Arenas (1,500+ venues), Stadiums (800+ venues), Clubs (5,000+ venues)
-- **International venues** - UK venues (3,000+), German venues (2,500+), Canadian venues (1,000+)
-- **Geographic diversity** - Major cities worldwide with comprehensive venue coverage
-
-## Performance Considerations
-
-The examples include:
-
-- **Automatic rate limiting**: Built-in protection against API limits with real-time monitoring
-- **Pagination efficiency**: Smart page collection strategies for large datasets
-- **Memory management**: Efficient data collection and processing techniques
-- **API courtesy**: STANDARD profile ensures respectful API usage patterns
-- **Queue management**: Automatic request queuing when rate limits are approached
-
-## Venue Insights
-
-Through these examples with rate limiting protection, you'll discover:
-
-- How venue types are distributed globally (theaters dominate with 25% of venues)
-- Geographic concentration of venues in major music markets (Nashville leads with 1,200+ venues)
-- Activity patterns and performance frequency at famous venues (Madison Square Garden: 50+ shows/year)
-- International venue naming patterns and geographic data
-- Setlist data availability and depth across different venue types
-- Rate limiting impact on large-scale venue analysis workflows
-
-## Use Cases
-
-These examples demonstrate patterns useful for:
-
-- **Event planning**: Finding venues in specific cities or regions with rate limiting protection
-- **Market research**: Analyzing venue distribution and activity patterns across large datasets
-- **Fan applications**: Discovering venue history and artist performance data responsibly
-- **Geographic analysis**: Understanding music venue distribution globally with rate-limited data collection
-- **Performance tracking**: Monitoring artist activity at specific venues over time
-
-## Troubleshooting
-
-**API Key Issues**:
-
-- Ensure your `.env` file is in the project root
-- Verify your API key is correct and active
-- Check that `SETLISTFM_API_KEY` matches exactly
-
-**Rate Limiting** (Expected Behavior):
-
-- Examples show rate limiting in action with status updates throughout workflows
-- This demonstrates the STANDARD profile protection working correctly (2/2 requests, queue activation)
-- Rate limiting prevents accidental API abuse and ensures sustainable usage
-- Wait a few seconds between runs if testing multiple examples consecutively
-- Consider using PREMIUM profile for higher limits if you have premium access
-
-**Search Issues**:
-
-- Use ISO 3166-1 alpha-2 country codes (US, GB, DE, not USA, UK, GER)
-- Venue IDs are 8-character hexadecimal strings (e.g., "4bd6ca13")
-- Some venues may not have city information attached
-- Empty results may indicate overly restrictive search criteria
-
-**Data Considerations**:
-
-- Venue data quality varies; some venues may lack complete information
-- Setlist availability depends on community contributions
-- Recent venues may have fewer historical setlists
-- Geographic coordinates may not be available for all venues
-
-## Performance Data
-
-Real performance metrics from testing with rate limiting:
-
-- **Basic lookup**: 6-7 requests total, demonstrates rate limiting progression
-- **Comprehensive search**: 12+ requests, shows 2/2 limit reached and queue activation
-- **Setlist analysis**: 20+ requests, complex pagination with rate limiting protection
-- **Complete workflow**: 30+ requests, enterprise-scale analysis with automatic protection
-- **Average response time**: 150-300ms per request with rate limiting overhead
-- **Data throughput**: 1,000+ venues analyzed per minute with STANDARD profile protection
-
-## API References
-
-- [setlist.fm API: venue Data Type](https://api.setlist.fm/docs/1.0/json_Venue.html)
-- [setlist.fm API: venues Data Type](https://api.setlist.fm/docs/1.0/json_Venues.html)
-- [GET /1.0/venue/{venueId}](https://api.setlist.fm/docs/1.0/resource__1.0_venue__venueId_.html)
-- [GET /1.0/venue/{venueId}/setlists](https://api.setlist.fm/docs/1.0/resource__1.0_venue__venueId__setlists.html)
-- [GET /1.0/search/venues](https://api.setlist.fm/docs/1.0/resource__1.0_search_venues.html)
-- [Rate Limiting Documentation](../../src/utils/rateLimiter.ts)
+The venue examples demonstrate production-ready patterns for building music discovery applications, venue analysis tools, and concert data processors with automatic rate limiting protection and full type safety.
