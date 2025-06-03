@@ -7,7 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.1.2] - 2025-01-19
+## [0.1.3] - 2025-06-03
+
+### Added
+
+- **Cities endpoints**: Complete implementation of both cities endpoints with comprehensive functionality:
+  - `getCityByGeoId()` - Retrieve city details by GeoNames geographical ID
+  - `searchCities()` - Search cities by name, country, state, and state code with pagination support
+- **Cities examples directory**: Three comprehensive example files demonstrating real-world usage:
+  - `basicCityLookup.ts` - City search and lookup workflow with fallback strategies
+  - `searchCities.ts` - Geographic search using ISO country codes and pagination navigation
+  - `completeExample.ts` - Advanced geographic data analysis with statistics and coordinate processing
+- **Enhanced validation**: ISO 3166-1 alpha-2 country code validation for improved API compatibility
+- **Comprehensive testing**: 52 unit tests covering all cities endpoints, validation, error handling, and edge cases
+- **Geographic data analysis**: Examples demonstrate working with real setlist.fm database containing:
+  - 184 Paris cities worldwide
+  - 5064+ cities in Germany
+  - 3329+ cities in UK
+  - 10000+ cities in US across 200+ pages
+
+### Enhanced
+
+- **Validation schemas**: Improved `CountryCodeSchema` with strict 2-letter uppercase format validation
+- **Error handling**: Comprehensive error handling for geographic data edge cases and API limitations
+- **Documentation**: Updated README.md with cities examples, usage patterns, and progress tracking
+- **Type safety**: Enhanced TypeScript types for geographic coordinates, country codes, and pagination
+
+### Changed
+
+- **Project status**: Updated API coverage from 3/18 to 5/18 completed endpoints
+- **README examples**: Added cities usage examples with proper ISO country code format
+- **Feature list**: Added ISO standard validation and comprehensive examples documentation
+
+---
+
+## [0.1.2] - 2025-06-02
 
 ### Fixed
 
