@@ -1,13 +1,11 @@
-/* eslint-disable no-console */
 /**
  * @file searchArtists.ts
  * @description Example of searching for artists using various criteria.
  * @author tkozzer
  */
 
+import { createSetlistFMClient } from "../../src/client";
 import { searchArtists } from "../../src/endpoints/artists";
-
-import { HttpClient } from "../../src/utils/http";
 import "dotenv/config";
 
 /**
@@ -17,11 +15,16 @@ import "dotenv/config";
  * including by name, MBID, pagination, and sorting.
  */
 async function searchArtistsExample(): Promise<void> {
-  const httpClient = new HttpClient({
-    // eslint-disable-next-line node/no-process-env
+  // Create SetlistFM client with API key from environment
+  // The client automatically uses STANDARD rate limiting (2 req/sec, 1440 req/day)
+  const client = createSetlistFMClient({
+
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
+
+  // Get the HTTP client for making requests
+  const httpClient = client.getHttpClient();
 
   try {
     // Example 1: Search by artist name
@@ -87,14 +90,34 @@ async function searchArtistsExample(): Promise<void> {
     console.log("\n🔍 Example 4: Handle empty search results");
     console.log("Searching for a non-existent artist...\n");
 
-    const emptySearch = await searchArtists(httpClient, {
-      artistName: "ThisArtistDoesNotExistForSure123456",
-    });
+    try {
+      const emptySearch = await searchArtists(httpClient, {
+        artistName: "ThisArtistDoesNotExistForSure123456",
+      });
 
-    if (emptySearch.total === 0) {
-      console.log("❌ No artists found matching the search criteria");
-      console.log(`📊 Total results: ${emptySearch.total}`);
+      if (emptySearch.total === 0) {
+        console.log("❌ No artists found matching the search criteria");
+        console.log(`📊 Total results: ${emptySearch.total}`);
+      }
     }
+    catch (searchError: any) {
+      // Handle expected 404 when no results are found
+      if (searchError.statusCode === 404) {
+        console.log("❌ No artists found matching the search criteria (404 response)");
+        console.log("   This is expected when searching for non-existent artists");
+      }
+      else {
+        // Re-throw unexpected errors
+        throw searchError;
+      }
+    }
+
+    // Show rate limiting information
+    console.log("\n📊 Rate limiting information:");
+    const rateLimitStatus = client.getRateLimitStatus();
+    console.log(`Profile: ${rateLimitStatus.profile}`);
+    console.log(`Requests this second: ${rateLimitStatus.requestsThisSecond}/${rateLimitStatus.secondLimit}`);
+    console.log(`Requests this day: ${rateLimitStatus.requestsThisDay}/${rateLimitStatus.dayLimit}`);
   }
   catch (error) {
     console.error("❌ Error searching for artists:", error);

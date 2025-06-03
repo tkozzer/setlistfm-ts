@@ -1,13 +1,11 @@
-/* eslint-disable no-console */
 /**
  * @file completeExample.ts
  * @description Comprehensive example showcasing all artist endpoint functions.
  * @author tkozzer
  */
 
+import { createSetlistFMClient } from "../../src/client";
 import { getArtist, getArtistSetlists, searchArtists } from "../../src/endpoints/artists";
-
-import { HttpClient } from "../../src/utils/http";
 import "dotenv/config";
 
 /**
@@ -20,11 +18,16 @@ import "dotenv/config";
  * 4. Analyze the data
  */
 async function completeArtistExample(): Promise<void> {
-  const httpClient = new HttpClient({
-    // eslint-disable-next-line node/no-process-env
+  // Create SetlistFM client with API key from environment
+  // The client automatically uses STANDARD rate limiting (2 req/sec, 1440 req/day)
+  const client = createSetlistFMClient({
+
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
+
+  // Get the HTTP client for making requests
+  const httpClient = client.getHttpClient();
 
   try {
     console.log("🎼 Complete Artist Workflow Example");
@@ -169,6 +172,13 @@ async function completeArtistExample(): Promise<void> {
     if (artistDetails.url) {
       console.log(`\n🔗 View all setlists: ${artistDetails.url}`);
     }
+
+    // Show rate limiting information
+    console.log("\n📊 Rate limiting information:");
+    const rateLimitStatus = client.getRateLimitStatus();
+    console.log(`Profile: ${rateLimitStatus.profile}`);
+    console.log(`Requests this second: ${rateLimitStatus.requestsThisSecond}/${rateLimitStatus.secondLimit}`);
+    console.log(`Requests this day: ${rateLimitStatus.requestsThisDay}/${rateLimitStatus.dayLimit}`);
   }
   catch (error) {
     console.error("❌ Error in complete artist example:", error);

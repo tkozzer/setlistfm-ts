@@ -60,6 +60,16 @@ const config = antfu(
       "unicorn/filename-case": "off",
     },
   },
+  {
+    files: ["examples/**/*"],
+    rules: {
+      "no-console": "off", // Allow console.log in examples
+      "node/no-process-env": "off", // Allow process.env in examples
+      "jsdoc/require-jsdoc": "off", // Don't require JSDoc in examples
+      "jsdoc/require-param": "off", // Don't require JSDoc params in examples
+      "jsdoc/require-returns": "off", // Don't require JSDoc returns in examples
+    },
+  },
 );
 
 export default config;

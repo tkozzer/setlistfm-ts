@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /**
  * @file completeExample.ts
  * @description Complete workflow example using all cities endpoints with data analysis.
@@ -6,9 +5,8 @@
  */
 
 import type { City } from "../../src/endpoints/cities";
+import { createSetlistFMClient } from "../../src/client";
 import { getCityByGeoId, searchCities } from "../../src/endpoints/cities";
-
-import { HttpClient } from "../../src/utils/http";
 import "dotenv/config";
 
 /**
@@ -18,15 +16,24 @@ import "dotenv/config";
  * operations with data analysis and processing.
  */
 async function completeExample(): Promise<void> {
-  const httpClient = new HttpClient({
-    // eslint-disable-next-line node/no-process-env
+  // Create SetlistFM client with automatic STANDARD rate limiting
+  const client = createSetlistFMClient({
+
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
 
+  // Get the HTTP client for making requests
+  const httpClient = client.getHttpClient();
+
   try {
     console.log("🌍 Complete Cities Workflow Example");
     console.log("=====================================\n");
+
+    // Display rate limiting information
+    const rateLimitStatus = client.getRateLimitStatus();
+    console.log(`📊 Rate Limiting: ${rateLimitStatus.profile.toUpperCase()} profile`);
+    console.log(`📈 Requests: ${rateLimitStatus.requestsThisSecond}/${rateLimitStatus.secondLimit} this second, ${rateLimitStatus.requestsThisDay}/${rateLimitStatus.dayLimit} today\n`);
 
     // Step 1: Find all major cities named "London"
     console.log("🔍 Step 1: Finding all cities named 'London'");
@@ -55,6 +62,11 @@ async function completeExample(): Promise<void> {
 
       if (hasMorePages) {
         console.log(`📄 Collected page ${currentPage - 1}, getting more...`);
+
+        // Display rate limiting status during pagination
+        const pageStatus = client.getRateLimitStatus();
+        console.log(`📊 Rate Limiting: ${pageStatus.requestsThisSecond}/${pageStatus.secondLimit} requests this second`);
+
         // Add a small delay to be respectful to the API
         await new Promise(resolve => setTimeout(resolve, 100));
       }
@@ -164,6 +176,10 @@ async function completeExample(): Promise<void> {
         console.log(`  ❌ Could not find London, Ontario: ${error}`);
       }
     }
+
+    // Display rate limiting status after major lookups
+    const midStatus = client.getRateLimitStatus();
+    console.log(`\n📊 Rate Limiting Status: ${midStatus.requestsThisSecond}/${midStatus.secondLimit} requests this second`);
 
     // Step 4: Compare major music cities
     console.log("\n🎵 Step 4: Comparing major music cities");
@@ -288,6 +304,13 @@ async function completeExample(): Promise<void> {
     const longRange = easternmost.coords.long - westernmost.coords.long;
 
     console.log(`📏 Coordinate ranges: ${latRange.toFixed(2)}° latitude, ${longRange.toFixed(2)}° longitude`);
+
+    // Final rate limiting status
+    const finalStatus = client.getRateLimitStatus();
+    console.log(`\n📊 Final Rate Limiting Status:`);
+    console.log(`Profile: ${finalStatus.profile.toUpperCase()}`);
+    console.log(`Requests this second: ${finalStatus.requestsThisSecond}/${finalStatus.secondLimit}`);
+    console.log(`Requests today: ${finalStatus.requestsThisDay}/${finalStatus.dayLimit}`);
 
     console.log("\n✅ Complete cities workflow analysis finished!");
   }

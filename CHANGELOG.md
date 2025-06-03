@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.6] - 2025-06-03
+
+### Enhanced
+
+- **Development configuration**: Comprehensive enhancement of TypeScript and ESLint configurations to support examples directory:
+  - Updated `tsconfig.json` to include examples directory with proper path mappings for full IDE support
+  - Created separate `tsconfig.build.json` for production builds that excludes examples from distribution
+  - Enhanced `eslint.config.ts` with examples-specific rules allowing console.log and process.env usage
+  - Updated package.json scripts to lint and type-check both src and examples directories
+- **Examples directory support**: Full TypeScript and ESLint integration for all example files:
+  - Fixed TypeScript parameter type errors in venue examples
+  - Automatic lint fixing to remove unused eslint-disable directives
+  - Complete IDE support with proper import resolution and type checking
+- **Documentation improvements**: Major README.md updates highlighting enhanced development experience:
+  - Added comprehensive Rate Limiting section with STANDARD/PREMIUM profile documentation
+  - Enhanced examples section emphasizing TypeScript support and rate limiting monitoring
+  - Restructured Development Tools section with separate guidance for type-checking, linting, and building
+  - Updated usage examples to highlight automatic rate limiting features
+
+### Changed
+
+- **Build process**: Separated development and production configurations for optimal developer experience
+- **Linting rules**: Examples directory now has relaxed rules appropriate for demonstration code
+- **Version**: Bumped to 0.1.6 for development configuration enhancements
+
+### Fixed
+
+- **TypeScript compilation**: Resolved parameter type issues in examples/venues/getVenueSetlists.ts
+- **Configuration consistency**: Unified approach to handling both library code and examples with appropriate tooling
+
+---
+
 ## [0.1.5] - 2025-06-03
 
 ### Added

@@ -1,13 +1,11 @@
-/* eslint-disable no-console */
 /**
  * @file completeExample.ts
  * @description Complete workflow using all venues endpoints with advanced analysis.
  * @author tkozzer
  */
 
+import { createSetlistFMClient } from "../../src/client";
 import { getVenue, getVenueSetlists, searchVenues } from "../../src/endpoints/venues";
-
-import { HttpClient } from "../../src/utils/http";
 import "dotenv/config";
 
 /**
@@ -17,17 +15,24 @@ import "dotenv/config";
  * all venue endpoints for comprehensive venue and setlist analysis.
  */
 async function completeVenueExample(): Promise<void> {
-  // Create HTTP client with API key from environment
+  // Create SetlistFM client with automatic STANDARD rate limiting
+  const client = createSetlistFMClient({
 
-  const httpClient = new HttpClient({
-    // eslint-disable-next-line node/no-process-env
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
 
+  // Get the HTTP client for making requests
+  const httpClient = client.getHttpClient();
+
   try {
-    console.log("🎪 Complete Venues Analysis Workflow");
-    console.log("=====================================\n");
+    console.log("🎪 Complete Venues Analysis Workflow with Rate Limiting");
+    console.log("=======================================================\n");
+
+    // Display rate limiting information
+    const rateLimitStatus = client.getRateLimitStatus();
+    console.log(`📊 Rate Limiting: ${rateLimitStatus.profile.toUpperCase()} profile`);
+    console.log(`📈 Requests: ${rateLimitStatus.requestsThisSecond}/${rateLimitStatus.secondLimit} this second, ${rateLimitStatus.requestsThisDay}/${rateLimitStatus.dayLimit} today\n`);
 
     // Phase 1: Discover venues in major music cities
     console.log("📍 Phase 1: Discovering venues in major music cities");
@@ -72,7 +77,15 @@ async function completeVenueExample(): Promise<void> {
           console.log(`   ${index + 1}. ${venue.name}`);
         });
       }
-      console.log();
+
+      // Display rate limiting status during city search
+      const duringCitySearch = client.getRateLimitStatus();
+      console.log(`📊 Rate Limiting: ${duringCitySearch.requestsThisSecond}/${duringCitySearch.secondLimit} requests this second\n`);
+
+      // Check if we're hitting the rate limit
+      if (duringCitySearch.requestsThisSecond >= (duringCitySearch.secondLimit || 2)) {
+        console.log(`⚠️  Rate limit reached (${duringCitySearch.requestsThisSecond}/${duringCitySearch.secondLimit}), subsequent requests will be queued\n`);
+      }
     }
 
     // Phase 2: Analyze venue types and categories
@@ -112,6 +125,10 @@ async function completeVenueExample(): Promise<void> {
       });
 
       console.log(`   Found ${typeSearch.total} venues`);
+
+      // Display rate limiting status during type analysis
+      const duringTypeAnalysis = client.getRateLimitStatus();
+      console.log(`   📊 Rate Limiting: ${duringTypeAnalysis.requestsThisSecond}/${duringTypeAnalysis.secondLimit} requests this second`);
     }
 
     // Sort and display venue type statistics
@@ -208,6 +225,10 @@ async function completeVenueExample(): Promise<void> {
           if (topArtists.length > 0) {
             console.log(`   ⭐ Top artist: ${topArtists[0].name} (${topArtists[0].count} shows)`);
           }
+
+          // Display rate limiting status during famous venue analysis
+          const duringFamousAnalysis = client.getRateLimitStatus();
+          console.log(`   📊 Rate Limiting: ${duringFamousAnalysis.requestsThisSecond}/${duringFamousAnalysis.secondLimit} requests this second`);
         }
         else {
           console.log(`❌ Could not find: ${venueInfo.name}`);
@@ -268,11 +289,19 @@ async function completeVenueExample(): Promise<void> {
       console.log(`- Average setlists per famous venue: ${Math.round(totalSetlists / venueAnalysis.length)}`);
     }
 
+    // Final rate limiting status
+    const finalStatus = client.getRateLimitStatus();
+    console.log(`\n📊 Final Rate Limiting Status:`);
+    console.log(`Profile: ${finalStatus.profile.toUpperCase()}`);
+    console.log(`Requests this second: ${finalStatus.requestsThisSecond}/${finalStatus.secondLimit}`);
+    console.log(`Requests today: ${finalStatus.requestsThisDay}/${finalStatus.dayLimit}`);
+
     // Final summary
     console.log("\n🎯 Summary:");
     console.log("This analysis demonstrates the comprehensive venue data available");
     console.log("in the setlist.fm API, from major music cities to iconic venues,");
     console.log("providing insights into the global live music landscape.");
+    console.log("\n✅ Complete venue analysis completed successfully with rate limiting protection!");
   }
   catch (error) {
     console.error("❌ Error in complete venue analysis:", error);
