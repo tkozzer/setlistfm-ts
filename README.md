@@ -56,7 +56,8 @@ This project is in **active development** with working implementations for core 
 
 - [x] Artist endpoints (3/3 complete) - **WORKING**
 - [x] Cities endpoints (2/2 complete) - **WORKING**
-- [ ] Remaining endpoint implementations (5/18 complete)
+- [x] Countries endpoints (1/1 complete) - **WORKING**
+- [ ] Remaining endpoint implementations (6/18 complete)
 - [x] Type definitions for API responses
 - [x] Input validation (Zod schemas)
 - [x] Rate limiting
@@ -70,6 +71,7 @@ This project is in **active development** with working implementations for core 
 import { createSetlistFMClient } from "setlistfm-ts";
 import { getArtist, getArtistSetlists, searchArtists } from "setlistfm-ts/endpoints/artists";
 import { getCityByGeoId, searchCities } from "setlistfm-ts/endpoints/cities";
+import { searchCountries } from "setlistfm-ts/endpoints/countries";
 
 const client = createSetlistFMClient({
   apiKey: "your-api-key-here",
@@ -96,6 +98,9 @@ const cityResults = await searchCities(client.getHttpClient(), {
 // Example: Get city details
 const city = await getCityByGeoId(client.getHttpClient(), "2643743");
 
+// Example: Get all supported countries
+const countries = await searchCountries(client.getHttpClient());
+
 // eslint-disable-next-line no-console
 console.log(searchResults.artist);
 // eslint-disable-next-line no-console
@@ -106,6 +111,8 @@ console.log(setlists.setlist);
 console.log(cityResults.cities);
 // eslint-disable-next-line no-console
 console.log(city.name, city.country.name);
+// eslint-disable-next-line no-console
+console.log(countries.country.length, "countries available");
 ```
 
 ---
@@ -152,7 +159,7 @@ console.log(city.name, city.country.name);
 
 ### Countries
 
-- [ ] `searchCountries` - Search for countries
+- [x] `searchCountries` - Get all supported countries ✅
 
 ### Users
 
@@ -160,7 +167,7 @@ console.log(city.name, city.country.name);
 - [ ] `getUserAttended` - Get setlists attended by user
 - [ ] `getUserEdited` - Get setlists edited by user
 
-> **Note:** Artists and Cities endpoints are fully implemented with comprehensive tests and examples. Remaining endpoints have scaffolded files with implementations pending.
+> **Note:** Artists, Cities, and Countries endpoints are fully implemented with comprehensive tests and examples. Remaining endpoints have scaffolded files with implementations pending.
 
 ---
 
@@ -180,6 +187,12 @@ Comprehensive examples are available for all implemented endpoints:
 - `searchCities.ts` - Geographic search with country codes and pagination
 - `completeExample.ts` - Advanced geographic data analysis
 
+### Countries Examples
+
+- `basicCountriesLookup.ts` - Countries retrieval and data exploration
+- `countriesAnalysis.ts` - Comprehensive analysis and integration with cities
+- `completeExample.ts` - Production-ready workflow with validation and testing
+
 Run examples:
 
 ```bash
@@ -192,6 +205,11 @@ pnpm dlx tsx examples/artists/completeExample.ts
 pnpm dlx tsx examples/cities/basicCityLookup.ts
 pnpm dlx tsx examples/cities/searchCities.ts
 pnpm dlx tsx examples/cities/completeExample.ts
+
+# Countries examples
+pnpm dlx tsx examples/countries/basicCountriesLookup.ts
+pnpm dlx tsx examples/countries/countriesAnalysis.ts
+pnpm dlx tsx examples/countries/completeExample.ts
 ```
 
 > **Note:** Examples require a valid API key in `.env` file. See example README files for setup instructions.
@@ -220,6 +238,7 @@ pnpm test:watch
 - [x] Basic test structure for all endpoints
 - [x] Unit tests for artists endpoints (52 tests)
 - [x] Unit tests for cities endpoints (52 tests)
+- [x] Unit tests for countries endpoints (40 tests)
 - [x] Error handling tests
 - [x] Validation tests
 - [ ] Integration tests with live API
