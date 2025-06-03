@@ -1,14 +1,12 @@
-/* eslint-disable no-console */
 /**
  * @file countriesAnalysis.ts
  * @description Comprehensive analysis of countries and their integration with cities data.
  * @author tkozzer
  */
 
+import { createSetlistFMClient } from "../../src/client";
 import { searchCities } from "../../src/endpoints/cities";
 import { searchCountries } from "../../src/endpoints/countries";
-
-import { HttpClient } from "../../src/utils/http";
 import "dotenv/config";
 
 /**
@@ -18,20 +16,35 @@ import "dotenv/config";
  * and its integration with other API endpoints for data analysis.
  */
 async function countriesAnalysis(): Promise<void> {
-  // Create HTTP client with API key from environment
-  const httpClient = new HttpClient({
-    // eslint-disable-next-line node/no-process-env
+  // Create SetlistFM client with automatic STANDARD rate limiting
+  const client = createSetlistFMClient({
+
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
 
+  // Get the HTTP client for making requests
+  const httpClient = client.getHttpClient();
+
   try {
+    console.log("📊 Countries Analysis with Rate Limiting");
+    console.log("========================================\n");
+
+    // Display rate limiting information
+    const rateLimitStatus = client.getRateLimitStatus();
+    console.log(`📊 Rate Limiting: ${rateLimitStatus.profile.toUpperCase()} profile`);
+    console.log(`📈 Requests: ${rateLimitStatus.requestsThisSecond}/${rateLimitStatus.secondLimit} this second, ${rateLimitStatus.requestsThisDay}/${rateLimitStatus.dayLimit} today\n`);
+
     // Phase 1: Get all countries
     console.log("🔍 Phase 1: Retrieving all supported countries");
     console.log("=".repeat(50));
 
     const countriesResult = await searchCountries(httpClient);
     console.log(`✅ Retrieved ${countriesResult.total} countries\n`);
+
+    // Display rate limiting status after first request
+    const afterPhase1 = client.getRateLimitStatus();
+    console.log(`📊 Rate Limiting Status: ${afterPhase1.requestsThisSecond}/${afterPhase1.secondLimit} requests this second\n`);
 
     // Phase 2: Country analysis
     console.log("📊 Phase 2: Country data analysis");
@@ -120,6 +133,10 @@ async function countriesAnalysis(): Promise<void> {
             console.log(`   🏙️  Sample cities: ${sampleCities.map(c => c.name).join(", ")}`);
           }
 
+          // Display rate limiting status during integration testing
+          const duringIntegration = client.getRateLimitStatus();
+          console.log(`   📊 Rate Limiting: ${duringIntegration.requestsThisSecond}/${duringIntegration.secondLimit} requests this second`);
+
           // Small delay to be respectful to the API
           await new Promise(resolve => setTimeout(resolve, 500));
         }
@@ -171,6 +188,13 @@ async function countriesAnalysis(): Promise<void> {
       }
     });
 
+    // Final rate limiting status
+    const finalStatus = client.getRateLimitStatus();
+    console.log(`\n📊 Final Rate Limiting Status:`);
+    console.log(`Profile: ${finalStatus.profile.toUpperCase()}`);
+    console.log(`Requests this second: ${finalStatus.requestsThisSecond}/${finalStatus.secondLimit}`);
+    console.log(`Requests today: ${finalStatus.requestsThisDay}/${finalStatus.dayLimit}`);
+
     // Final summary
     console.log("\n📋 Final Summary");
     console.log("=".repeat(50));
@@ -185,6 +209,8 @@ async function countriesAnalysis(): Promise<void> {
       const topCountry = sortedByCities[0];
       console.log(`🏆 Country with most cities: ${topCountry.name} (${topCountry.totalCities.toLocaleString()} cities)`);
     }
+
+    console.log("\n✅ Countries analysis completed successfully with rate limiting protection!");
   }
   catch (error) {
     console.error("❌ Error during countries analysis:", error);

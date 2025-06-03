@@ -1,13 +1,11 @@
-/* eslint-disable no-console */
 /**
  * @file searchCities.ts
  * @description Example of searching for cities using various criteria.
  * @author tkozzer
  */
 
+import { createSetlistFMClient } from "../../src/client";
 import { searchCities } from "../../src/endpoints/cities";
-
-import { HttpClient } from "../../src/utils/http";
 import "dotenv/config";
 
 /**
@@ -17,13 +15,25 @@ import "dotenv/config";
  * including by name, country, state, state code, and pagination.
  */
 async function searchCitiesExample(): Promise<void> {
-  const httpClient = new HttpClient({
-    // eslint-disable-next-line node/no-process-env
+  // Create SetlistFM client with automatic STANDARD rate limiting
+  const client = createSetlistFMClient({
+
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
 
+  // Get the HTTP client for making requests
+  const httpClient = client.getHttpClient();
+
   try {
+    console.log("🔍 Cities Search Examples");
+    console.log("========================\n");
+
+    // Display rate limiting information
+    const rateLimitStatus = client.getRateLimitStatus();
+    console.log(`📊 Rate Limiting: ${rateLimitStatus.profile.toUpperCase()} profile`);
+    console.log(`📈 Requests: ${rateLimitStatus.requestsThisSecond}/${rateLimitStatus.secondLimit} this second, ${rateLimitStatus.requestsThisDay}/${rateLimitStatus.dayLimit} today\n`);
+
     // Example 1: Search by city name
     console.log("🔍 Example 1: Search by city name");
     console.log("Searching for cities named 'Paris'...\n");
@@ -42,6 +52,10 @@ async function searchCitiesExample(): Promise<void> {
       console.log(`   Coordinates: ${city.coords.lat}, ${city.coords.long}`);
       console.log("");
     });
+
+    // Display rate limiting status after first request
+    const afterFirstRequest = client.getRateLimitStatus();
+    console.log(`📊 After first request: ${afterFirstRequest.requestsThisSecond}/${afterFirstRequest.secondLimit} requests this second\n`);
 
     // Example 2: Search by country (using country code)
     console.log("🔍 Example 2: Search by country code");
@@ -99,6 +113,10 @@ async function searchCitiesExample(): Promise<void> {
       console.log(`   GeoId: ${city.id}`);
       console.log("");
     });
+
+    // Check if we're hitting rate limits
+    const midStatus = client.getRateLimitStatus();
+    console.log(`📊 Mid-execution rate limiting: ${midStatus.requestsThisSecond}/${midStatus.secondLimit} requests this second\n`);
 
     // Example 5: Combined search parameters
     console.log("🔍 Example 5: Combined search parameters");
@@ -215,6 +233,15 @@ async function searchCitiesExample(): Promise<void> {
       console.log(`   Coordinates: ${city.coords.lat}, ${city.coords.long}`);
       console.log("");
     });
+
+    // Final rate limiting status
+    const finalStatus = client.getRateLimitStatus();
+    console.log(`\n📊 Final Rate Limiting Status:`);
+    console.log(`Profile: ${finalStatus.profile.toUpperCase()}`);
+    console.log(`Requests this second: ${finalStatus.requestsThisSecond}/${finalStatus.secondLimit}`);
+    console.log(`Requests today: ${finalStatus.requestsThisDay}/${finalStatus.dayLimit}`);
+
+    console.log("\n✅ Cities search examples completed successfully!");
   }
   catch (error) {
     console.error("❌ Error searching for cities:", error);

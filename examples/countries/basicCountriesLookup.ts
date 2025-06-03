@@ -1,13 +1,11 @@
-/* eslint-disable no-console */
 /**
  * @file basicCountriesLookup.ts
  * @description Basic example of retrieving all supported countries.
  * @author tkozzer
  */
 
+import { createSetlistFMClient } from "../../src/client";
 import { searchCountries } from "../../src/endpoints/countries";
-
-import { HttpClient } from "../../src/utils/http";
 import "dotenv/config";
 
 /**
@@ -17,14 +15,25 @@ import "dotenv/config";
  * of countries supported by the setlist.fm API.
  */
 async function basicCountriesLookup(): Promise<void> {
-  // Create HTTP client with API key from environment
-  const httpClient = new HttpClient({
-    // eslint-disable-next-line node/no-process-env
+  // Create SetlistFM client with automatic STANDARD rate limiting
+  const client = createSetlistFMClient({
+
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
 
+  // Get the HTTP client for making requests
+  const httpClient = client.getHttpClient();
+
   try {
+    console.log("🌍 Basic Countries Lookup Examples");
+    console.log("=================================\n");
+
+    // Display rate limiting information
+    const rateLimitStatus = client.getRateLimitStatus();
+    console.log(`📊 Rate Limiting: ${rateLimitStatus.profile.toUpperCase()} profile`);
+    console.log(`📈 Requests: ${rateLimitStatus.requestsThisSecond}/${rateLimitStatus.secondLimit} this second, ${rateLimitStatus.requestsThisDay}/${rateLimitStatus.dayLimit} today\n`);
+
     // Example 1: Get all supported countries
     console.log("🔍 Example 1: Getting all supported countries");
     console.log("Fetching complete countries list...\n");
@@ -35,6 +44,10 @@ async function basicCountriesLookup(): Promise<void> {
     console.log(`📄 Page ${countriesResult.page} of results`);
     console.log(`📋 ${countriesResult.country.length} countries on this page`);
     console.log(`🔢 ${countriesResult.itemsPerPage} items per page\n`);
+
+    // Display rate limiting status after first request
+    const afterFirstRequest = client.getRateLimitStatus();
+    console.log(`📊 Rate Limiting Status: ${afterFirstRequest.requestsThisSecond}/${afterFirstRequest.secondLimit} requests this second\n`);
 
     // Example 2: Display first 10 countries
     console.log("🌍 Example 2: First 10 countries");
@@ -150,6 +163,15 @@ async function basicCountriesLookup(): Promise<void> {
     console.log(`Countries retrieved: ${countriesResult.country.length}`);
     console.log(`Shortest country name: "${countriesResult.country.reduce((a, b) => a.name.length < b.name.length ? a : b).name}"`);
     console.log(`Longest country name: "${countriesResult.country.reduce((a, b) => a.name.length > b.name.length ? a : b).name}"`);
+
+    // Final rate limiting status
+    const finalStatus = client.getRateLimitStatus();
+    console.log(`\n📊 Final Rate Limiting Status:`);
+    console.log(`Profile: ${finalStatus.profile.toUpperCase()}`);
+    console.log(`Requests this second: ${finalStatus.requestsThisSecond}/${finalStatus.secondLimit}`);
+    console.log(`Requests today: ${finalStatus.requestsThisDay}/${finalStatus.dayLimit}`);
+
+    console.log("\n✅ Basic countries lookup examples completed successfully!");
   }
   catch (error) {
     console.error("❌ Error retrieving countries:", error);

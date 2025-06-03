@@ -42,13 +42,14 @@ This project is in **active development** with working implementations for core 
 
 ### Development Tools
 
-- [x] TypeScript configuration
-- [x] Build scripts
+- [x] TypeScript configuration (src + examples support)
+- [x] Build scripts (separate configs for development vs distribution)
 - [x] Test scripts
-- [x] Linting scripts
+- [x] Linting scripts (includes examples directory)
 - [x] Git hooks setup (Husky)
 - [x] Test coverage reporting
-- [x] Rate limiting utilities
+- [x] Rate limiting utilities with automatic STANDARD profile
+- [x] Examples directory with full IDE support
 - [ ] CI/CD pipeline
 - [ ] Documentation generation
 
@@ -68,6 +69,8 @@ This project is in **active development** with working implementations for core 
 
 ## ⚙️ Usage
 
+**setlistfm-ts** includes automatic rate limiting using the STANDARD profile (2 req/sec, 1440 req/day) by default. For premium users, you can configure higher limits.
+
 ```ts
 import { createSetlistFMClient } from "setlistfm-ts";
 import { getArtist, getArtistSetlists, searchArtists } from "setlistfm-ts/endpoints/artists";
@@ -75,9 +78,17 @@ import { getCityByGeoId, searchCities } from "setlistfm-ts/endpoints/cities";
 import { searchCountries } from "setlistfm-ts/endpoints/countries";
 import { getVenue, getVenueSetlists, searchVenues } from "setlistfm-ts/endpoints/venues";
 
+// Default client with STANDARD rate limiting (2 req/sec, 1440 req/day)
 const client = createSetlistFMClient({
   apiKey: "your-api-key-here",
   userAgent: "your-app-name (your-email@example.com)",
+});
+
+// Optional: Configure premium rate limiting
+const premiumClient = createSetlistFMClient({
+  apiKey: "your-api-key-here",
+  userAgent: "your-app-name (your-email@example.com)",
+  rateLimit: { profile: RateLimitProfile.PREMIUM } // 16 req/sec, 50,000 req/day
 });
 
 // Example: Search artists
@@ -141,15 +152,16 @@ console.log(venueSetlists.setlist);
 ## 🧩 Features
 
 - [x] Fully typed API responses
-- [x] Modern `axios`-based HTTP client
+- [x] Modern `axios`-based HTTP client with automatic rate limiting
 - [x] Built-in pagination support
 - [x] Minimal dependencies
 - [x] Developer-friendly errors
 - [x] Tree-shakable modular endpoints
-- [x] Rate limiting support
+- [x] Intelligent rate limiting with STANDARD/PREMIUM profiles
 - [x] Comprehensive logging utilities
 - [x] ISO standard validation (country codes, etc.)
-- [x] Comprehensive examples and documentation
+- [x] Comprehensive examples with full IDE support
+- [x] Production-ready configuration (TypeScript, ESLint, testing)
 
 ---
 
@@ -194,19 +206,20 @@ console.log(venueSetlists.setlist);
 
 ## 📖 Examples
 
-Comprehensive examples are available for all implemented endpoints:
+Comprehensive examples are available for all implemented endpoints with **full TypeScript support**, **rate limiting monitoring**, and **production-ready patterns**:
 
 ### Artists Examples
 
-- `basicArtistLookup.ts` - Search and retrieve artist information
-- `searchArtists.ts` - Advanced artist search with filtering
-- `completeExample.ts` - Full workflow with setlist analysis
+- `basicArtistLookup.ts` - Search and retrieve artist information with rate limiting
+- `searchArtists.ts` - Advanced artist search with filtering and pagination
+- `getArtistSetlists.ts` - Artist setlist analysis with intelligent batching
+- `completeExample.ts` - Full workflow with setlist analysis and statistics
 
 ### Cities Examples
 
-- `basicCityLookup.ts` - City search and lookup workflow
-- `searchCities.ts` - Geographic search with country codes and pagination
-- `completeExample.ts` - Advanced geographic data analysis
+- `basicCityLookup.ts` - City search and lookup workflow with geographic validation
+- `searchCities.ts` - Geographic search with country codes and rate-limited pagination
+- `completeExample.ts` - Advanced geographic data analysis with real-world examples
 
 ### Countries Examples
 
@@ -216,10 +229,18 @@ Comprehensive examples are available for all implemented endpoints:
 
 ### Venues Examples
 
-- `basicVenueLookup.ts` - Venue search and lookup workflow
-- `searchVenues.ts` - Advanced venue search with geographic filtering
-- `getVenueSetlists.ts` - Venue setlist analysis and statistics
+- `basicVenueLookup.ts` - Venue search and lookup workflow with location filtering
+- `searchVenues.ts` - Advanced venue search with geographic and rate limiting demonstrations
+- `getVenueSetlists.ts` - Venue setlist analysis and statistics with multi-page processing
 - `completeExample.ts` - Comprehensive venue data exploration and insights
+
+**All examples feature:**
+
+- ✅ Automatic STANDARD rate limiting (2 req/sec, 1440 req/day)
+- ✅ Real-time rate limiting status monitoring
+- ✅ Production-ready error handling
+- ✅ Full TypeScript type checking and IDE support
+- ✅ ESLint compliance with examples-specific rules
 
 Run examples:
 
@@ -228,6 +249,9 @@ Run examples:
 pnpm dlx tsx examples/artists/basicArtistLookup.ts
 pnpm dlx tsx examples/artists/searchArtists.ts
 pnpm dlx tsx examples/artists/completeExample.ts
+
+# Artists examples
+pnpm dlx tsx examples/artists/getArtistSetlists.ts
 
 # Cities examples
 pnpm dlx tsx examples/cities/basicCityLookup.ts
@@ -281,18 +305,85 @@ pnpm test:watch
 
 ---
 
-## ✅ Type Checking
+## ✅ Development Tools
 
-Ensure your project stays type-safe:
+### Type Checking
+
+Full TypeScript checking for both library code and examples:
 
 ```bash
-pnpm type-check
+pnpm type-check           # Check src + examples directories
+pnpm type-check:verbose   # Verbose output with file listings
 ```
 
-Verbose typecheck with file listings and diagnostics:
+### Linting
+
+ESLint with examples-specific rules (allows console.log, process.env in examples):
 
 ```bash
-pnpm type-check:verbose
+pnpm lint                 # Lint src + examples directories
+pnpm lint:fix             # Auto-fix issues
+```
+
+### Building
+
+Separate configurations for development vs distribution:
+
+```bash
+pnpm build                # Build library only (excludes examples)
+pnpm check                # Full validation (type-check + lint + test)
+```
+
+**Configuration Files:**
+
+- `tsconfig.json` - Development config (includes examples)
+- `tsconfig.build.json` - Production build config (excludes examples)
+- `eslint.config.ts` - Unified linting with examples-specific rules
+
+---
+
+## ⚡ Rate Limiting
+
+**setlistfm-ts** includes intelligent rate limiting to protect against API limits and ensure reliable operation:
+
+### Automatic Protection
+
+- **STANDARD Profile** (default): 2 requests/second, 1,440 requests/day
+- **PREMIUM Profile**: 16 requests/second, 50,000 requests/day
+- **DISABLED Profile**: No rate limiting (advanced users only)
+
+### Smart Features
+
+- ✅ **Automatic request queuing** when limits are approached
+- ✅ **Real-time status monitoring** with detailed metrics
+- ✅ **Intelligent retry logic** with proper backoff
+- ✅ **Per-second and per-day limit tracking**
+- ✅ **Configurable queue sizes** and timeout handling
+
+### Usage Examples
+
+```ts
+import { createSetlistFMClient, RateLimitProfile } from "setlistfm-ts";
+
+// Default STANDARD rate limiting
+const client = createSetlistFMClient({
+  apiKey: "your-api-key",
+  userAgent: "your-app-name (email@example.com)"
+});
+
+// Premium rate limiting
+const premiumClient = createSetlistFMClient({
+  apiKey: "your-api-key",
+  userAgent: "your-app-name (email@example.com)",
+  rateLimit: { profile: RateLimitProfile.PREMIUM }
+});
+
+// Check rate limit status
+const status = client.getRateLimitStatus();
+// eslint-disable-next-line no-console
+console.log(`Requests: ${status.requestsThisSecond}/${status.secondLimit} this second`);
+// eslint-disable-next-line no-console
+console.log(`Daily usage: ${status.requestsThisDay}/${status.dayLimit} today`);
 ```
 
 ---
