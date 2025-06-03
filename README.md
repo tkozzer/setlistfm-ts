@@ -1,7 +1,7 @@
 # 🎶 setlistfm-ts
 
 [![npm](https://img.shields.io/npm/v/setlistfm-ts?color=%2300B2FF&label=npm)](https://www.npmjs.com/package/setlistfm-ts)
-[![build](https://github.com/tkozzer/setlistfm-ts/actions/workflows/test.yml/badge.svg)](https://github.com/tkozzer/setlistfm-ts/actions/workflows/test.yml)
+[![build](https://github.com/tkozzer/setlistfm-ts/actions/workflows/ci.yml/badge.svg)](https://github.com/tkozzer/setlistfm-ts/actions/workflows/test.yml)
 [![license](https://img.shields.io/github/license/tkozzer/setlistfm-ts)](./LICENSE)
 [![stars](https://img.shields.io/github/stars/tkozzer/setlistfm-ts?style=social)](https://github.com/tkozzer/setlistfm-ts/stargazers)
 
@@ -23,7 +23,46 @@ yarn add setlistfm-ts
 
 ---
 
+## 🚧 Project Status
+
+This project is currently in **early development**. The basic structure and scaffolding are in place, but most functionality is not yet implemented.
+
+### Core Infrastructure
+
+- [x] Project scaffolding and TypeScript setup
+- [x] Test framework setup (Vitest)
+- [x] Linting and formatting (ESLint with @antfu/eslint-config)
+- [x] Package.json configuration
+- [x] Directory structure for all endpoints
+- [ ] Main client implementation
+- [ ] HTTP client utilities
+- [ ] Error handling system
+- [ ] Type definitions
+- [ ] Shared utilities (pagination, metadata)
+
+### Development Tools
+
+- [x] TypeScript configuration
+- [x] Build scripts
+- [x] Test scripts
+- [x] Linting scripts
+- [x] Git hooks setup (Husky)
+- [ ] CI/CD pipeline
+- [ ] Documentation generation
+
+### API Coverage
+
+- [ ] All endpoint implementations (0/18 complete)
+- [ ] Type definitions for API responses
+- [ ] Input validation
+- [ ] Rate limiting
+- [ ] Caching (optional)
+
+---
+
 ## ⚙️ Usage
+
+> **⚠️ Warning:** The usage example below shows the intended API but is not yet functional. Implementation is in progress.
 
 ```ts
 import { createSetlistFMClient } from "setlistfm-ts";
@@ -44,33 +83,59 @@ console.log(result.artists);
 
 ## 🧩 Features
 
-✅ Fully typed API responses
-✅ Modern `fetch`-based HTTP client
-✅ Built-in pagination support
-✅ Minimal dependencies
-✅ Developer-friendly errors
-✅ Tree-shakable modular endpoints
+- [ ] Fully typed API responses
+- [ ] Modern `fetch`-based HTTP client
+- [ ] Built-in pagination support
+- [x] Minimal dependencies
+- [ ] Developer-friendly errors
+- [x] Tree-shakable modular endpoints (structure only)
 
 ---
 
 ## 🔍 Supported Endpoints
 
-| Domain    | Methods                                       |
-| --------- | --------------------------------------------- |
-| Artists   | `getArtist`, `search`, `getSetlists`          |
-| Setlists  | `getSetlist`, `getSetlistVersion`, `search`   |
-| Venues    | `getVenue`, `getSetlists`, `search`           |
-| Cities    | `search`, `getCityByGeoId`                    |
-| Countries | `search`                                      |
-| Users     | `getUser`, `getUserAttended`, `getUserEdited` |
+### Artists
 
-> All responses are typed according to the official setlist.fm schema.
+- [ ] `getArtist` - Get artist by MusicBrainz ID
+- [ ] `searchArtists` - Search for artists
+- [ ] `getArtistSetlists` - Get setlists for an artist
+
+### Setlists
+
+- [ ] `getSetlist` - Get setlist by ID
+- [ ] `getSetlistVersion` - Get specific version of a setlist
+- [ ] `searchSetlists` - Search for setlists
+
+### Venues
+
+- [ ] `getVenue` - Get venue by ID
+- [ ] `getVenueSetlists` - Get setlists for a venue
+- [ ] `searchVenues` - Search for venues
+
+### Cities
+
+- [ ] `searchCities` - Search for cities
+- [ ] `getCityByGeoId` - Get city by geographical ID
+
+### Countries
+
+- [ ] `searchCountries` - Search for countries
+
+### Users
+
+- [ ] `getUser` - Get user information
+- [ ] `getUserAttended` - Get setlists attended by user
+- [ ] `getUserEdited` - Get setlists edited by user
+
+> **Note:** All endpoints have scaffolded files but implementations are pending.
 
 ---
 
 ## 🧪 Testing
 
-Run the full test suite:
+> **Note:** Currently only placeholder tests exist. Real tests will be added as endpoints are implemented.
+
+Run the test suite:
 
 ```bash
 pnpm test
@@ -82,11 +147,14 @@ Watch mode:
 pnpm test:watch
 ```
 
-Check code coverage:
+### Test Coverage
 
-```bash
-pnpm coverage
-```
+- [x] Test framework setup
+- [x] Basic test structure for all endpoints
+- [ ] Unit tests for endpoint implementations
+- [ ] Integration tests with API
+- [ ] Error handling tests
+- [ ] Type safety tests
 
 ---
 
@@ -98,10 +166,10 @@ Ensure your project stays type-safe:
 pnpm type-check
 ```
 
-Verbose typecheck:
+Verbose typecheck with file listings and diagnostics:
 
 ```bash
-pnpm run type-check:verbose
+pnpm type-check:verbose
 ```
 
 ---

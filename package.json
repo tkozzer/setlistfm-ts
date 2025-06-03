@@ -43,7 +43,8 @@
     "lint:fix": "eslint src --ext .ts --fix",
     "check": "pnpm type-check && pnpm lint && pnpm test",
     "prepare": "husky",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "type-check:verbose": "tsc --noEmit --listFiles --extendedDiagnostics"
   },
   "dependencies": {
     "axios": "^1.9.0",
@@ -63,7 +64,8 @@
   "lint-staged": {
     "*.ts": [
       "pnpm lint:fix",
-      "bash -c 'pnpm type-check'"
+      "bash -c 'pnpm type-check'",
+      "pnpm test"
     ]
   }
 }
