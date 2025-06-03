@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.2] - 2025-01-19
+
+### Fixed
+
+- **API Base URL**: Corrected setlist.fm API base URL from `https://api.setlist.fm/1.0` to `https://api.setlist.fm/rest/1.0` to match the actual API endpoint structure
+- **Parameter passing bug**: Fixed artist endpoints incorrectly wrapping parameters in `{ params: }` object when calling HTTP client
+- **Test assertions**: Updated HTTP client test to expect the corrected base URL
+
+### Added
+
+- **Working artist endpoints**: All three artist endpoints are now fully functional with real API integration:
+  - `getArtist()` - Retrieve artist details by MusicBrainz ID
+  - `searchArtists()` - Search for artists with various criteria  
+  - `getArtistSetlists()` - Get setlists for a specific artist
+- **Enhanced examples**: Updated `basicArtistLookup.ts` example to demonstrate both search and direct lookup functionality
+- **Comprehensive validation**: Zod schema validation for all artist endpoint parameters and responses
+
+### Changed
+
+- Updated documentation to reflect correct API URL structure in setlist.fm API docs
+- Enhanced README.md usage examples with working code snippets
+- Updated project status to show artist endpoints as completed (3/18 endpoints done)
+
+---
+
 ## [0.1.1] - 2025-06-02
 
 ### Added

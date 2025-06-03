@@ -5,9 +5,9 @@
  * @module rateLimiter
  */
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { getProfileSettings, RateLimiter, RateLimitProfile } from "@utils/rateLimiter";
 
-import { getProfileSettings, RateLimiter, RateLimitProfile } from "../../utils/rateLimiter";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("Rate Limiter", () => {
   beforeEach(() => {

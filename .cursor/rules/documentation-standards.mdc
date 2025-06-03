@@ -14,6 +14,8 @@ alwaysApply: true
 
 This rule defines how files, functions, types, and constants in the SDK must be documented to ensure clarity and maintainability.
 
+**Note:** These standards apply only to TypeScript (`.ts`) files. Markdown (`.md`) files follow standard markdown documentation practices and are excluded from these JSDoc requirements.
+
 ---
 
 ### File Header

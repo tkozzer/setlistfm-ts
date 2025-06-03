@@ -7,14 +7,14 @@
 
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 
-import axios from "axios";
-
 import type { RateLimitConfig } from "./rateLimiter";
+
+import axios from "axios";
 
 import { RateLimiter } from "./rateLimiter";
 
 /** Base URL for the setlist.fm API */
-export const API_BASE_URL = "https://api.setlist.fm/1.0";
+export const API_BASE_URL = "https://api.setlist.fm/rest/1.0";
 
 /** Default timeout for API requests in milliseconds */
 export const DEFAULT_TIMEOUT = 10000;

@@ -5,10 +5,10 @@
  * @module client
  */
 
-import { describe, expect, it } from "vitest";
+import { RateLimitProfile } from "@utils/rateLimiter";
 
-import { createSetlistFMClient, SetlistFMClient } from "../client";
-import { RateLimitProfile } from "../utils/rateLimiter";
+import { describe, expect, it } from "vitest";
+import { createSetlistFMClient, SetlistFMClient } from "@/client";
 
 describe("SetlistFM Client", () => {
   const validConfig = {

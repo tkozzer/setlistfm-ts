@@ -33,12 +33,6 @@ const config = antfu(
       "node/prefer-global/process": "off",
       "node/no-process-env": ["error"],
       "vitest/prefer-lowercase-title": "off",
-      "perfectionist/sort-imports": [
-        "error",
-        {
-          tsconfigRootDir: ".",
-        },
-      ],
       "unicorn/filename-case": [
         "error",
         {
