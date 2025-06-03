@@ -8,7 +8,7 @@
   "homepage": "https://github.com/tkozzer/setlistfm-ts#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tkozzer/setlistfm-ts"
+    "url": "git+https://github.com/tkozzer/setlistfm-ts.git"
   },
   "bugs": {
     "url": "https://github.com/tkozzer/setlistfm-ts/issues"
