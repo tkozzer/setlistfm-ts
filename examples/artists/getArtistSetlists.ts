@@ -1,13 +1,11 @@
-/* eslint-disable no-console */
 /**
  * @file getArtistSetlists.ts
  * @description Example of retrieving setlists for a specific artist.
  * @author tkozzer
  */
 
+import { createSetlistFMClient } from "../../src/client";
 import { getArtistSetlists } from "../../src/endpoints/artists";
-
-import { HttpClient } from "../../src/utils/http";
 import "dotenv/config";
 
 /**
@@ -17,11 +15,16 @@ import "dotenv/config";
  * with pagination support.
  */
 async function getArtistSetlistsExample(): Promise<void> {
-  const httpClient = new HttpClient({
-    // eslint-disable-next-line node/no-process-env
+  // Create SetlistFM client with API key from environment
+  // The client automatically uses STANDARD rate limiting (2 req/sec, 1440 req/day)
+  const client = createSetlistFMClient({
+
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
+
+  // Get the HTTP client for making requests
+  const httpClient = client.getHttpClient();
 
   try {
     // Example 1: Get first page of setlists for The Beatles
@@ -104,6 +107,13 @@ async function getArtistSetlistsExample(): Promise<void> {
       .forEach(([country, count]) => {
         console.log(`   ${country}: ${count} setlist${count === 1 ? "" : "s"}`);
       });
+
+    // Show rate limiting information
+    console.log("\n📊 Rate limiting information:");
+    const rateLimitStatus = client.getRateLimitStatus();
+    console.log(`Profile: ${rateLimitStatus.profile}`);
+    console.log(`Requests this second: ${rateLimitStatus.requestsThisSecond}/${rateLimitStatus.secondLimit}`);
+    console.log(`Requests this day: ${rateLimitStatus.requestsThisDay}/${rateLimitStatus.dayLimit}`);
   }
   catch (error) {
     console.error("❌ Error getting artist setlists:", error);

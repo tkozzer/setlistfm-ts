@@ -1,13 +1,11 @@
-/* eslint-disable no-console */
 /**
  * @file getVenueSetlists.ts
  * @description Example of getting setlists for venues with analysis.
  * @author tkozzer
  */
 
+import { createSetlistFMClient } from "../../src/client";
 import { getVenue, getVenueSetlists, searchVenues } from "../../src/endpoints/venues";
-
-import { HttpClient } from "../../src/utils/http";
 import "dotenv/config";
 
 /**
@@ -17,15 +15,25 @@ import "dotenv/config";
  * and analyze the data.
  */
 async function getVenueSetlistsExample(): Promise<void> {
-  // Create HTTP client with API key from environment
+  // Create SetlistFM client with automatic STANDARD rate limiting
+  const client = createSetlistFMClient({
 
-  const httpClient = new HttpClient({
-    // eslint-disable-next-line node/no-process-env
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
 
+  // Get the HTTP client for making requests
+  const httpClient = client.getHttpClient();
+
   try {
+    console.log("🎵 Venue Setlists Examples with Rate Limiting");
+    console.log("=============================================\n");
+
+    // Display rate limiting information
+    const rateLimitStatus = client.getRateLimitStatus();
+    console.log(`📊 Rate Limiting: ${rateLimitStatus.profile.toUpperCase()} profile`);
+    console.log(`📈 Requests: ${rateLimitStatus.requestsThisSecond}/${rateLimitStatus.secondLimit} this second, ${rateLimitStatus.requestsThisDay}/${rateLimitStatus.dayLimit} today\n`);
+
     // Example 1: Find and analyze setlists for Madison Square Garden
     console.log("🔍 Example 1: Madison Square Garden setlists");
     console.log("Finding Madison Square Garden...\n");
@@ -33,6 +41,10 @@ async function getVenueSetlistsExample(): Promise<void> {
     const msgSearch = await searchVenues(httpClient, {
       name: "Madison Square Garden",
     });
+
+    // Display rate limiting status after first request
+    const afterSearch = client.getRateLimitStatus();
+    console.log(`📊 After venue search: ${afterSearch.requestsThisSecond}/${afterSearch.secondLimit} requests this second\n`);
 
     if (msgSearch.venue.length > 0) {
       // Find the actual MSG in New York
@@ -52,8 +64,12 @@ async function getVenueSetlistsExample(): Promise<void> {
       console.log(`✅ Found ${setlists.total} total setlists for ${msg.name}`);
       console.log(`📄 Page ${setlists.page}: ${setlists.setlist.length} setlists`);
 
+      // Display rate limiting status after getting setlists
+      const afterSetlists = client.getRateLimitStatus();
+      console.log(`📊 After setlists fetch: ${afterSetlists.requestsThisSecond}/${afterSetlists.secondLimit} requests this second\n`);
+
       if (setlists.setlist.length > 0) {
-        console.log("\n🎤 Recent concerts:");
+        console.log("🎤 Recent concerts:");
         setlists.setlist.slice(0, 5).forEach((setlist, index) => {
           console.log(`${index + 1}. ${setlist.artist.name}`);
           console.log(`   📅 Date: ${setlist.eventDate}`);
@@ -126,6 +142,15 @@ async function getVenueSetlistsExample(): Promise<void> {
             const latestShow = setlists.setlist[0];
             console.log(`   🎤 Latest: ${latestShow.artist.name} (${latestShow.eventDate})`);
           }
+
+          // Display rate limiting status during comparison
+          const duringComparison = client.getRateLimitStatus();
+          console.log(`   📊 Rate Limiting: ${duringComparison.requestsThisSecond}/${duringComparison.secondLimit} requests this second`);
+
+          // Check if we're hitting the rate limit
+          if (duringComparison.requestsThisSecond >= (duringComparison.secondLimit || 2)) {
+            console.log(`   ⚠️  Rate limit reached, subsequent requests will be queued`);
+          }
         }
       }
       catch {
@@ -181,6 +206,10 @@ async function getVenueSetlistsExample(): Promise<void> {
             console.log(`📊 Total setlists available: ${pageSetlists.total}`);
           }
 
+          // Display rate limiting status during pagination
+          const duringPagination = client.getRateLimitStatus();
+          console.log(`   📊 Rate Limiting: ${duringPagination.requestsThisSecond}/${duringPagination.secondLimit} requests this second`);
+
           // Stop if we've reached the end
           if (pageSetlists.setlist.length < pageSetlists.itemsPerPage)
             break;
@@ -232,7 +261,7 @@ async function getVenueSetlistsExample(): Promise<void> {
 
         if (setlistsWithSongs.length > 0) {
           const songCounts = setlistsWithSongs.map((setlist) => {
-            return setlist.sets!.set.reduce((total, set) =>
+            return setlist.sets!.set.reduce((total: number, set: any) =>
               total + (set.song?.length || 0), 0);
           });
 
@@ -306,6 +335,15 @@ async function getVenueSetlistsExample(): Promise<void> {
           console.log(`   🎤 Latest: ${venue.latestArtist} (${venue.latestDate})`);
         });
     }
+
+    // Final rate limiting status
+    const finalStatus = client.getRateLimitStatus();
+    console.log(`\n📊 Final Rate Limiting Status:`);
+    console.log(`Profile: ${finalStatus.profile.toUpperCase()}`);
+    console.log(`Requests this second: ${finalStatus.requestsThisSecond}/${finalStatus.secondLimit}`);
+    console.log(`Requests today: ${finalStatus.requestsThisDay}/${finalStatus.dayLimit}`);
+
+    console.log("\n✅ Venue setlists analysis completed successfully!");
   }
   catch (error) {
     console.error("❌ Error getting venue setlists:", error);

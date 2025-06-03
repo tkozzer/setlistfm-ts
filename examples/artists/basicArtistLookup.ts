@@ -1,13 +1,11 @@
-/* eslint-disable no-console */
 /**
  * @file basicArtistLookup.ts
  * @description Basic example of looking up an artist by MusicBrainz MBID.
  * @author tkozzer
  */
 
+import { createSetlistFMClient } from "../../src/client";
 import { getArtist, searchArtists } from "../../src/endpoints/artists";
-
-import { HttpClient } from "../../src/utils/http";
 import "dotenv/config";
 
 /**
@@ -17,13 +15,16 @@ import "dotenv/config";
  * using their MusicBrainz identifier (MBID).
  */
 async function basicArtistLookup(): Promise<void> {
-  // Create HTTP client with API key from environment
+  // Create SetlistFM client with API key from environment
+  // The client automatically uses STANDARD rate limiting (2 req/sec, 1440 req/day)
+  const client = createSetlistFMClient({
 
-  const httpClient = new HttpClient({
-    // eslint-disable-next-line node/no-process-env
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
+
+  // Get the HTTP client for making requests
+  const httpClient = client.getHttpClient();
 
   try {
     // Example 1: Direct artist lookup using The Beatles MBID
@@ -77,6 +78,13 @@ async function basicArtistLookup(): Promise<void> {
         console.log(`Setlist.fm URL: ${artistDetails.url}`);
       }
     }
+
+    // Example 3: Check rate limit status
+    console.log("\n📊 Rate limiting information:");
+    const rateLimitStatus = client.getRateLimitStatus();
+    console.log(`Profile: ${rateLimitStatus.profile}`);
+    console.log(`Requests this second: ${rateLimitStatus.requestsThisSecond}/${rateLimitStatus.secondLimit}`);
+    console.log(`Requests this day: ${rateLimitStatus.requestsThisDay}/${rateLimitStatus.dayLimit}`);
   }
   catch (error) {
     console.error("❌ Error looking up artist:", error);
