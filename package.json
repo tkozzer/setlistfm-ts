@@ -1,6 +1,6 @@
 {
   "name": "setlistfm-ts",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "packageManager": "pnpm@10.11.1",
   "description": "A TypeScript client for the setlist.fm API",
   "author": "tkozzer <tkoz.dev@gmail.com>",

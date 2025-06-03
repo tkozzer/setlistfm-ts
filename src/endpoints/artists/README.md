@@ -26,9 +26,9 @@ import type { HttpClient } from "@utils/http";
 import { getArtist } from "./getArtist";
 
 const artist = await getArtist(httpClient, "b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d");
-// eslint-disable-next-line no-console
+
 console.log(artist.name); // "The Beatles"
-// eslint-disable-next-line no-console
+
 console.log(artist.sortName); // "Beatles, The"
 ```
 
@@ -59,9 +59,9 @@ import { searchArtists } from "./searchArtists";
 const results = await searchArtists(httpClient, {
   artistName: "The Beatles"
 });
-// eslint-disable-next-line no-console
+
 console.log(results.total); // Total number of matching artists
-// eslint-disable-next-line no-console
+
 console.log(results.artist); // Array of artist objects
 
 // Search with pagination and sorting
@@ -97,9 +97,9 @@ import { getArtistSetlists } from "./getArtistSetlists";
 
 // Get first page of setlists
 const setlists = await getArtistSetlists(httpClient, "b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d");
-// eslint-disable-next-line no-console
+
 console.log(setlists.total); // Total number of setlists
-// eslint-disable-next-line no-console
+
 console.log(setlists.setlist.length); // Number of setlists on this page
 
 // Get specific page
@@ -230,27 +230,26 @@ async function demonstrateArtistEndpoints(httpClient: HttpClient) {
       sort: "relevance"
     });
 
-    // eslint-disable-next-line no-console
     console.log(`Found ${searchResults.total} artists matching "The Beatles"`);
 
     if (searchResults.artist.length > 0) {
       const firstArtist = searchResults.artist[0];
-      // eslint-disable-next-line no-console
+
       console.log(`First result: ${firstArtist.name} (${firstArtist.mbid})`);
 
       // 2. Get detailed artist information
       const artist = await getArtist(httpClient, firstArtist.mbid);
-      // eslint-disable-next-line no-console
+
       console.log(`Artist details: ${artist.name} - ${artist.sortName}`);
 
       // 3. Get artist's setlists
       const setlists = await getArtistSetlists(httpClient, artist.mbid, { p: 1 });
-      // eslint-disable-next-line no-console
+
       console.log(`Found ${setlists.total} setlists for ${artist.name}`);
 
       if (setlists.setlist.length > 0) {
         const latestSetlist = setlists.setlist[0];
-        // eslint-disable-next-line no-console
+
         console.log(`Latest setlist: ${latestSetlist.eventDate} at ${latestSetlist.venue.name}`);
       }
     }
