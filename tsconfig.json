@@ -2,9 +2,16 @@
   "compilerOptions": {
     "target": "ES2020",
     "lib": ["ES2020"],
+    "baseUrl": "./src",
     "rootDir": "./src",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+    "paths": {
+      "@/*": ["*"],
+      "@shared/*": ["shared/*"],
+      "@utils/*": ["utils/*"],
+      "@endpoints/*": ["endpoints/*"]
+    },
     "resolveJsonModule": true,
     "strict": true,
     "declaration": true,

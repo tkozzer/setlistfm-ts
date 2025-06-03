@@ -54,20 +54,20 @@ This project is currently in **early development**. The core infrastructure is n
 
 ### API Coverage
 
-- [ ] All endpoint implementations (0/18 complete)
-- [ ] Type definitions for API responses
-- [ ] Input validation
-- [ ] Rate limiting
+- [x] Artist endpoints (3/3 complete) - **WORKING**
+- [ ] Remaining endpoint implementations (3/18 complete)
+- [x] Type definitions for API responses
+- [x] Input validation (Zod schemas)
+- [x] Rate limiting
 - [ ] Caching (optional)
 
 ---
 
 ## ⚙️ Usage
 
-> **⚠️ Warning:** The usage example below shows the intended API but is not yet functional. Implementation is in progress.
-
 ```ts
 import { createSetlistFMClient } from "setlistfm-ts";
+import { getArtist, getArtistSetlists, searchArtists } from "setlistfm-ts/endpoints/artists";
 
 const client = createSetlistFMClient({
   apiKey: "your-api-key-here",
@@ -75,10 +75,22 @@ const client = createSetlistFMClient({
 });
 
 // Example: Search artists
-const result = await client.artists.search({ artistName: "Radiohead" });
+const searchResults = await searchArtists(client.getHttpClient(), {
+  artistName: "Radiohead"
+});
+
+// Example: Get artist details
+const artist = await getArtist(client.getHttpClient(), "a74b1b7f-71a5-4011-9441-d0b5e4122711");
+
+// Example: Get artist setlists
+const setlists = await getArtistSetlists(client.getHttpClient(), "a74b1b7f-71a5-4011-9441-d0b5e4122711");
 
 // eslint-disable-next-line no-console
-console.log(result.artists);
+console.log(searchResults.artist);
+// eslint-disable-next-line no-console
+console.log(artist.name);
+// eslint-disable-next-line no-console
+console.log(setlists.setlist);
 ```
 
 ---
@@ -100,9 +112,9 @@ console.log(result.artists);
 
 ### Artists
 
-- [ ] `getArtist` - Get artist by MusicBrainz ID
-- [ ] `searchArtists` - Search for artists
-- [ ] `getArtistSetlists` - Get setlists for an artist
+- [x] `getArtist` - Get artist by MusicBrainz ID ✅
+- [x] `searchArtists` - Search for artists ✅
+- [x] `getArtistSetlists` - Get setlists for an artist ✅
 
 ### Setlists
 

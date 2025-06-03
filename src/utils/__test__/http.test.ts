@@ -48,7 +48,7 @@ describe("HTTP Client", () => {
 
   describe("Constants", () => {
     it("should export correct API base URL", () => {
-      expect(API_BASE_URL).toBe("https://api.setlist.fm/1.0");
+      expect(API_BASE_URL).toBe("https://api.setlist.fm/rest/1.0");
     });
 
     it("should export correct default timeout", () => {

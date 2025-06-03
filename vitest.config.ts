@@ -21,6 +21,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@shared": path.resolve(__dirname, "./src/shared"),
+      "@utils": path.resolve(__dirname, "./src/utils"),
+      "@endpoints": path.resolve(__dirname, "./src/endpoints"),
     },
   },
   esbuild: {
