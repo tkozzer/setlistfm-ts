@@ -17,6 +17,8 @@ export default defineConfig({
         "**/*.test.ts",
         "**/__test__/**",
         "**/__tests__/**",
+        "**/types.ts",
+        "**/*.types.ts",
         "examples/**/*",
         "**/node_modules/**",
         "**/dist/**",
