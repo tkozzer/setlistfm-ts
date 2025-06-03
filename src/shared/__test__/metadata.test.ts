@@ -5,9 +5,9 @@
  * @module shared/metadata
  */
 
-import { describe, expect, it } from "vitest";
-
 import type { LibraryInfo, ResponseMetadata } from "../metadata";
+
+import { describe, expect, it } from "vitest";
 
 import {
   createResponseMetadata,

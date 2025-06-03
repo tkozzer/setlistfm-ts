@@ -5,10 +5,10 @@
  * @module shared/pagination
  */
 
-import { describe, expect, it } from "vitest";
-
 import type { ExtendedPaginationParams, PaginationInfo } from "../pagination";
+
 import type { PaginatedResponse } from "../types";
+import { describe, expect, it } from "vitest";
 
 import {
   delay,

@@ -4,7 +4,7 @@
 
 The setlist.fm API provides access to setlist data, including artists, venues, cities, countries, and users. It is designed for building applications and websites that require concert setlist information. The API is RESTful and supports both JSON and XML formats.
 
-- **Base URL:** `https://api.setlist.fm`
+- **Base URL:** `https://api.setlist.fm/rest`
 - **API Version:** 1.0 (all endpoints are prefixed with `/1.0/`)
 - **Official Docs:** [setlist.fm API Docs](https://api.setlist.fm/docs/1.0/index.html)
 
@@ -44,23 +44,23 @@ The setlist.fm API provides access to setlist data, including artists, venues, c
 
 ## Endpoints
 
-| Path                                 | Method | Description                      |
-|-------------------------------------- |--------|----------------------------------|
-| `/1.0/artist/{mbid}`                 | GET    | Get artist by Musicbrainz ID     |
-| `/1.0/artist/{mbid}/setlists`        | GET    | Get setlists for an artist       |
-| `/1.0/city/{geoId}`                  | GET    | Get city by GeoNames ID          |
-| `/1.0/search/artists`                | GET    | Search for artists               |
-| `/1.0/search/cities`                 | GET    | Search for cities                |
-| `/1.0/search/countries`              | GET    | Search for countries             |
-| `/1.0/search/setlists`               | GET    | Search for setlists              |
-| `/1.0/search/venues`                 | GET    | Search for venues                |
-| `/1.0/setlist/version/{versionId}`   | GET    | Get setlist by version ID        |
-| `/1.0/setlist/{setlistId}`           | GET    | Get setlist by setlist ID        |
-| `/1.0/user/{userId}`                 | GET    | Get user by user ID              |
-| `/1.0/user/{userId}/attended`        | GET    | Get setlists attended by user    |
-| `/1.0/user/{userId}/edited`          | GET    | Get setlists edited by user      |
-| `/1.0/venue/{venueId}`               | GET    | Get venue by venue ID            |
-| `/1.0/venue/{venueId}/setlists`      | GET    | Get setlists for a venue         |
+| Path                               | Method | Description                   |
+| ---------------------------------- | ------ | ----------------------------- |
+| `/1.0/artist/{mbid}`               | GET    | Get artist by Musicbrainz ID  |
+| `/1.0/artist/{mbid}/setlists`      | GET    | Get setlists for an artist    |
+| `/1.0/city/{geoId}`                | GET    | Get city by GeoNames ID       |
+| `/1.0/search/artists`              | GET    | Search for artists            |
+| `/1.0/search/cities`               | GET    | Search for cities             |
+| `/1.0/search/countries`            | GET    | Search for countries          |
+| `/1.0/search/setlists`             | GET    | Search for setlists           |
+| `/1.0/search/venues`               | GET    | Search for venues             |
+| `/1.0/setlist/version/{versionId}` | GET    | Get setlist by version ID     |
+| `/1.0/setlist/{setlistId}`         | GET    | Get setlist by setlist ID     |
+| `/1.0/user/{userId}`               | GET    | Get user by user ID           |
+| `/1.0/user/{userId}/attended`      | GET    | Get setlists attended by user |
+| `/1.0/user/{userId}/edited`        | GET    | Get setlists edited by user   |
+| `/1.0/venue/{venueId}`             | GET    | Get venue by venue ID         |
+| `/1.0/venue/{venueId}/setlists`    | GET    | Get setlists for a venue      |
 
 ## Common Data Types
 
@@ -95,7 +95,7 @@ x-api-key: <YOUR_API_KEY>
 ```sh
 curl -H "Accept: application/json" \
      -H "x-api-key: <YOUR_API_KEY>" \
-     "https://api.setlist.fm/1.0/artist/1234-abcd-5678-efgh/setlists"
+     "https://api.setlist.fm/rest/1.0/artist/1234-abcd-5678-efgh/setlists"
 ```
 
 ## Usage Tips
@@ -107,6 +107,7 @@ curl -H "Accept: application/json" \
 - Respect the API's terms of service and rate limits.
 
 ## References
+
 - [setlist.fm API Docs](https://api.setlist.fm/docs/1.0/index.html)
 - [Musicbrainz MBID](http://wiki.musicbrainz.org/MBID)
-- [GeoNames](http://geonames.org/) 
+- [GeoNames](http://geonames.org/)
