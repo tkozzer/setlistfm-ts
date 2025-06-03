@@ -57,7 +57,8 @@ This project is in **active development** with working implementations for core 
 - [x] Artist endpoints (3/3 complete) - **WORKING**
 - [x] Cities endpoints (2/2 complete) - **WORKING**
 - [x] Countries endpoints (1/1 complete) - **WORKING**
-- [ ] Remaining endpoint implementations (6/18 complete)
+- [x] Venues endpoints (3/3 complete) - **WORKING**
+- [ ] Remaining endpoint implementations (9/18 complete)
 - [x] Type definitions for API responses
 - [x] Input validation (Zod schemas)
 - [x] Rate limiting
@@ -72,6 +73,7 @@ import { createSetlistFMClient } from "setlistfm-ts";
 import { getArtist, getArtistSetlists, searchArtists } from "setlistfm-ts/endpoints/artists";
 import { getCityByGeoId, searchCities } from "setlistfm-ts/endpoints/cities";
 import { searchCountries } from "setlistfm-ts/endpoints/countries";
+import { getVenue, getVenueSetlists, searchVenues } from "setlistfm-ts/endpoints/venues";
 
 const client = createSetlistFMClient({
   apiKey: "your-api-key-here",
@@ -101,6 +103,19 @@ const city = await getCityByGeoId(client.getHttpClient(), "2643743");
 // Example: Get all supported countries
 const countries = await searchCountries(client.getHttpClient());
 
+// Example: Search venues
+const venueResults = await searchVenues(client.getHttpClient(), {
+  name: "Madison Square Garden",
+  cityName: "New York",
+  country: "US"
+});
+
+// Example: Get venue details
+const venue = await getVenue(client.getHttpClient(), "6bd6ca6e");
+
+// Example: Get venue setlists
+const venueSetlists = await getVenueSetlists(client.getHttpClient(), "6bd6ca6e");
+
 // eslint-disable-next-line no-console
 console.log(searchResults.artist);
 // eslint-disable-next-line no-console
@@ -113,6 +128,12 @@ console.log(cityResults.cities);
 console.log(city.name, city.country.name);
 // eslint-disable-next-line no-console
 console.log(countries.country.length, "countries available");
+// eslint-disable-next-line no-console
+console.log(venueResults.venue);
+// eslint-disable-next-line no-console
+console.log(venue.name, venue.city?.name);
+// eslint-disable-next-line no-console
+console.log(venueSetlists.setlist);
 ```
 
 ---
@@ -148,9 +169,9 @@ console.log(countries.country.length, "countries available");
 
 ### Venues
 
-- [ ] `getVenue` - Get venue by ID
-- [ ] `getVenueSetlists` - Get setlists for a venue
-- [ ] `searchVenues` - Search for venues
+- [x] `getVenue` - Get venue by ID ✅
+- [x] `getVenueSetlists` - Get setlists for a venue ✅
+- [x] `searchVenues` - Search for venues ✅
 
 ### Cities
 
@@ -167,7 +188,7 @@ console.log(countries.country.length, "countries available");
 - [ ] `getUserAttended` - Get setlists attended by user
 - [ ] `getUserEdited` - Get setlists edited by user
 
-> **Note:** Artists, Cities, and Countries endpoints are fully implemented with comprehensive tests and examples. Remaining endpoints have scaffolded files with implementations pending.
+> **Note:** Artists, Cities, Countries, and Venues endpoints are fully implemented with comprehensive tests and examples. Remaining endpoints have scaffolded files with implementations pending.
 
 ---
 
@@ -193,6 +214,13 @@ Comprehensive examples are available for all implemented endpoints:
 - `countriesAnalysis.ts` - Comprehensive analysis and integration with cities
 - `completeExample.ts` - Production-ready workflow with validation and testing
 
+### Venues Examples
+
+- `basicVenueLookup.ts` - Venue search and lookup workflow
+- `searchVenues.ts` - Advanced venue search with geographic filtering
+- `getVenueSetlists.ts` - Venue setlist analysis and statistics
+- `completeExample.ts` - Comprehensive venue data exploration and insights
+
 Run examples:
 
 ```bash
@@ -210,6 +238,12 @@ pnpm dlx tsx examples/cities/completeExample.ts
 pnpm dlx tsx examples/countries/basicCountriesLookup.ts
 pnpm dlx tsx examples/countries/countriesAnalysis.ts
 pnpm dlx tsx examples/countries/completeExample.ts
+
+# Venues examples
+pnpm dlx tsx examples/venues/basicVenueLookup.ts
+pnpm dlx tsx examples/venues/searchVenues.ts
+pnpm dlx tsx examples/venues/getVenueSetlists.ts
+pnpm dlx tsx examples/venues/completeExample.ts
 ```
 
 > **Note:** Examples require a valid API key in `.env` file. See example README files for setup instructions.
@@ -239,6 +273,7 @@ pnpm test:watch
 - [x] Unit tests for artists endpoints (52 tests)
 - [x] Unit tests for cities endpoints (52 tests)
 - [x] Unit tests for countries endpoints (40 tests)
+- [x] Unit tests for venues endpoints (52 tests)
 - [x] Error handling tests
 - [x] Validation tests
 - [ ] Integration tests with live API
