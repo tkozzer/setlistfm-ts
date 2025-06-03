@@ -39,8 +39,8 @@
     "build": "tsc",
     "test": "vitest run",
     "test:watch": "vitest watch",
-    "lint": "eslint . --ext .ts",
-    "lint:fix": "eslint . --ext .ts --fix",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
     "check": "pnpm type-check && pnpm lint && pnpm test",
     "prepare": "pnpm build",
     "type-check": "tsc --noEmit"
@@ -54,6 +54,7 @@
     "@types/node": "^22.15.29",
     "eslint": "^9.28.0",
     "eslint-plugin-format": "^1.0.1",
+    "jiti": "^2.4.2",
     "typescript": "^5.8.3",
     "vitest": "^3.2.0"
   }
