@@ -70,6 +70,12 @@ const config = antfu(
       "jsdoc/require-returns": "off", // Don't require JSDoc returns in examples
     },
   },
+  {
+    files: ["**/*.md", "**/*.md/*.ts"],
+    rules: {
+      "no-console": "off", // Allow console.log in markdown examples
+    },
+  },
 );
 
 export default config;

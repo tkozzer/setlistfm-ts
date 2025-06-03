@@ -26,11 +26,11 @@ import type { HttpClient } from "@utils/http";
 import { getVenue } from "./getVenue";
 
 const venue = await getVenue(httpClient, "6bd6ca6e");
-// eslint-disable-next-line no-console
+
 console.log(venue.name); // "Compaq Center"
-// eslint-disable-next-line no-console
+
 console.log(venue.city?.name); // "Hollywood"
-// eslint-disable-next-line no-console
+
 console.log(venue.city?.country.name); // "United States"
 ```
 
@@ -56,9 +56,9 @@ import { getVenueSetlists } from "./getVenueSetlists";
 
 // Get first page of setlists for a venue
 const setlists = await getVenueSetlists(httpClient, "6bd6ca6e");
-// eslint-disable-next-line no-console
+
 console.log(setlists.total); // Total number of setlists
-// eslint-disable-next-line no-console
+
 console.log(setlists.setlist.length); // Number of setlists on this page
 
 // Get specific page
@@ -66,7 +66,6 @@ const page2 = await getVenueSetlists(httpClient, "6bd6ca6e", { p: 2 });
 
 // Process setlist data
 setlists.setlist.forEach((setlist) => {
-  // eslint-disable-next-line no-console
   console.log(`${setlist.artist.name} at ${setlist.venue.name} on ${setlist.eventDate}`);
 });
 ```
@@ -98,9 +97,9 @@ import { searchVenues } from "./searchVenues";
 
 // Search by venue name
 const results = await searchVenues(httpClient, { name: "Madison Square Garden" });
-// eslint-disable-next-line no-console
+
 console.log(results.total); // Total number of matching venues
-// eslint-disable-next-line no-console
+
 console.log(results.venue.length); // Number of venues on this page
 
 // Search by city and country
@@ -253,7 +252,6 @@ async function exploreVenues(httpClient: HttpClient) {
       country: "US"
     });
 
-    // eslint-disable-next-line no-console
     console.log(`Found ${searchResults.total} venues in New York`);
 
     // Get details for the first venue
@@ -261,21 +259,18 @@ async function exploreVenues(httpClient: HttpClient) {
       const firstVenue = searchResults.venue[0];
       const venueDetails = await getVenue(httpClient, firstVenue.id);
 
-      // eslint-disable-next-line no-console
       console.log(`Venue: ${venueDetails.name}`);
       if (venueDetails.city) {
-        // eslint-disable-next-line no-console
         console.log(`Location: ${venueDetails.city.name}, ${venueDetails.city.state}`);
       }
 
       // Get setlists for this venue
       const setlists = await getVenueSetlists(httpClient, firstVenue.id, { p: 1 });
-      // eslint-disable-next-line no-console
+
       console.log(`Found ${setlists.total} setlists for this venue`);
 
       // Display recent setlists
       setlists.setlist.slice(0, 3).forEach((setlist) => {
-        // eslint-disable-next-line no-console
         console.log(`- ${setlist.artist.name} (${setlist.eventDate})`);
       });
     }
