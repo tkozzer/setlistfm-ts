@@ -60,6 +60,12 @@ const config = antfu(
       ],
     },
   },
+  {
+    files: ["docs/**/*"],
+    rules: {
+      "unicorn/filename-case": "off",
+    },
+  },
 );
 
 export default config;

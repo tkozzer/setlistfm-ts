@@ -25,7 +25,7 @@ yarn add setlistfm-ts
 
 ## 🚧 Project Status
 
-This project is currently in **early development**. The basic structure and scaffolding are in place, but most functionality is not yet implemented.
+This project is currently in **early development**. The core infrastructure is now in place, including the main client implementation and foundational utilities. API endpoint implementations are the next priority.
 
 ### Core Infrastructure
 
@@ -34,11 +34,11 @@ This project is currently in **early development**. The basic structure and scaf
 - [x] Linting and formatting (ESLint with @antfu/eslint-config)
 - [x] Package.json configuration
 - [x] Directory structure for all endpoints
-- [ ] Main client implementation
-- [ ] HTTP client utilities
-- [ ] Error handling system
-- [ ] Type definitions
-- [ ] Shared utilities (pagination, metadata)
+- [x] Main client implementation
+- [x] HTTP client utilities
+- [x] Error handling system
+- [x] Type definitions
+- [x] Shared utilities (pagination, metadata)
 
 ### Development Tools
 
@@ -47,6 +47,8 @@ This project is currently in **early development**. The basic structure and scaf
 - [x] Test scripts
 - [x] Linting scripts
 - [x] Git hooks setup (Husky)
+- [x] Test coverage reporting
+- [x] Rate limiting utilities
 - [ ] CI/CD pipeline
 - [ ] Documentation generation
 
@@ -83,12 +85,14 @@ console.log(result.artists);
 
 ## 🧩 Features
 
-- [ ] Fully typed API responses
-- [ ] Modern `fetch`-based HTTP client
-- [ ] Built-in pagination support
+- [x] Fully typed API responses
+- [x] Modern `axios`-based HTTP client
+- [x] Built-in pagination support
 - [x] Minimal dependencies
-- [ ] Developer-friendly errors
-- [x] Tree-shakable modular endpoints (structure only)
+- [x] Developer-friendly errors
+- [x] Tree-shakable modular endpoints
+- [x] Rate limiting support
+- [x] Comprehensive logging utilities
 
 ---
 

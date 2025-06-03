@@ -13,7 +13,7 @@ export default defineConfig({
       provider: "v8",
       reportsDirectory: "./coverage",
       reporter: ["text", "html", "lcov"],
-      exclude: ["**/*.test.ts", "**/__tests__/**", "src/utils/logger.ts"],
+      exclude: ["**/*.test.ts", "**/__tests__/**"],
     },
     watch: false,
     logHeapUsage: true,
