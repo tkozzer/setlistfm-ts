@@ -81,11 +81,11 @@ export type Artist = {
   mbid: MBID;
   /** Artist name */
   name: string;
-  /** Disambiguation string (if needed) */
+  /** Sort name for the artist (e.g., "Beatles, The" or "Springsteen, Bruce") */
+  sortName: string;
+  /** Disambiguation string to distinguish between artists with same names */
   disambiguation?: string;
-  /** Sort name for the artist */
-  sortName?: string;
-  /** URL to setlist.fm page */
+  /** URL to the artist's setlists on setlist.fm */
   url?: string;
 };
 
