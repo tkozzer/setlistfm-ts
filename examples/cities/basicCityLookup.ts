@@ -5,7 +5,6 @@
  */
 
 import { createSetlistFMClient } from "../../src/client";
-import { getCityByGeoId, searchCities } from "../../src/endpoints/cities";
 import "dotenv/config";
 
 /**
@@ -17,13 +16,9 @@ import "dotenv/config";
 async function basicCityLookup(): Promise<void> {
   // Create SetlistFM client with automatic STANDARD rate limiting
   const client = createSetlistFMClient({
-
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
-
-  // Get the HTTP client for making requests
-  const httpClient = client.getHttpClient();
 
   try {
     console.log("🌍 Basic City Lookup Examples");
@@ -38,7 +33,7 @@ async function basicCityLookup(): Promise<void> {
     console.log("🔍 Example 1: Search and lookup workflow");
     console.log("Searching for cities named 'Paris'...\n");
 
-    const parisSearch = await searchCities(httpClient, {
+    const parisSearch = await client.searchCities({
       name: "Paris",
     });
 
@@ -58,7 +53,7 @@ async function basicCityLookup(): Promise<void> {
 
       // Get detailed city information
       console.log("\n🔍 Looking up detailed city information...");
-      const parisDetails = await getCityByGeoId(httpClient, parisFrance.id);
+      const parisDetails = await client.getCityByGeoId(parisFrance.id);
 
       console.log("\n✅ City details found!");
       console.log(`Name: ${parisDetails.name}`);
@@ -75,7 +70,7 @@ async function basicCityLookup(): Promise<void> {
     console.log("\n🔍 Example 2: Finding London, UK");
     console.log("Searching for cities named 'London'...\n");
 
-    const londonSearch = await searchCities(httpClient, {
+    const londonSearch = await client.searchCities({
       name: "London",
     });
 
@@ -96,7 +91,7 @@ async function basicCityLookup(): Promise<void> {
         console.log(`GeoId: ${londonUK.id}`);
 
         // Get detailed information
-        const londonDetails = await getCityByGeoId(httpClient, londonUK.id);
+        const londonDetails = await client.getCityByGeoId(londonUK.id);
         console.log(`\n✅ London, UK details:`);
         console.log(`Coordinates: ${londonDetails.coords.lat}°N, ${Math.abs(londonDetails.coords.long)}°W`);
       }
@@ -105,7 +100,7 @@ async function basicCityLookup(): Promise<void> {
         const firstLondon = londonSearch.cities[0];
         console.log(`Name: ${firstLondon.name}, ${firstLondon.state}, ${firstLondon.country.name}`);
 
-        const details = await getCityByGeoId(httpClient, firstLondon.id);
+        const details = await client.getCityByGeoId(firstLondon.id);
         console.log(`Coordinates: ${details.coords.lat}, ${details.coords.long}`);
       }
     }
@@ -114,7 +109,7 @@ async function basicCityLookup(): Promise<void> {
     console.log("\n🔍 Example 3: Finding New York City");
     console.log("Searching for cities named 'New York'...\n");
 
-    const nySearch = await searchCities(httpClient, {
+    const nySearch = await client.searchCities({
       name: "New York",
     });
 
@@ -135,7 +130,7 @@ async function basicCityLookup(): Promise<void> {
       console.log(`GeoId: ${newYorkCity.id}`);
 
       // Get detailed information
-      const nyDetails = await getCityByGeoId(httpClient, newYorkCity.id);
+      const nyDetails = await client.getCityByGeoId(newYorkCity.id);
       console.log(`\n✅ New York details:`);
       console.log(`Coordinates: ${nyDetails.coords.lat}°N, ${Math.abs(nyDetails.coords.long)}°W`);
     }
@@ -144,7 +139,7 @@ async function basicCityLookup(): Promise<void> {
     console.log("\n🔍 Example 4: Finding Los Angeles");
     console.log("Searching for cities named 'Los Angeles'...\n");
 
-    const laSearch = await searchCities(httpClient, {
+    const laSearch = await client.searchCities({
       name: "Los Angeles",
     });
 
@@ -163,7 +158,7 @@ async function basicCityLookup(): Promise<void> {
       console.log(`GeoId: ${losAngeles.id}`);
 
       // Get detailed information
-      const laDetails = await getCityByGeoId(httpClient, losAngeles.id);
+      const laDetails = await client.getCityByGeoId(losAngeles.id);
       console.log(`\n✅ Los Angeles details:`);
       console.log(`Coordinates: ${laDetails.coords.lat}°N, ${Math.abs(laDetails.coords.long)}°W`);
     }

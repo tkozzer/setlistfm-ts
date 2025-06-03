@@ -5,7 +5,6 @@
  */
 
 import { createSetlistFMClient } from "../../src/client";
-import { getArtistSetlists } from "../../src/endpoints/artists";
 import "dotenv/config";
 
 /**
@@ -18,13 +17,9 @@ async function getArtistSetlistsExample(): Promise<void> {
   // Create SetlistFM client with API key from environment
   // The client automatically uses STANDARD rate limiting (2 req/sec, 1440 req/day)
   const client = createSetlistFMClient({
-
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
-
-  // Get the HTTP client for making requests
-  const httpClient = client.getHttpClient();
 
   try {
     // Example 1: Get first page of setlists for The Beatles
@@ -32,7 +27,7 @@ async function getArtistSetlistsExample(): Promise<void> {
     const beatlesMbid = "b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d";
     console.log(`Artist MBID: ${beatlesMbid}\n`);
 
-    const firstPage = await getArtistSetlists(httpClient, beatlesMbid);
+    const firstPage = await client.getArtistSetlists(beatlesMbid);
 
     console.log(`✅ Found ${firstPage.total} total setlists for The Beatles`);
     console.log(`📄 Page ${firstPage.page}, showing ${firstPage.setlist.length} setlists\n`);
@@ -63,7 +58,7 @@ async function getArtistSetlistsExample(): Promise<void> {
       console.log("🎵 Example 2: Get second page of setlists");
       console.log(`Fetching page 2 of setlists...\n`);
 
-      const secondPage = await getArtistSetlists(httpClient, beatlesMbid, { p: 2 });
+      const secondPage = await client.getArtistSetlists(beatlesMbid, 2);
 
       console.log(`📄 Page ${secondPage.page}, showing ${secondPage.setlist.length} setlists`);
       console.log(`📊 Total pages available: ${Math.ceil(secondPage.total / secondPage.itemsPerPage)}\n`);

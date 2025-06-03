@@ -5,7 +5,6 @@
  */
 
 import { createSetlistFMClient } from "../../src/client";
-import { getArtist, searchArtists } from "../../src/endpoints/artists";
 import "dotenv/config";
 
 /**
@@ -18,13 +17,9 @@ async function basicArtistLookup(): Promise<void> {
   // Create SetlistFM client with API key from environment
   // The client automatically uses STANDARD rate limiting (2 req/sec, 1440 req/day)
   const client = createSetlistFMClient({
-
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
-
-  // Get the HTTP client for making requests
-  const httpClient = client.getHttpClient();
 
   try {
     // Example 1: Direct artist lookup using The Beatles MBID
@@ -32,7 +27,7 @@ async function basicArtistLookup(): Promise<void> {
     const beatlesMbid = "b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d";
     console.log(`Looking up The Beatles (MBID: ${beatlesMbid})...\n`);
 
-    const beatles = await getArtist(httpClient, beatlesMbid);
+    const beatles = await client.getArtist(beatlesMbid);
 
     console.log("✅ Artist found!");
     console.log(`Name: ${beatles.name}`);
@@ -48,7 +43,7 @@ async function basicArtistLookup(): Promise<void> {
     console.log("\n🔍 Example 2: Search and lookup");
     console.log("Searching for 'Metallica'...\n");
 
-    const searchResults = await searchArtists(httpClient, {
+    const searchResults = await client.searchArtists({
       artistName: "Metallica",
     });
 
@@ -66,7 +61,7 @@ async function basicArtistLookup(): Promise<void> {
 
       // Get detailed artist information
       console.log("\n🔍 Looking up detailed artist information...");
-      const artistDetails = await getArtist(httpClient, metallica.mbid);
+      const artistDetails = await client.getArtist(metallica.mbid);
 
       console.log("\n✅ Artist details found!");
       console.log(`Name: ${artistDetails.name}`);

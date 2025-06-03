@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.8] - 2025-06-03
+
+### Added
+
+- **Enhanced client architecture**: Major improvements to the SetlistFM client implementation:
+  - Type-safe interface definition with comprehensive method signatures and JSDoc documentation
+  - Factory pattern implementation for creating configured client instances
+  - Endpoint delegation system connecting client methods to individual endpoint functions
+  - Integration layer between high-level client interface and low-level endpoint implementations
+- **Examples automation system**: Complete automation infrastructure for running all examples:
+  - `examples/run-all-examples.sh` script for executing all endpoint examples with proper environment setup
+  - `examples/README.md` with comprehensive documentation for the examples system and automation
+  - Unified examples execution with rate limiting awareness and error handling
+- **Enhanced client testing**: Expanded test coverage for client functionality:
+  - Factory pattern validation and configuration testing
+  - Client interface method delegation verification
+  - Integration testing between client methods and endpoint functions
+
+### Enhanced
+
+- **Documentation improvements**: Major updates to project documentation:
+  - Updated main `README.md` with Quick Start section, enhanced usage examples, and comprehensive features list
+  - Enhanced examples README files across all endpoints with consistent formatting and better code examples
+  - Improved client usage documentation with factory pattern examples and configuration options
+- **Code organization**: Improved separation of concerns and maintainability:
+  - Clear distinction between client interface, implementation, and endpoint delegation
+  - Enhanced type safety across all client methods with proper TypeScript interface definitions
+  - Standardized error handling and response patterns across all endpoint integrations
+- **Examples consistency**: Standardized example code across all endpoints:
+  - Consistent client instantiation patterns using factory methods
+  - Unified error handling and logging approaches
+  - Improved code readability and documentation across all example files
+
+### Changed
+
+- **Version**: Bumped to 0.1.8 for enhanced client architecture and examples automation
+- **Client initialization**: Updated from direct constructor usage to factory pattern for better configuration management
+- **Examples structure**: Enhanced organization with centralized automation and documentation
+- **Development workflow**: Improved development experience with comprehensive examples system and better client interface
+
+### Fixed
+
+- **Client interface consistency**: Resolved inconsistencies in client method signatures and return types
+- **Examples execution**: Fixed path resolution and environment setup issues in example scripts
+- **Documentation accuracy**: Updated all documentation to reflect current implementation patterns and best practices
+
+---
+
 ## [0.1.7] - 2025-06-03
 
 ### Added

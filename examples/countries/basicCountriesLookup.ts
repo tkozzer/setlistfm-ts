@@ -5,7 +5,6 @@
  */
 
 import { createSetlistFMClient } from "../../src/client";
-import { searchCountries } from "../../src/endpoints/countries";
 import "dotenv/config";
 
 /**
@@ -17,13 +16,9 @@ import "dotenv/config";
 async function basicCountriesLookup(): Promise<void> {
   // Create SetlistFM client with automatic STANDARD rate limiting
   const client = createSetlistFMClient({
-
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
-
-  // Get the HTTP client for making requests
-  const httpClient = client.getHttpClient();
 
   try {
     console.log("🌍 Basic Countries Lookup Examples");
@@ -38,7 +33,7 @@ async function basicCountriesLookup(): Promise<void> {
     console.log("🔍 Example 1: Getting all supported countries");
     console.log("Fetching complete countries list...\n");
 
-    const countriesResult = await searchCountries(httpClient);
+    const countriesResult = await client.searchCountries();
 
     console.log(`✅ Retrieved ${countriesResult.total} countries total`);
     console.log(`📄 Page ${countriesResult.page} of results`);

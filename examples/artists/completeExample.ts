@@ -5,7 +5,6 @@
  */
 
 import { createSetlistFMClient } from "../../src/client";
-import { getArtist, getArtistSetlists, searchArtists } from "../../src/endpoints/artists";
 import "dotenv/config";
 
 /**
@@ -21,13 +20,9 @@ async function completeArtistExample(): Promise<void> {
   // Create SetlistFM client with API key from environment
   // The client automatically uses STANDARD rate limiting (2 req/sec, 1440 req/day)
   const client = createSetlistFMClient({
-
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
-
-  // Get the HTTP client for making requests
-  const httpClient = client.getHttpClient();
 
   try {
     console.log("🎼 Complete Artist Workflow Example");
@@ -38,7 +33,7 @@ async function completeArtistExample(): Promise<void> {
     const searchQuery = "Pink Floyd";
     console.log(`Searching for "${searchQuery}"...\n`);
 
-    const searchResults = await searchArtists(httpClient, {
+    const searchResults = await client.searchArtists({
       artistName: searchQuery,
       sort: "relevance",
     });
@@ -65,7 +60,7 @@ async function completeArtistExample(): Promise<void> {
     console.log(`\n🎨 Step 2: Get detailed information for "${selectedArtist.name}"`);
     console.log(`Using MBID: ${selectedArtist.mbid}\n`);
 
-    const artistDetails = await getArtist(httpClient, selectedArtist.mbid);
+    const artistDetails = await client.getArtist(selectedArtist.mbid);
 
     console.log("✅ Artist details retrieved:");
     console.log(`   Name: ${artistDetails.name}`);
@@ -84,7 +79,7 @@ async function completeArtistExample(): Promise<void> {
     console.log(`\n🎵 Step 3: Get setlists for ${artistDetails.name}`);
     console.log("Fetching first page of setlists...\n");
 
-    const setlists = await getArtistSetlists(httpClient, artistDetails.mbid);
+    const setlists = await client.getArtistSetlists(artistDetails.mbid);
 
     console.log(`✅ Found ${setlists.total} total setlists`);
     console.log(`📄 Page ${setlists.page}, showing ${setlists.setlist.length} setlists\n`);
