@@ -26,11 +26,11 @@ import type { HttpClient } from "@utils/http";
 import { getCityByGeoId } from "./getCityByGeoId";
 
 const city = await getCityByGeoId(httpClient, "5357527");
-// eslint-disable-next-line no-console
+
 console.log(city.name); // "Hollywood"
-// eslint-disable-next-line no-console
+
 console.log(city.state); // "California"
-// eslint-disable-next-line no-console
+
 console.log(city.country.name); // "United States"
 ```
 
@@ -59,9 +59,9 @@ import { searchCities } from "./searchCities";
 
 // Search by city name
 const results = await searchCities(httpClient, { name: "Hollywood" });
-// eslint-disable-next-line no-console
+
 console.log(results.total); // Total number of matching cities
-// eslint-disable-next-line no-console
+
 console.log(results.cities.length); // Number of cities on this page
 
 // Search by country and state
@@ -229,19 +229,18 @@ async function demonstrateCityEndpoints(httpClient: HttpClient) {
       p: 1
     });
 
-    // eslint-disable-next-line no-console
     console.log(`Found ${searchResults.total} cities matching "Hollywood"`);
 
     if (searchResults.cities.length > 0) {
       const firstCity = searchResults.cities[0];
-      // eslint-disable-next-line no-console
+
       console.log(`First result: ${firstCity.name}, ${firstCity.state} (${firstCity.id})`);
 
       // 2. Get detailed city information
       const city = await getCityByGeoId(httpClient, firstCity.id);
-      // eslint-disable-next-line no-console
+
       console.log(`City details: ${city.name} - ${city.state}, ${city.country.name}`);
-      // eslint-disable-next-line no-console
+
       console.log(`Coordinates: ${city.coords.lat}, ${city.coords.long}`);
     }
 
@@ -251,7 +250,7 @@ async function demonstrateCityEndpoints(httpClient: HttpClient) {
       state: "California",
       p: 1
     });
-    // eslint-disable-next-line no-console
+
     console.log(`Found ${californiaResults.total} cities in California`);
 
     // 4. Search by state code
@@ -259,13 +258,13 @@ async function demonstrateCityEndpoints(httpClient: HttpClient) {
       stateCode: "CA",
       p: 1
     });
-    // eslint-disable-next-line no-console
+
     console.log(`Found ${stateCodeResults.total} cities with state code CA`);
 
     // 5. Handle pagination
     if (searchResults.total > searchResults.itemsPerPage) {
       const totalPages = Math.ceil(searchResults.total / searchResults.itemsPerPage);
-      // eslint-disable-next-line no-console
+
       console.log(`Results span ${totalPages} pages`);
 
       // Get next page
@@ -273,7 +272,7 @@ async function demonstrateCityEndpoints(httpClient: HttpClient) {
         name: "Hollywood",
         p: 2
       });
-      // eslint-disable-next-line no-console
+
       console.log(`Page 2 has ${page2.cities.length} cities`);
     }
   }

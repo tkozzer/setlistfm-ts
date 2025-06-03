@@ -27,20 +27,19 @@ import { searchCountries } from "./searchCountries";
 
 // Get all supported countries
 const results = await searchCountries(httpClient, {});
-// eslint-disable-next-line no-console
+
 console.log(results.total); // Total number of countries
-// eslint-disable-next-line no-console
+
 console.log(results.country.length); // Number of countries on this page
 
 // Countries are automatically paginated by the API
 for (const country of results.country) {
-  // eslint-disable-next-line no-console
   console.log(`${country.code}: ${country.name}`);
 }
 
 // You can also call without parameters
 const allCountries = await searchCountries(httpClient);
-// eslint-disable-next-line no-console
+
 console.log(`${allCountries.country.length} countries available`);
 ```
 
@@ -124,31 +123,27 @@ async function demonstrateCountriesEndpoint(httpClient: HttpClient) {
     // Get all supported countries
     const results = await searchCountries(httpClient);
 
-    // eslint-disable-next-line no-console
     console.log(`Total countries available: ${results.total}`);
-    // eslint-disable-next-line no-console
+
     console.log(`Countries on this page: ${results.country.length}`);
-    // eslint-disable-next-line no-console
+
     console.log(`Current page: ${results.page}`);
-    // eslint-disable-next-line no-console
+
     console.log(`Items per page: ${results.itemsPerPage}`);
 
     // Display all countries
     results.country.forEach((country) => {
-      // eslint-disable-next-line no-console
       console.log(`${country.code}: ${country.name}`);
     });
 
     // Example with specific countries
     const unitedStates = results.country.find(c => c.code === "US");
     if (unitedStates) {
-      // eslint-disable-next-line no-console
       console.log(`Found: ${unitedStates.name} (${unitedStates.code})`);
     }
 
     const unitedKingdom = results.country.find(c => c.code === "GB");
     if (unitedKingdom) {
-      // eslint-disable-next-line no-console
       console.log(`Found: ${unitedKingdom.name} (${unitedKingdom.code})`);
     }
   }
