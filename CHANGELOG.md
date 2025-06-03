@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.7] - 2025-06-03
+
+### Added
+
+- **Setlists endpoints**: Complete implementation of both setlists endpoints with comprehensive functionality:
+  - `getSetlist()` - Retrieve setlist details by setlist ID with full artist, venue, and song information
+  - `searchSetlists()` - Search setlists by artist, venue, city, date, year, and other criteria with pagination
+- **Setlists examples directory**: Four comprehensive example files demonstrating real-world usage:
+  - `basicSetlistLookup.ts` - Basic setlist retrieval and search with Beatles example data
+  - `searchSetlists.ts` - Advanced search functionality with filtering, pagination, and Beatles historical data
+  - `completeExample.ts` - Comprehensive setlist analysis with Radiohead tour data and statistical insights
+  - `advancedAnalysis.ts` - Complex multi-year setlist analytics with rate limiting and detailed performance metrics
+- **Enhanced data validation**: Robust setlist and version ID validation with flexible format support for real API data
+- **Comprehensive testing**: 69 unit tests covering all setlists functionality, validation, error handling, and edge cases
+- **Real-world API integration**: Examples handle actual setlist.fm API responses including sets structure and song metadata
+- **100% test coverage**: Achieved complete test coverage across all implemented endpoints with 515+ tests
+
+### Enhanced
+
+- **API structure compatibility**: Updated validation to match actual setlist.fm API response format with `sets: { set: [...] }` structure
+- **Documentation**: Updated main README.md with setlists examples, usage patterns, and complete endpoint coverage tracking
+- **API coverage**: Completed setlists endpoints implementation (2/2) bringing total coverage to 11/12 implemented endpoints
+- **Type safety**: Complete TypeScript types for setlists data, songs, sets, tours, and validation schemas
+- **Error handling**: Comprehensive error handling patterns for setlists endpoints with proper validation feedback
+- **Index exports**: Enhanced main endpoints export with conflict resolution for shared types across modules
+
+### Changed
+
+- **Version**: Bumped to 0.1.7 for setlists endpoints implementation
+- **Project status**: Updated to reflect setlists endpoints as fully implemented alongside artists, cities, countries, and venues
+- **Examples structure**: Added setlists examples following established patterns with comprehensive real-world scenarios
+- **Validation schemas**: Updated setlist ID validation to support 7-8 character format and version ID validation for deprecated fields
+
+### Removed
+
+- **Deprecated endpoint**: Removed `getSetlistVersion` endpoint as it is deprecated by setlist.fm API
+- **Unused validation**: Cleaned up obsolete validation schemas and test data for deprecated functionality
+
+### Fixed
+
+- **API response structure**: Fixed setlists data structure to match actual API format with proper sets nesting
+- **Validation edge cases**: Resolved test failures for setlist ID and version ID validation with realistic data constraints
+- **Test coverage gaps**: Added comprehensive endpoint exports testing to achieve 100% coverage milestone
+- **Documentation consistency**: Updated all endpoint README files to remove eslint-disable directives and maintain consistent examples
+
+---
+
 ## [0.1.6] - 2025-06-03
 
 ### Enhanced
