@@ -6,25 +6,20 @@
 
 import type { Setlist } from "../../src/endpoints/setlists";
 import { createSetlistFMClient } from "../../src/client";
-import { getSetlist, searchSetlists } from "../../src/endpoints/setlists";
 import "dotenv/config";
 
 /**
  * Example: Advanced setlist analysis and statistics
  *
  * This example demonstrates advanced data processing techniques
- * for analyzing tour patterns, song frequencies, and venue statistics.
+ * for analyzing tour patterns, song frequencies, and venue statistics using the type-safe client.
  */
 async function advancedSetlistAnalysis(): Promise<void> {
-  // Create SetlistFM client with API key from environment
-  // The client automatically uses STANDARD rate limiting (2 req/sec, 1440 req/day)
+  // Create SetlistFM client with automatic STANDARD rate limiting
   const client = createSetlistFMClient({
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
-
-  // Get the HTTP client for making requests
-  const httpClient = client.getHttpClient();
 
   try {
     // Step 1: Collect comprehensive tour data
@@ -37,7 +32,7 @@ async function advancedSetlistAnalysis(): Promise<void> {
     for (const year of years) {
       console.log(`📅 Collecting ${year} data...`);
 
-      const yearSetlists = await searchSetlists(httpClient, {
+      const yearSetlists = await client.searchSetlists({
         artistName: "Pearl Jam",
         year,
         p: 1,
@@ -51,7 +46,7 @@ async function advancedSetlistAnalysis(): Promise<void> {
         const totalPages = Math.min(3, Math.ceil(yearSetlists.total / yearSetlists.itemsPerPage));
 
         for (let page = 2; page <= totalPages; page++) {
-          const additionalSetlists = await searchSetlists(httpClient, {
+          const additionalSetlists = await client.searchSetlists({
             artistName: "Pearl Jam",
             year,
             p: page,
@@ -145,7 +140,7 @@ async function advancedSetlistAnalysis(): Promise<void> {
 
     for (const setlistSummary of sampleSetlists) {
       try {
-        const detailedSetlist = await getSetlist(httpClient, setlistSummary.id);
+        const detailedSetlist = await client.getSetlist(setlistSummary.id);
 
         detailedSetlist.sets.set.forEach((set) => {
           songAnalysis.totalSets += 1;

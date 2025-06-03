@@ -6,7 +6,6 @@
 
 import type { City } from "../../src/endpoints/cities";
 import { createSetlistFMClient } from "../../src/client";
-import { getCityByGeoId, searchCities } from "../../src/endpoints/cities";
 import "dotenv/config";
 
 /**
@@ -18,13 +17,9 @@ import "dotenv/config";
 async function completeExample(): Promise<void> {
   // Create SetlistFM client with automatic STANDARD rate limiting
   const client = createSetlistFMClient({
-
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
-
-  // Get the HTTP client for making requests
-  const httpClient = client.getHttpClient();
 
   try {
     console.log("🌍 Complete Cities Workflow Example");
@@ -37,7 +32,7 @@ async function completeExample(): Promise<void> {
 
     // Step 1: Find all major cities named "London"
     console.log("🔍 Step 1: Finding all cities named 'London'");
-    const londonSearch = await searchCities(httpClient, {
+    const londonSearch = await client.searchCities({
       name: "London",
     });
 
@@ -49,7 +44,7 @@ async function completeExample(): Promise<void> {
 
     // Collect all London cities across multiple pages
     while (hasMorePages && currentPage <= 3) { // Limit to first 3 pages for demo
-      const pageResults = await searchCities(httpClient, {
+      const pageResults = await client.searchCities({
         name: "London",
         p: currentPage,
       });
@@ -109,7 +104,7 @@ async function completeExample(): Promise<void> {
 
     if (londonUK) {
       console.log("\n🇬🇧 London, United Kingdom:");
-      const ukDetails = await getCityByGeoId(httpClient, londonUK.id);
+      const ukDetails = await client.getCityByGeoId(londonUK.id);
       console.log(`  Name: ${ukDetails.name}`);
       console.log(`  State: ${ukDetails.state} (${ukDetails.stateCode})`);
       console.log(`  Coordinates: ${ukDetails.coords.lat}°N, ${Math.abs(ukDetails.coords.long)}°W`);
@@ -119,14 +114,14 @@ async function completeExample(): Promise<void> {
       // If we can't find exact "London", try searching specifically for it
       console.log("\n🇬🇧 Searching specifically for London, UK...");
       try {
-        const ukLondonSearch = await searchCities(httpClient, {
+        const ukLondonSearch = await client.searchCities({
           name: "London",
           country: "GB",
         });
 
         if (ukLondonSearch.cities.length > 0) {
           const londonUKResult = ukLondonSearch.cities.find(city => city.name === "London") || ukLondonSearch.cities[0];
-          const ukDetails = await getCityByGeoId(httpClient, londonUKResult.id);
+          const ukDetails = await client.getCityByGeoId(londonUKResult.id);
           console.log(`  Name: ${ukDetails.name}`);
           console.log(`  State: ${ukDetails.state} (${ukDetails.stateCode})`);
           console.log(`  Coordinates: ${ukDetails.coords.lat}°N, ${Math.abs(ukDetails.coords.long)}°W`);
@@ -145,7 +140,7 @@ async function completeExample(): Promise<void> {
 
     if (londonCanada) {
       console.log("\n🇨🇦 London, Ontario, Canada:");
-      const canadaDetails = await getCityByGeoId(httpClient, londonCanada.id);
+      const canadaDetails = await client.getCityByGeoId(londonCanada.id);
       console.log(`  Name: ${canadaDetails.name}`);
       console.log(`  State: ${canadaDetails.state} (${canadaDetails.stateCode})`);
       console.log(`  Coordinates: ${canadaDetails.coords.lat}°N, ${Math.abs(canadaDetails.coords.long)}°W`);
@@ -155,7 +150,7 @@ async function completeExample(): Promise<void> {
       // Try searching specifically for London, Ontario
       console.log("\n🇨🇦 Searching specifically for London, Ontario...");
       try {
-        const canadaLondonSearch = await searchCities(httpClient, {
+        const canadaLondonSearch = await client.searchCities({
           name: "London",
           country: "CA",
         });
@@ -165,7 +160,7 @@ async function completeExample(): Promise<void> {
             city.name === "London" && city.state.includes("Ontario"),
           ) || canadaLondonSearch.cities[0];
 
-          const canadaDetails = await getCityByGeoId(httpClient, londonOntario.id);
+          const canadaDetails = await client.getCityByGeoId(londonOntario.id);
           console.log(`  Name: ${canadaDetails.name}`);
           console.log(`  State: ${canadaDetails.state} (${canadaDetails.stateCode})`);
           console.log(`  Coordinates: ${canadaDetails.coords.lat}°N, ${Math.abs(canadaDetails.coords.long)}°W`);
@@ -197,7 +192,7 @@ async function completeExample(): Promise<void> {
         console.log(`\n🔍 Searching for ${cityInfo.name}, ${cityInfo.state}...`);
 
         // First try with name and country
-        const searchResult = await searchCities(httpClient, {
+        const searchResult = await client.searchCities({
           name: cityInfo.name,
           country: cityInfo.country,
         });
@@ -227,7 +222,7 @@ async function completeExample(): Promise<void> {
         }
 
         if (targetCity) {
-          const details = await getCityByGeoId(httpClient, targetCity.id);
+          const details = await client.getCityByGeoId(targetCity.id);
           console.log(`🏙️ ${details.name}, ${details.state}:`);
           console.log(`   Country: ${details.country.name}`);
           console.log(`   Coordinates: ${details.coords.lat}, ${details.coords.long}`);

@@ -17,6 +17,16 @@ Create a `.env` file in the project root (`setlistfm-ts/.env`):
 SETLISTFM_API_KEY=your-api-key-here
 ```
 
+## Key Features
+
+These examples showcase the **new type-safe client API** with significant improvements:
+
+- **Cleaner syntax**: `client.getArtist(mbid)` instead of `getArtist(httpClient, mbid)`
+- **No HTTP client management**: Direct method calls on the client instance
+- **Simplified pagination**: `client.getArtistSetlists(mbid, 2)` instead of `getArtistSetlists(httpClient, mbid, { p: 2 })`
+- **Full type safety**: IDE autocompletion and type checking for all methods
+- **Consistent interface**: All endpoint methods follow the same pattern
+
 ## Rate Limiting
 
 All examples automatically use **STANDARD rate limiting** (2 requests/second, 1440 requests/day) by default. This protects you from accidentally hitting API rate limits while exploring the examples.
@@ -36,8 +46,8 @@ The examples display rate limiting information to help you understand current us
 **What it demonstrates**:
 
 - Creating a SetlistFM client with default rate limiting
-- Looking up an artist using their MBID
-- Searching for artists and getting detailed information
+- Using the type-safe `client.getArtist()` method to lookup artists by MBID
+- Using the type-safe `client.searchArtists()` method to search for artists
 - Handling and displaying artist information
 - Viewing rate limiting status
 - Basic error handling
@@ -54,7 +64,7 @@ pnpm dlx tsx examples/artists/basicArtistLookup.ts
 
 **What it demonstrates**:
 
-- Searching artists by name with various criteria
+- Using the type-safe `client.searchArtists()` method with various criteria
 - Using pagination and sorting parameters
 - Searching by MBID for validation
 - Handling empty search results and expected 404 responses
@@ -73,7 +83,7 @@ pnpm dlx tsx examples/artists/searchArtists.ts
 
 **What it demonstrates**:
 
-- Getting paginated setlist data for an artist
+- Using the type-safe `client.getArtistSetlists()` method with pagination
 - Navigating through multiple pages of results
 - Analyzing setlist data (venues, countries, years)
 - Working with complex nested data structures
@@ -92,7 +102,7 @@ pnpm dlx tsx examples/artists/getArtistSetlists.ts
 
 **What it demonstrates**:
 
-- Real-world workflow: search → get details → get setlists
+- Real-world workflow using type-safe client methods: `searchArtists()` → `getArtist()` → `getArtistSetlists()`
 - Data analysis and statistics across multiple API calls
 - Combining multiple API calls efficiently
 - Advanced data processing and presentation
@@ -108,41 +118,38 @@ pnpm dlx tsx examples/artists/completeExample.ts
 
 When you run these examples, you'll see formatted output with:
 
-- 🔍 Search operations and results
+- 🔍 Type-safe search operations and results
 - ✅ Successful data retrieval confirmations
-- 📄 Pagination information
+- 📄 Pagination information with clean client method calls
 - 🎵 Setlist and performance data
 - 📊 Statistical analysis and rate limiting information
 - ❌ Error handling demonstrations
 
 ## Code Structure
 
-Each example follows a consistent pattern using the high-level client with automatic rate limiting:
+Each example follows a consistent pattern using the type-safe client with automatic rate limiting:
 
 ```typescript
 import { createSetlistFMClient } from "../../src/client";
-import { /* endpoint functions */ } from "../../src/endpoints/artists";
 import "dotenv/config";
 
 async function exampleFunction(): Promise<void> {
   // Create SetlistFM client with automatic STANDARD rate limiting
   const client = createSetlistFMClient({
-
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
 
-  // Get the HTTP client for making requests
-  const httpClient = client.getHttpClient();
-
   try {
-    // Example implementation with API calls
+    // Use type-safe client methods directly
+    const artists = await client.searchArtists({ artistName: "Radiohead" });
+    const artist = await client.getArtist("some-mbid");
+    const setlists = await client.getArtistSetlists("some-mbid");
+    const page2 = await client.getArtistSetlists("some-mbid", 2);
 
     // Display rate limiting information
     const rateLimitStatus = client.getRateLimitStatus();
-
     console.log(`Profile: ${rateLimitStatus.profile}`);
-
     console.log(`Requests: ${rateLimitStatus.requestsThisSecond}/${rateLimitStatus.secondLimit}`);
   }
   catch (error) {
@@ -155,15 +162,16 @@ async function exampleFunction(): Promise<void> {
 
 We recommend running the examples in this order:
 
-1. **Start with `basicArtistLookup.ts`** - Learn the fundamentals and rate limiting
-2. **Try `searchArtists.ts`** - Understand search capabilities and error handling
-3. **Explore `getArtistSetlists.ts`** - Work with complex data and pagination
-4. **Run `completeExample.ts`** - See everything working together in a real workflow
+1. **Start with `basicArtistLookup.ts`** - Learn the type-safe client fundamentals and rate limiting
+2. **Try `searchArtists.ts`** - Understand search capabilities with `client.searchArtists()` and error handling
+3. **Explore `getArtistSetlists.ts`** - Work with complex data and simplified pagination using `client.getArtistSetlists()`
+4. **Run `completeExample.ts`** - See all type-safe methods working together in a real workflow
 
 ## Rate Limiting Features
 
 All examples demonstrate:
 
+- **Type-safe API calls**: Use client methods instead of raw endpoint functions
 - **Automatic rate limiting**: STANDARD profile (2 req/sec, 1440 req/day) applied by default
 - **Real-time tracking**: See current request counts and limits
 - **Transparent handling**: Rate limiting works behind the scenes
@@ -174,7 +182,6 @@ To use different rate limiting profiles:
 ```typescript
 // Premium rate limiting (16 req/sec, 50,000 req/day)
 const premiumClient = createSetlistFMClient({
-
   apiKey: process.env.SETLISTFM_API_KEY!,
   userAgent: "your-app-name",
   rateLimit: { profile: RateLimitProfile.PREMIUM }
@@ -182,11 +189,14 @@ const premiumClient = createSetlistFMClient({
 
 // Disable rate limiting (advanced users only)
 const unlimitedClient = createSetlistFMClient({
-
   apiKey: process.env.SETLISTFM_API_KEY!,
   userAgent: "your-app-name",
   rateLimit: { profile: RateLimitProfile.DISABLED }
 });
+
+// All clients use the same type-safe methods
+const artists = await premiumClient.searchArtists({ artistName: "Tool" });
+const setlists = await unlimitedClient.getArtistSetlists("some-mbid");
 ```
 
 ## Error Handling
@@ -200,12 +210,12 @@ All examples include comprehensive error handling demonstrating:
 
 ## Data Analysis Features
 
-The examples show practical data analysis techniques:
+The examples show practical data analysis techniques using type-safe client responses:
 
-- Counting unique venues, cities, and countries
-- Sorting performances by date
-- Grouping setlists by year
-- Statistical summaries and trends
+- Counting unique venues, cities, and countries from typed setlist data
+- Sorting performances by date with full type safety
+- Grouping setlists by year using clean API responses
+- Statistical summaries and trends with auto-completion support
 - Performance analytics across different time periods
 
 ## Real API Data
@@ -242,11 +252,11 @@ These examples use real data from the setlist.fm API, including:
 
 After exploring these examples:
 
-1. Try modifying the search terms and MBIDs
-2. Experiment with different pagination parameters
+1. Try modifying the search terms and MBIDs using the type-safe client methods
+2. Experiment with different pagination parameters (note the simplified `getArtistSetlists(mbid, page)` syntax)
 3. Test different rate limiting profiles (PREMIUM or DISABLED)
-4. Add your own data analysis logic
-5. Integrate the patterns into your own applications
+4. Add your own data analysis logic using the clean API responses
+5. Integrate the type-safe client patterns into your own applications
 
 ## Related Documentation
 

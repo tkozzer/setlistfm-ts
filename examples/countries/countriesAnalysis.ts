@@ -5,8 +5,6 @@
  */
 
 import { createSetlistFMClient } from "../../src/client";
-import { searchCities } from "../../src/endpoints/cities";
-import { searchCountries } from "../../src/endpoints/countries";
 import "dotenv/config";
 
 /**
@@ -18,13 +16,9 @@ import "dotenv/config";
 async function countriesAnalysis(): Promise<void> {
   // Create SetlistFM client with automatic STANDARD rate limiting
   const client = createSetlistFMClient({
-
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
-
-  // Get the HTTP client for making requests
-  const httpClient = client.getHttpClient();
 
   try {
     console.log("📊 Countries Analysis with Rate Limiting");
@@ -39,7 +33,7 @@ async function countriesAnalysis(): Promise<void> {
     console.log("🔍 Phase 1: Retrieving all supported countries");
     console.log("=".repeat(50));
 
-    const countriesResult = await searchCountries(httpClient);
+    const countriesResult = await client.searchCountries();
     console.log(`✅ Retrieved ${countriesResult.total} countries\n`);
 
     // Display rate limiting status after first request
@@ -114,7 +108,7 @@ async function countriesAnalysis(): Promise<void> {
           console.log(`🔍 Checking cities in ${country.name} (${countryCode})...`);
 
           // Search for cities in this country
-          const citiesResult = await searchCities(httpClient, {
+          const citiesResult = await client.searchCities({
             country: countryCode,
             p: 1, // Just get first page for analysis
           });

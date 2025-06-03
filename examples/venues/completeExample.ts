@@ -5,25 +5,20 @@
  */
 
 import { createSetlistFMClient } from "../../src/client";
-import { getVenue, getVenueSetlists, searchVenues } from "../../src/endpoints/venues";
 import "dotenv/config";
 
 /**
  * Complete example: Advanced venue analysis workflow
  *
  * This example demonstrates a real-world workflow that combines
- * all venue endpoints for comprehensive venue and setlist analysis.
+ * all venue endpoints for comprehensive venue and setlist analysis using the type-safe client.
  */
 async function completeVenueExample(): Promise<void> {
   // Create SetlistFM client with automatic STANDARD rate limiting
   const client = createSetlistFMClient({
-
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
-
-  // Get the HTTP client for making requests
-  const httpClient = client.getHttpClient();
 
   try {
     console.log("🎪 Complete Venues Analysis Workflow with Rate Limiting");
@@ -55,7 +50,7 @@ async function completeVenueExample(): Promise<void> {
     for (const city of musicCities) {
       console.log(`🔍 Searching venues in ${city.name}, ${city.state}...`);
 
-      const venueSearch = await searchVenues(httpClient, {
+      const venueSearch = await client.searchVenues({
         cityName: city.name,
         stateCode: city.stateCode,
         country: city.country,
@@ -113,7 +108,7 @@ async function completeVenueExample(): Promise<void> {
     for (const venueType of venueTypes) {
       console.log(`🔍 Analyzing "${venueType}" venues...`);
 
-      const typeSearch = await searchVenues(httpClient, {
+      const typeSearch = await client.searchVenues({
         name: venueType,
         p: 1,
       });
@@ -164,7 +159,7 @@ async function completeVenueExample(): Promise<void> {
 
       try {
         // Search for the venue
-        const search = await searchVenues(httpClient, {
+        const search = await client.searchVenues({
           name: venueInfo.name,
         });
 
@@ -173,121 +168,168 @@ async function completeVenueExample(): Promise<void> {
           const venue = search.venue[0];
 
           // Get detailed venue information
-          const venueDetails = await getVenue(httpClient, venue.id);
+          const venueDetails = await client.getVenue(venue.id);
           console.log(`✅ Found: ${venueDetails.name}`);
           if (venueDetails.city) {
             console.log(`   📍 Location: ${venueDetails.city.name}, ${venueDetails.city.country.name}`);
           }
 
           // Get setlists for analysis
-          const setlists = await getVenueSetlists(httpClient, venue.id, { p: 1 });
+          const setlists = await client.getVenueSetlists(venue.id);
           console.log(`   🎵 Total setlists: ${setlists.total}`);
 
           // Analyze recent activity
           const recentArtists: string[] = [];
           const artistCounts = new Map<string, number>();
 
-          // Get multiple pages for better analysis
-          const maxPages = Math.min(3, Math.ceil(setlists.total / setlists.itemsPerPage));
-          for (let page = 1; page <= maxPages; page++) {
-            try {
-              const pageSetlists = await getVenueSetlists(httpClient, venue.id, { p: page });
+          // Analyze first page of setlists
+          setlists.setlist.forEach((setlist) => {
+            const artistName = setlist.artist.name;
+            recentArtists.push(artistName);
+            artistCounts.set(artistName, (artistCounts.get(artistName) || 0) + 1);
+          });
 
-              pageSetlists.setlist.forEach((setlist) => {
-                const artistName = setlist.artist.name;
-                recentArtists.push(artistName);
-                artistCounts.set(artistName, (artistCounts.get(artistName) || 0) + 1);
-              });
-
-              if (pageSetlists.setlist.length < pageSetlists.itemsPerPage)
-                break;
-            }
-            catch {
-              break;
-            }
-          }
-
-          // Get top artists
+          // Get top artists for this venue
           const topArtists = Array.from(artistCounts.entries())
             .sort(([, a], [, b]) => b - a)
             .slice(0, 5)
             .map(([name, count]) => ({ name, count }));
 
+          console.log(`   🎤 Artists on first page: ${recentArtists.slice(0, 5).join(", ")}`);
+          console.log(`   ⭐ Top artist: ${topArtists[0]?.name || "None"} (${topArtists[0]?.count || 0} shows)`);
+
           venueAnalysis.push({
             name: venueDetails.name,
             details: venueDetails,
             setlistCount: setlists.total,
-            recentArtists: recentArtists.slice(0, 5),
+            recentArtists: recentArtists.slice(0, 10),
             topArtists,
           });
 
-          console.log(`   🎤 Recent artists: ${recentArtists.slice(0, 3).join(", ")}`);
-          if (topArtists.length > 0) {
-            console.log(`   ⭐ Top artist: ${topArtists[0].name} (${topArtists[0].count} shows)`);
-          }
+          // Display rate limiting status during venue analysis
+          const duringVenueAnalysis = client.getRateLimitStatus();
+          console.log(`   📊 Rate Limiting: ${duringVenueAnalysis.requestsThisSecond}/${duringVenueAnalysis.secondLimit} requests this second`);
 
-          // Display rate limiting status during famous venue analysis
-          const duringFamousAnalysis = client.getRateLimitStatus();
-          console.log(`   📊 Rate Limiting: ${duringFamousAnalysis.requestsThisSecond}/${duringFamousAnalysis.secondLimit} requests this second`);
+          // Check if we're hitting the rate limit
+          if (duringVenueAnalysis.requestsThisSecond >= (duringVenueAnalysis.secondLimit || 2)) {
+            console.log(`   ⚠️  Rate limit reached, subsequent requests will be queued`);
+          }
         }
         else {
-          console.log(`❌ Could not find: ${venueInfo.name}`);
+          console.log(`   ❌ No venues found for "${venueInfo.name}"`);
         }
       }
-      catch {
-        console.log(`❌ Error analyzing: ${venueInfo.name}`);
+      catch (error) {
+        console.log(`   ❌ Error analyzing ${venueInfo.name}: ${error}`);
       }
 
-      console.log();
+      console.log(); // Empty line for readability
     }
 
-    // Phase 4: Geographic and statistical analysis
-    console.log("📊 Phase 4: Final analysis and insights");
-    console.log("---------------------------------------\n");
+    // Phase 4: Comparative analysis
+    console.log("📊 Phase 4: Comparative analysis");
+    console.log("---------------------------------\n");
 
-    // City venue summary
-    console.log("🌍 City venue summary:");
+    // City venue statistics
+    console.log("🌆 City venue counts:");
     cityVenueData
       .sort((a, b) => b.totalVenues - a.totalVenues)
       .forEach((cityData, index) => {
         console.log(`${index + 1}. ${cityData.city}: ${cityData.totalVenues} venues`);
       });
 
-    // Famous venue rankings
-    console.log("\n🏆 Famous venue setlist rankings:");
-    venueAnalysis
-      .sort((a, b) => b.setlistCount - a.setlistCount)
-      .forEach((venue, index) => {
-        console.log(`${index + 1}. ${venue.name}: ${venue.setlistCount} setlists`);
-        if (venue.details.city) {
-          console.log(`   📍 ${venue.details.city.name}, ${venue.details.city.country.name}`);
-        }
-        if (venue.topArtists.length > 0) {
-          console.log(`   🎤 Top performer: ${venue.topArtists[0].name} (${venue.topArtists[0].count} shows)`);
-        }
-      });
-
-    // Venue type insights
-    console.log("\n🏗️  Venue type insights:");
-    console.log(`- Most common type: ${venueTypeStats[0].type} (${venueTypeStats[0].count} venues)`);
-    console.log(`- Total venues analyzed: ${venueTypeStats.reduce((sum, stat) => sum + stat.count, 0)}`);
-    console.log(`- Types analyzed: ${venueTypeStats.length}`);
-
-    // Geographic insights
-    const totalCityVenues = cityVenueData.reduce((sum, city) => sum + city.totalVenues, 0);
-    console.log(`\n🌎 Geographic insights:`);
-    console.log(`- Major music cities analyzed: ${musicCities.length}`);
-    console.log(`- Total venues in major cities: ${totalCityVenues}`);
-    console.log(`- Average venues per major city: ${Math.round(totalCityVenues / musicCities.length)}`);
-
-    // Activity insights
-    const totalSetlists = venueAnalysis.reduce((sum, venue) => sum + venue.setlistCount, 0);
-    console.log(`\n🎵 Activity insights:`);
-    console.log(`- Famous venues analyzed: ${venueAnalysis.length}`);
-    console.log(`- Total setlists in famous venues: ${totalSetlists}`);
+    // Famous venue statistics
     if (venueAnalysis.length > 0) {
-      console.log(`- Average setlists per famous venue: ${Math.round(totalSetlists / venueAnalysis.length)}`);
+      console.log("\n🌟 Famous venue analysis:");
+      venueAnalysis
+        .sort((a, b) => b.setlistCount - a.setlistCount)
+        .forEach((venue, index) => {
+          console.log(`${index + 1}. ${venue.name}: ${venue.setlistCount} total setlists`);
+          if (venue.details.city) {
+            console.log(`   📍 ${venue.details.city.name}, ${venue.details.city.country.name}`);
+          }
+          if (venue.topArtists.length > 0) {
+            console.log(`   🎤 Top artist: ${venue.topArtists[0].name} (${venue.topArtists[0].count} shows)`);
+          }
+        });
+
+      // Most active venue
+      const mostActiveVenue = venueAnalysis.reduce((max, venue) =>
+        venue.setlistCount > max.setlistCount ? venue : max,
+      );
+
+      console.log(`\n🏆 Most active venue: ${mostActiveVenue.name} (${mostActiveVenue.setlistCount} setlists)`);
+
+      // Most diverse venue (most unique artists)
+      const mostDiverseVenue = venueAnalysis.reduce((max, venue) =>
+        venue.topArtists.length > max.topArtists.length ? venue : max,
+      );
+
+      console.log(`🎭 Most diverse venue: ${mostDiverseVenue.name} (${mostDiverseVenue.topArtists.length} unique artists on first page)`);
     }
+
+    // Phase 5: Geographic insights
+    console.log("\n🗺️  Phase 5: Geographic insights");
+    console.log("----------------------------------\n");
+
+    // Analyze venue distribution by country
+    const countryStats = new Map<string, { count: number; cities: Set<string> }>();
+
+    cityVenueData.forEach((cityData) => {
+      // Extract country from city data (this is simplified for the example)
+      const isUS = cityData.city.includes("Tennessee") || cityData.city.includes("Texas")
+        || cityData.city.includes("New York") || cityData.city.includes("California");
+      const country = isUS ? "United States" : "United Kingdom";
+
+      if (!countryStats.has(country)) {
+        countryStats.set(country, { count: 0, cities: new Set() });
+      }
+
+      const stats = countryStats.get(country)!;
+      stats.count += cityData.totalVenues;
+      stats.cities.add(cityData.city);
+    });
+
+    console.log("🌍 Venue distribution by country:");
+    Array.from(countryStats.entries()).forEach(([country, stats]) => {
+      console.log(`${country}: ${stats.count} venues across ${stats.cities.size} cities`);
+      console.log(`   Cities: ${Array.from(stats.cities).join(", ")}`);
+    });
+
+    // Phase 6: Final insights and recommendations
+    console.log("\n💡 Phase 6: Insights and recommendations");
+    console.log("----------------------------------------\n");
+
+    const insights = [
+      `Analyzed ${cityVenueData.length} major music cities`,
+      `Discovered ${venueTypeStats.length} different venue types`,
+      `Deep-dived into ${venueAnalysis.length} famous venues`,
+      `Found ${cityVenueData.reduce((sum, city) => sum + city.totalVenues, 0)} total venues across all cities`,
+    ];
+
+    console.log("📈 Key insights:");
+    insights.forEach((insight, index) => {
+      console.log(`${index + 1}. ${insight}`);
+    });
+
+    if (venueTypeStats.length > 0) {
+      const topVenueType = venueTypeStats[0];
+      console.log(`\n🏟️  Most common venue type: "${topVenueType.type}" (${topVenueType.count} venues)`);
+    }
+
+    if (cityVenueData.length > 0) {
+      const topMusicCity = cityVenueData.reduce((max, city) =>
+        city.totalVenues > max.totalVenues ? city : max,
+      );
+      console.log(`🎵 Top music city: ${topMusicCity.city} (${topMusicCity.totalVenues} venues)`);
+    }
+
+    console.log("\n💡 Recommendations for further analysis:");
+    console.log("• Analyze seasonal patterns in venue bookings");
+    console.log("• Study correlation between venue size and artist popularity");
+    console.log("• Investigate genre preferences by venue type");
+    console.log("• Compare venue activity across different time periods");
+    console.log("• Analyze tour routing patterns between venues");
 
     // Final rate limiting status
     const finalStatus = client.getRateLimitStatus();
@@ -296,15 +338,16 @@ async function completeVenueExample(): Promise<void> {
     console.log(`Requests this second: ${finalStatus.requestsThisSecond}/${finalStatus.secondLimit}`);
     console.log(`Requests today: ${finalStatus.requestsThisDay}/${finalStatus.dayLimit}`);
 
-    // Final summary
-    console.log("\n🎯 Summary:");
-    console.log("This analysis demonstrates the comprehensive venue data available");
-    console.log("in the setlist.fm API, from major music cities to iconic venues,");
-    console.log("providing insights into the global live music landscape.");
-    console.log("\n✅ Complete venue analysis completed successfully with rate limiting protection!");
+    console.log("\n✅ Complete venue analysis workflow finished successfully!");
+    console.log("This comprehensive analysis demonstrates production-ready patterns for:");
+    console.log("• Multi-city venue discovery and comparison");
+    console.log("• Venue categorization and type analysis");
+    console.log("• Famous venue deep-dive with setlist analysis");
+    console.log("• Geographic distribution and insights");
+    console.log("• Rate limiting management throughout complex workflows");
   }
   catch (error) {
-    console.error("❌ Error in complete venue analysis:", error);
+    console.error("❌ Error in complete venue example:", error);
 
     if (error instanceof Error) {
       console.error(`Error message: ${error.message}`);

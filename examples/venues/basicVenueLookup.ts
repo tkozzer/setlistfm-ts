@@ -5,25 +5,20 @@
  */
 
 import { createSetlistFMClient } from "../../src/client";
-import { getVenue, searchVenues } from "../../src/endpoints/venues";
 import "dotenv/config";
 
 /**
  * Example: Basic venue lookup by venue ID
  *
  * This example demonstrates how to retrieve venue information
- * using their unique venue identifier.
+ * using their unique venue identifier with the type-safe client.
  */
 async function basicVenueLookup(): Promise<void> {
   // Create SetlistFM client with automatic STANDARD rate limiting
   const client = createSetlistFMClient({
-
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
-
-  // Get the HTTP client for making requests
-  const httpClient = client.getHttpClient();
 
   try {
     console.log("🎪 Basic Venue Lookup Examples");
@@ -38,7 +33,7 @@ async function basicVenueLookup(): Promise<void> {
     console.log("🔍 Example 1: Search and lookup workflow");
     console.log("Searching for venues named 'Madison Square Garden'...\n");
 
-    const msgSearch = await searchVenues(httpClient, {
+    const msgSearch = await client.searchVenues({
       name: "Madison Square Garden",
     });
 
@@ -64,7 +59,7 @@ async function basicVenueLookup(): Promise<void> {
 
       // Get detailed venue information
       console.log("\n🔍 Looking up detailed venue information...");
-      const msgDetails = await getVenue(httpClient, msg.id);
+      const msgDetails = await client.getVenue(msg.id);
 
       console.log("\n✅ Venue details found!");
       console.log(`Name: ${msgDetails.name}`);
@@ -84,7 +79,7 @@ async function basicVenueLookup(): Promise<void> {
     console.log("\n🔍 Example 2: Finding Wembley Stadium");
     console.log("Searching for venues named 'Wembley'...\n");
 
-    const wembleySearch = await searchVenues(httpClient, {
+    const wembleySearch = await client.searchVenues({
       name: "Wembley",
     });
 
@@ -107,7 +102,7 @@ async function basicVenueLookup(): Promise<void> {
       console.log(`Venue ID: ${wembley.id}`);
 
       // Get detailed information
-      const wembleyDetails = await getVenue(httpClient, wembley.id);
+      const wembleyDetails = await client.getVenue(wembley.id);
       console.log(`\n✅ Wembley details:`);
       if (wembleyDetails.city) {
         console.log(`Coordinates: ${wembleyDetails.city.coords.lat}°N, ${Math.abs(wembleyDetails.city.coords.long)}°W`);
@@ -119,7 +114,7 @@ async function basicVenueLookup(): Promise<void> {
     console.log("\n🔍 Example 3: Finding Red Rocks Amphitheatre");
     console.log("Searching for venues with 'Red Rocks'...\n");
 
-    const redRocksSearch = await searchVenues(httpClient, {
+    const redRocksSearch = await client.searchVenues({
       name: "Red Rocks",
     });
 
@@ -141,7 +136,7 @@ async function basicVenueLookup(): Promise<void> {
       console.log(`Venue ID: ${redRocks.id}`);
 
       // Get detailed information
-      const redRocksDetails = await getVenue(httpClient, redRocks.id);
+      const redRocksDetails = await client.getVenue(redRocks.id);
       console.log(`\n✅ Red Rocks details:`);
       if (redRocksDetails.city) {
         console.log(`Coordinates: ${redRocksDetails.city.coords.lat}°N, ${Math.abs(redRocksDetails.city.coords.long)}°W`);
@@ -153,7 +148,7 @@ async function basicVenueLookup(): Promise<void> {
     console.log("\n🔍 Example 4: Finding venues in Nashville");
     console.log("Searching for venues in Nashville, TN...\n");
 
-    const nashvilleSearch = await searchVenues(httpClient, {
+    const nashvilleSearch = await client.searchVenues({
       cityName: "Nashville",
       stateCode: "TN",
       country: "US",
@@ -184,7 +179,7 @@ async function basicVenueLookup(): Promise<void> {
 
         // Get detailed info for the first valid venue
         console.log(`\n🔍 Getting details for: ${topVenues[0].name}`);
-        const venueDetails = await getVenue(httpClient, topVenues[0].id);
+        const venueDetails = await client.getVenue(topVenues[0].id);
 
         console.log(`\n✅ Venue details:`);
         console.log(`Name: ${venueDetails.name}`);

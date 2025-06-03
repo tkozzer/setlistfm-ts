@@ -5,25 +5,20 @@
  */
 
 import { createSetlistFMClient } from "../../src/client";
-import { getVenue, getVenueSetlists, searchVenues } from "../../src/endpoints/venues";
 import "dotenv/config";
 
 /**
  * Example: Getting setlists for venues
  *
  * This example demonstrates how to retrieve setlists for venues
- * and analyze the data.
+ * and analyze the data using the type-safe client.
  */
 async function getVenueSetlistsExample(): Promise<void> {
   // Create SetlistFM client with automatic STANDARD rate limiting
   const client = createSetlistFMClient({
-
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
-
-  // Get the HTTP client for making requests
-  const httpClient = client.getHttpClient();
 
   try {
     console.log("🎵 Venue Setlists Examples with Rate Limiting");
@@ -38,7 +33,7 @@ async function getVenueSetlistsExample(): Promise<void> {
     console.log("🔍 Example 1: Madison Square Garden setlists");
     console.log("Finding Madison Square Garden...\n");
 
-    const msgSearch = await searchVenues(httpClient, {
+    const msgSearch = await client.searchVenues({
       name: "Madison Square Garden",
     });
 
@@ -59,7 +54,7 @@ async function getVenueSetlistsExample(): Promise<void> {
 
       // Get first page of setlists
       console.log("\n🎵 Getting setlists...");
-      const setlists = await getVenueSetlists(httpClient, msg.id, { p: 1 });
+      const setlists = await client.getVenueSetlists(msg.id);
 
       console.log(`✅ Found ${setlists.total} total setlists for ${msg.name}`);
       console.log(`📄 Page ${setlists.page}: ${setlists.setlist.length} setlists`);
@@ -120,11 +115,11 @@ async function getVenueSetlistsExample(): Promise<void> {
 
     for (const venueInfo of famousVenues) {
       try {
-        const search = await searchVenues(httpClient, venueInfo.search);
+        const search = await client.searchVenues(venueInfo.search);
 
         if (search.venue.length > 0) {
           const venue = search.venue[0];
-          const setlists = await getVenueSetlists(httpClient, venue.id, { p: 1 });
+          const setlists = await client.getVenueSetlists(venue.id);
 
           venueStats.push({
             name: venue.name,
@@ -168,12 +163,12 @@ async function getVenueSetlistsExample(): Promise<void> {
         });
     }
 
-    // Example 3: Analyze setlists with pagination
-    console.log("\n🔍 Example 3: Multi-page setlist analysis");
-    console.log("Analyzing venue with many setlists...\n");
+    // Example 3: Analyze setlists for a theater venue
+    console.log("\n🔍 Example 3: Theater venue setlist analysis");
+    console.log("Analyzing venue setlists...\n");
 
     // Find a venue with lots of setlists
-    const venueSearch = await searchVenues(httpClient, {
+    const venueSearch = await client.searchVenues({
       name: "Theater",
       p: 1,
     });
@@ -181,7 +176,7 @@ async function getVenueSetlistsExample(): Promise<void> {
     if (venueSearch.venue.length > 0) {
       // Pick a venue that likely has many shows
       const venue = venueSearch.venue[0];
-      const venueDetails = await getVenue(httpClient, venue.id);
+      const venueDetails = await client.getVenue(venue.id);
 
       console.log(`🎭 Analyzing: ${venueDetails.name}`);
       if (venueDetails.city) {
@@ -190,150 +185,155 @@ async function getVenueSetlistsExample(): Promise<void> {
 
       // Get multiple pages
       const allSetlists: any[] = [];
-      const maxPages = 3; // Limit to avoid too many requests
+      console.log("Getting venue setlists...");
 
-      for (let page = 1; page <= maxPages; page++) {
-        try {
-          const pageSetlists = await getVenueSetlists(httpClient, venue.id, { p: page });
+      try {
+        const pageSetlists = await client.getVenueSetlists(venue.id);
 
-          if (pageSetlists.setlist.length === 0)
-            break;
-
+        if (pageSetlists.setlist.length === 0) {
+          console.log("No setlists found for this venue.");
+        }
+        else {
           allSetlists.push(...pageSetlists.setlist);
-          console.log(`📄 Page ${page}: ${pageSetlists.setlist.length} setlists`);
+          console.log(`📄 Retrieved ${pageSetlists.setlist.length} setlists (showing first page of ${pageSetlists.total} total)`);
 
-          if (page === 1) {
-            console.log(`📊 Total setlists available: ${pageSetlists.total}`);
-          }
-
-          // Display rate limiting status during pagination
+          // Display rate limiting status
           const duringPagination = client.getRateLimitStatus();
-          console.log(`   📊 Rate Limiting: ${duringPagination.requestsThisSecond}/${duringPagination.secondLimit} requests this second`);
-
-          // Stop if we've reached the end
-          if (pageSetlists.setlist.length < pageSetlists.itemsPerPage)
-            break;
+          console.log(`📊 Rate Limiting: ${duringPagination.requestsThisSecond}/${duringPagination.secondLimit} requests this second`);
         }
-        catch {
-          console.log(`❌ Error getting page ${page}`);
-          break;
-        }
+      }
+      catch (error) {
+        console.log(`❌ Error fetching setlists: ${error}`);
       }
 
       if (allSetlists.length > 0) {
-        console.log(`\n📈 Analysis of ${allSetlists.length} setlists:`);
+        // Analyze collected data
+        const analysis = {
+          totalShows: allSetlists.length,
+          uniqueArtists: new Set<string>(),
+          yearCounts: new Map<number, number>(),
+          monthCounts: new Map<number, number>(),
+        };
 
-        // Year analysis
-        const yearCounts = new Map<string, number>();
         allSetlists.forEach((setlist) => {
-          if (setlist.eventDate) {
-            const year = setlist.eventDate.split("-")[2] || "Unknown";
-            yearCounts.set(year, (yearCounts.get(year) || 0) + 1);
+          analysis.uniqueArtists.add(setlist.artist.name);
+
+          // Parse date (dd-MM-yyyy format)
+          const [, month, year] = setlist.eventDate.split("-").map(Number);
+          if (year) {
+            analysis.yearCounts.set(year, (analysis.yearCounts.get(year) || 0) + 1);
+          }
+          if (month) {
+            analysis.monthCounts.set(month, (analysis.monthCounts.get(month) || 0) + 1);
           }
         });
 
-        console.log("\n📅 Shows by year:");
-        Array.from(yearCounts.entries())
-          .sort(([a], [b]) => b.localeCompare(a))
-          .slice(0, 5)
-          .forEach(([year, count]) => {
-            console.log(`- ${year}: ${count} show(s)`);
-          });
+        console.log(`\n📊 Venue analysis (${analysis.totalShows} shows):`);
+        console.log(`- Unique artists: ${analysis.uniqueArtists.size}`);
+        console.log(`- Shows per artist: ${(analysis.totalShows / analysis.uniqueArtists.size).toFixed(1)} average`);
 
-        // Artist analysis
-        const artistCounts = new Map<string, number>();
+        // Year breakdown
+        if (analysis.yearCounts.size > 0) {
+          console.log("\n📅 Shows by year:");
+          Array.from(analysis.yearCounts.entries())
+            .sort(([a], [b]) => b - a)
+            .slice(0, 5)
+            .forEach(([year, count]) => {
+              console.log(`   ${year}: ${count} shows`);
+            });
+        }
+
+        // Month breakdown
+        if (analysis.monthCounts.size > 0) {
+          const monthNames = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+          console.log("\n📊 Busiest months:");
+          Array.from(analysis.monthCounts.entries())
+            .sort(([, a], [, b]) => b - a)
+            .slice(0, 3)
+            .forEach(([month, count]) => {
+              console.log(`   ${monthNames[month]}: ${count} shows`);
+            });
+        }
+
+        // Top artists
+        const artistFrequency = new Map<string, number>();
         allSetlists.forEach((setlist) => {
-          const artistName = setlist.artist.name;
-          artistCounts.set(artistName, (artistCounts.get(artistName) || 0) + 1);
+          const artist = setlist.artist.name;
+          artistFrequency.set(artist, (artistFrequency.get(artist) || 0) + 1);
         });
 
-        console.log("\n🎤 Top artists:");
-        Array.from(artistCounts.entries())
+        console.log("\n🎤 Most frequent artists:");
+        Array.from(artistFrequency.entries())
           .sort(([, a], [, b]) => b - a)
           .slice(0, 5)
           .forEach(([artist, count]) => {
-            console.log(`- ${artist}: ${count} show(s)`);
+            console.log(`   ${artist}: ${count} show(s)`);
           });
-
-        // Song count analysis
-        const setlistsWithSongs = allSetlists.filter(setlist =>
-          setlist.sets?.set && setlist.sets.set.length > 0);
-
-        if (setlistsWithSongs.length > 0) {
-          const songCounts = setlistsWithSongs.map((setlist) => {
-            return setlist.sets!.set.reduce((total: number, set: any) =>
-              total + (set.song?.length || 0), 0);
-          });
-
-          const avgSongs = songCounts.reduce((a, b) => a + b, 0) / songCounts.length;
-          const maxSongs = Math.max(...songCounts);
-
-          console.log(`\n🎵 Song statistics:`);
-          console.log(`- Average songs per show: ${Math.round(avgSongs)}`);
-          console.log(`- Longest show: ${maxSongs} songs`);
-          console.log(`- Shows with song data: ${setlistsWithSongs.length}/${allSetlists.length}`);
-        }
       }
     }
 
-    // Example 4: Find venues with recent activity
-    console.log("\n🔍 Example 4: Recent venue activity");
-    console.log("Finding venues with recent shows...\n");
+    // Example 4: Find venue with recent activity
+    console.log("\n🔍 Example 4: Recently active venues");
+    console.log("Finding venues with recent concerts...\n");
 
-    const recentVenues: Array<{
-      venue: string;
-      location: string;
-      totalShows: number;
-      latestArtist: string;
-      latestDate: string;
-    }> = [];
-    const venueTypes = ["Club", "Hall", "Center"];
+    const recentVenueSearch = await client.searchVenues({
+      name: "Arena",
+      p: 1,
+    });
 
-    for (const venueType of venueTypes) {
-      try {
-        const search = await searchVenues(httpClient, {
-          name: venueType,
-          p: 1,
-        });
+    if (recentVenueSearch.venue.length > 0) {
+      console.log("📊 Recent activity analysis:");
 
-        if (search.venue.length > 0) {
-          // Check first few venues for recent activity
-          for (const venue of search.venue.slice(0, 2)) {
-            try {
-              const setlists = await getVenueSetlists(httpClient, venue.id, { p: 1 });
+      const recentActivity: Array<{
+        venue: string;
+        location: string;
+        recentShows: number;
+        latestShow?: string;
+        latestArtist?: string;
+      }> = [];
 
-              if (setlists.total > 0 && setlists.setlist.length > 0) {
-                const latestShow = setlists.setlist[0];
-                recentVenues.push({
-                  venue: venue.name,
-                  location: venue.city ? `${venue.city.name}, ${venue.city.country.code}` : "Unknown",
-                  totalShows: setlists.total,
-                  latestArtist: latestShow.artist.name,
-                  latestDate: latestShow.eventDate,
-                });
-              }
-            }
-            catch {
-              // Skip venues that cause errors
-            }
+      // Check first few venues for recent activity
+      const venuesToCheck = recentVenueSearch.venue.slice(0, 3);
+
+      for (const venue of venuesToCheck) {
+        try {
+          const setlists = await client.getVenueSetlists(venue.id);
+
+          const activity = {
+            venue: venue.name,
+            location: venue.city ? `${venue.city.name}, ${venue.city.country.name}` : "Unknown",
+            recentShows: setlists.setlist.length,
+            latestShow: setlists.setlist[0]?.eventDate,
+            latestArtist: setlists.setlist[0]?.artist.name,
+          };
+
+          recentActivity.push(activity);
+
+          console.log(`✅ ${venue.name}:`);
+          console.log(`   📍 ${activity.location}`);
+          console.log(`   🎵 ${setlists.total} total setlists`);
+          if (activity.latestShow && activity.latestArtist) {
+            console.log(`   🎤 Latest: ${activity.latestArtist} (${activity.latestShow})`);
           }
+
+          // Display rate limiting status
+          const duringActivity = client.getRateLimitStatus();
+          console.log(`   📊 Rate Limiting: ${duringActivity.requestsThisSecond}/${duringActivity.secondLimit} requests this second`);
+        }
+        catch (error) {
+          console.log(`❌ Could not get setlists for ${venue.name}: ${error}`);
         }
       }
-      catch {
-        console.log(`❌ Error searching for ${venueType} venues`);
-      }
-    }
 
-    if (recentVenues.length > 0) {
-      console.log("🎪 Active venues found:");
-      recentVenues
-        .sort((a, b) => b.totalShows - a.totalShows)
-        .slice(0, 5)
-        .forEach((venue, index) => {
-          console.log(`${index + 1}. ${venue.venue} (${venue.location})`);
-          console.log(`   📊 ${venue.totalShows} total shows`);
-          console.log(`   🎤 Latest: ${venue.latestArtist} (${venue.latestDate})`);
-        });
+      // Summary of recent activity
+      if (recentActivity.length > 0) {
+        console.log("\n📊 Recent activity summary:");
+        recentActivity
+          .sort((a, b) => b.recentShows - a.recentShows)
+          .forEach((activity, index) => {
+            console.log(`${index + 1}. ${activity.venue} (${activity.location}): ${activity.recentShows} recent shows`);
+          });
+      }
     }
 
     // Final rate limiting status
@@ -343,10 +343,10 @@ async function getVenueSetlistsExample(): Promise<void> {
     console.log(`Requests this second: ${finalStatus.requestsThisSecond}/${finalStatus.secondLimit}`);
     console.log(`Requests today: ${finalStatus.requestsThisDay}/${finalStatus.dayLimit}`);
 
-    console.log("\n✅ Venue setlists analysis completed successfully!");
+    console.log("\n✅ Venue setlists examples completed successfully!");
   }
   catch (error) {
-    console.error("❌ Error getting venue setlists:", error);
+    console.error("❌ Error in venue setlists example:", error);
 
     if (error instanceof Error) {
       console.error(`Error message: ${error.message}`);

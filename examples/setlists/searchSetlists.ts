@@ -5,32 +5,27 @@
  */
 
 import { createSetlistFMClient } from "../../src/client";
-import { searchSetlists } from "../../src/endpoints/setlists";
 import "dotenv/config";
 
 /**
  * Example: Comprehensive setlist search functionality
  *
  * This example demonstrates how to search for setlists using
- * various search criteria and handle pagination.
+ * various search criteria and handle pagination with the type-safe client.
  */
 async function searchSetlistsExample(): Promise<void> {
-  // Create SetlistFM client with API key from environment
-  // The client automatically uses STANDARD rate limiting (2 req/sec, 1440 req/day)
+  // Create SetlistFM client with automatic STANDARD rate limiting
   const client = createSetlistFMClient({
     apiKey: process.env.SETLISTFM_API_KEY!,
     userAgent: "setlistfm-ts-examples (github.com/tkozzer/setlistfm-ts)",
   });
-
-  // Get the HTTP client for making requests
-  const httpClient = client.getHttpClient();
 
   try {
     // Example 1: Search by artist name
     console.log("🔍 Example 1: Search by artist name");
     console.log("Searching for The Beatles setlists...\n");
 
-    const beatlesSetlists = await searchSetlists(httpClient, {
+    const beatlesSetlists = await client.searchSetlists({
       artistMbid: "b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d", // The Beatles MBID
       p: 1,
     });
@@ -53,7 +48,7 @@ async function searchSetlistsExample(): Promise<void> {
     console.log("🔍 Example 2: Search by venue and year");
     console.log("Searching for setlists at Madison Square Garden in 2023...\n");
 
-    const msgSetlists = await searchSetlists(httpClient, {
+    const msgSetlists = await client.searchSetlists({
       venueName: "Madison Square Garden",
       year: 2023,
       p: 1,
@@ -77,7 +72,7 @@ async function searchSetlistsExample(): Promise<void> {
     console.log("\n🔍 Example 3: Search by city");
     console.log("Searching for setlists in London...\n");
 
-    const londonSetlists = await searchSetlists(httpClient, {
+    const londonSetlists = await client.searchSetlists({
       cityName: "London",
       year: 2023,
       p: 1,
@@ -113,7 +108,7 @@ async function searchSetlistsExample(): Promise<void> {
     console.log("🔍 Example 4: Pagination example");
     console.log("Getting multiple pages of Radiohead setlists...\n");
 
-    const page1 = await searchSetlists(httpClient, {
+    const page1 = await client.searchSetlists({
       artistName: "Radiohead",
       p: 1,
     });
@@ -125,7 +120,7 @@ async function searchSetlistsExample(): Promise<void> {
     if (page1.total > page1.itemsPerPage) {
       console.log("\n📄 Getting page 2...");
 
-      const page2 = await searchSetlists(httpClient, {
+      const page2 = await client.searchSetlists({
         artistName: "Radiohead",
         p: 2,
       });
@@ -143,7 +138,7 @@ async function searchSetlistsExample(): Promise<void> {
     const specificDate = "23-08-1964"; // The Beatles at Hollywood Bowl
     console.log(`Searching for setlists on ${specificDate}...\n`);
 
-    const dateSetlists = await searchSetlists(httpClient, {
+    const dateSetlists = await client.searchSetlists({
       date: specificDate,
     });
 
