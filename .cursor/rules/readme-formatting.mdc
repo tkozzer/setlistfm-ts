@@ -1,0 +1,148 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+---
+description: README formatting standards for TypeScript SDK modules
+globs:
+  - "**/README.md"
+alwaysApply: true
+---
+
+# README Formatting Standards
+
+This rule defines consistent formatting standards for README files across all SDK modules to ensure uniformity and readability.
+
+## Code Block Formatting
+
+### TypeScript Type Declarations
+
+**Use `type` instead of `interface` in documentation examples:**
+
+```typescript
+// ✅ Correct
+type ExampleType = {
+  property: string; // Comment without extra spaces
+  optionalProperty?: number; // Consistent comment spacing
+};
+
+// ❌ Incorrect
+interface ExampleType {
+  property: string;         // Extra spaces before comment
+  optionalProperty?: number;
+}
+```
+
+### Import Statements
+
+**Always use double quotes for import paths:**
+
+```typescript
+// ✅ Correct
+import { ExampleFunction } from "./example";
+import type { ExampleType } from "@utils/types";
+
+// ❌ Incorrect
+import { ExampleFunction } from './example';
+import type { ExampleType } from '@utils/types';
+```
+
+### Comment Formatting
+
+**Use single space after `//` in inline comments:**
+
+```typescript
+// ✅ Correct
+type Example = {
+  id: string; // Short description
+  name: string; // Another description
+};
+
+// ❌ Incorrect
+type Example = {
+  id: string;     // Too many spaces
+  name: string;//No space after //
+};
+```
+
+## Code Example Standards
+
+### Object Type Formatting
+
+```typescript
+type ObjectExample = {
+  requiredField: string; // Single space before comment
+  optionalField?: number; // Consistent spacing
+  nestedObject: {
+    property: boolean; // Proper nesting
+  };
+};
+```
+
+### Function Examples
+
+```typescript
+import { functionName } from "./module";
+
+// Usage example with consistent formatting
+const result = await functionName(param1, {
+  option1: "value", // Double quotes for strings
+  option2: 42 // No trailing comma on last property
+});
+```
+
+## Documentation Structure Standards
+
+### Type Documentation Blocks
+
+1. **Brief description** of the type's purpose
+2. **Code block** with properly formatted type definition  
+3. **Usage examples** showing practical implementation
+4. **References** to official API documentation
+
+### Import Examples
+
+- Show realistic import patterns used in actual code
+- Include both value and type imports where relevant
+- Use consistent double quote formatting
+- Match actual file structure and naming
+
+### Code Comments
+
+- Focus on **purpose** and **usage**, not implementation details
+- Keep examples **practical and runnable**
+- Use **consistent eslint-disable patterns** when needed for console.log statements
+
+## Consistency Checklist
+
+When writing or reviewing README files, ensure:
+
+- [ ] **Quotes**: Double quotes in all code examples
+- [ ] **Types**: `type` declarations instead of `interface` in examples  
+- [ ] **Spacing**: Single space after `//` in comments
+- [ ] **Braces**: Consistent spacing around object braces
+- [ ] **Comments**: Aligned and concise inline comments
+- [ ] **Imports**: Double quotes for all import paths
+- [ ] **Examples**: Practical, runnable code samples
+
+## Example Template
+
+```typescript
+/**
+ * Description of the type or interface.
+ */
+type ExampleType = {
+  /** Description of required field */
+  id: string;
+  /** Description of optional field */
+  name?: string;
+  /** Description of nested object */
+  metadata: {
+    created: Date; // Creation timestamp
+    updated?: Date; // Last update timestamp
+  };
+};
+```
+
+This formatting ensures all README files maintain consistency and provide clear, professional documentation that matches the actual codebase style.
