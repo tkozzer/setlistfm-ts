@@ -457,6 +457,7 @@ The `ci-local.yml` workflow mirrors the production CI with Act-optimized feature
 - ✅ **Same validation steps** as production CI
 - ✅ **Enhanced platform-specific testing**
 - ✅ **Smart test separation** for optimal local experience
+- ✅ **Local-only execution** (prevents accidental GitHub Actions runs)
 
 ### Test Coverage
 
