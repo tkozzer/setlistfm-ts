@@ -210,7 +210,7 @@ jobs:
           fi
 
           # Save enhanced description
-          cat << 'ENHANCED_EOF' > enhanced_description.txt
+          cat << ENHANCED_EOF > enhanced_description.txt
           $ENHANCED_DESCRIPTION
           ENHANCED_EOF
 
@@ -279,8 +279,39 @@ jobs:
             LABELS="${{ steps.determine-labels.outputs.labels }}"
             LABEL_ARRAY=$(echo "$LABELS" | tr ',' ' ')
 
-            # Add labels to PR
-            gh pr edit ${{ steps.pr-details.outputs.pr_number }} --add-label $LABEL_ARRAY
+            # Create labels if they don't exist and add them to PR
+            for label in $LABEL_ARRAY; do
+              # Define label colors and descriptions
+              case "$label" in
+                "feature")
+                  gh label create "$label" --color "0e8a16" --description "New feature or enhancement" --force 2>/dev/null || true
+                  ;;
+                "bugfix")
+                  gh label create "$label" --color "d73a4a" --description "Bug fix" --force 2>/dev/null || true
+                  ;;
+                "documentation")
+                  gh label create "$label" --color "0075ca" --description "Documentation improvements" --force 2>/dev/null || true
+                  ;;
+                "maintenance")
+                  gh label create "$label" --color "fbca04" --description "Maintenance and chores" --force 2>/dev/null || true
+                  ;;
+                "breaking-change")
+                  gh label create "$label" --color "b60205" --description "Breaking change" --force 2>/dev/null || true
+                  ;;
+                "needs-review")
+                  gh label create "$label" --color "fbca04" --description "Needs additional review" --force 2>/dev/null || true
+                  ;;
+                "release")
+                  gh label create "$label" --color "0e8a16" --description "Release related" --force 2>/dev/null || true
+                  ;;
+                "automated")
+                  gh label create "$label" --color "ededed" --description "Automated PR or process" --force 2>/dev/null || true
+                  ;;
+              esac
+
+              # Add label to PR (ignore errors if label doesn't exist)
+              gh pr edit ${{ steps.pr-details.outputs.pr_number }} --add-label "$label" 2>/dev/null || echo "Warning: Could not add label '$label'"
+            done
           fi
 
       - name: Add helpful comment if needed
