@@ -1,22 +1,24 @@
 # Local CI workflow optimized for Act (nektos/act) testing
+# 🚨 DO NOT RUN ON GITHUB - This is for local development only
 # Mirrors the production CI pipeline with Act-compatible enhancements
 # Usage: act -W .github/workflows/ci-local.yml
 # Install Act: https://github.com/nektos/act
+# GitHub execution: Only manual workflow_dispatch (for testing purposes)
 name: 🏠 CI Local (Production Mirror)
 
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
-  schedule:
-    # Run nightly at 2 AM UTC to catch dependency issues (Act compatible)
-    - cron: "0 2 * * *"
+  # Only run manually - this workflow is designed for local Act testing
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual run (this workflow is intended for local Act usage)'
+        required: false
+        default: 'Manual testing of local CI workflow'
 
-# Cancel in-progress runs for PRs when new commits are pushed
+# Concurrency control for manual runs
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ci-local-${{ github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   # 🚀 Quick feedback job - runs first for fast developer feedback
