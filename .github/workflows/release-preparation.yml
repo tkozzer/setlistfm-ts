@@ -57,7 +57,9 @@ jobs:
         id: version_bump
         run: |
           # Store commit messages safely in temporary file to avoid shell interpretation issues
-          echo "${{ steps.commits.outputs.commits }}" > commits_temp.txt
+          cat << 'COMMITS_EOF' > commits_temp.txt
+          ${{ steps.commits.outputs.commits }}
+          COMMITS_EOF
 
           # Check for breaking changes (major bump) - must be at start of line or after newline
           if grep -E "(^|[\n])BREAKING CHANGE:|!:" commits_temp.txt ; then
@@ -100,7 +102,9 @@ jobs:
           VERSION="${{ steps.version_update.outputs.version }}"
 
           # Store commits safely in temporary file to avoid shell interpretation issues
-          echo "${{ steps.commits.outputs.commits }}" > commits_temp.txt
+          cat << 'COMMITS_EOF' > commits_temp.txt
+          ${{ steps.commits.outputs.commits }}
+          COMMITS_EOF
 
           # Create JSON template with placeholders
           cat > changelog_prompt_template.json << 'EOF'
