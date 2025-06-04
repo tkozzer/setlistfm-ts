@@ -151,6 +151,27 @@ jobs:
 
           echo "Generated PR description"
 
+      - name: 🏷️ Ensure labels exist
+        if: steps.check_pr.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Check and create 'release' label if it doesn't exist
+          if ! gh label list --json name --jq '.[].name' | grep -q "^release$"; then
+            echo "Creating 'release' label..."
+            gh label create "release" --description "Issues and PRs related to releases" --color "0052cc"
+          else
+            echo "'release' label already exists"
+          fi
+
+          # Check and create 'automated' label if it doesn't exist
+          if ! gh label list --json name --jq '.[].name' | grep -q "^automated$"; then
+            echo "Creating 'automated' label..."
+            gh label create "automated" --description "Automatically created by GitHub Actions" --color "ededed"
+          else
+            echo "'automated' label already exists"
+          fi
+
       - name: 🎯 Create release pull request
         id: create_pr
         if: steps.check_pr.outputs.exists == 'false'
