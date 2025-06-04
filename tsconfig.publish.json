@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.build.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "exclude": [
+    "examples/**/*",
+    "**/*.test.ts",
+    "**/__test__/**/*"
+  ]
+}
