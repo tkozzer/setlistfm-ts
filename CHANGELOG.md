@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.0] - 2025-06-04
+
+### Added
+- Introduced a comprehensive three-branch development workflow automating pull request creation and release management.
+- Added AI-powered PR description enhancement using OpenAI to generate clearer, more informative pull requests.
+- Implemented automatic conventional commit analysis and labeling to streamline changelog generation and version bumping.
+- Created `pr-template-automation.yml` to automate PR descriptions targeting the `preview` branch.
+- Created `create-release-pr.yml` for automated release PR generation from `preview` to `main`.
+- Added repository owner auto-assignment for all pull requests to improve review efficiency.
+- Provided `.env.act.example` template for local testing of GitHub workflows with OpenAI integration.
+- Enhanced documentation with a visual branch structure diagram and detailed explanation of the new three-branch workflow in `CONTRIBUTING.md`.
+- Updated `README.md` to reflect the new project structure and contributing workflow.
+
+### Changed
+- Updated CI workflow triggers to run on pull requests targeting `preview` and `main` branches instead of `main` and `develop`.
+- Removed push triggers from CI workflows to focus on validation during PRs, aligning with the new branching strategy.
+- Improved environment file handling by adding `.env.act` to `.gitignore` and providing configuration examples for OpenAI API keys.
+- Fixed README build badge URL to correctly point to the CI workflow.
+- Improved documentation formatting and clarity throughout the project.
+
+### Fixed
+- Resolved GitHub Actions permissions issues by adding `contents:write` permission and enabling `persist-credentials` for proper authentication during release workflows.
+- Fixed shell escaping issues in changelog update commands to prevent command interpretation errors during CI runs.
+
+---
+
 ## [0.2.0] - 2025-06-04
 
 ### Added
