@@ -46,7 +46,7 @@ jobs:
         run: pnpm type-check
 
       - name: ⚡ Source tests only (no build artifacts needed)
-        run: pnpm test --run --reporter=basic src/**/*.test.ts
+        run: pnpm vitest run src/
 
   # 🧪 Comprehensive testing matrix
   test-matrix:
@@ -86,7 +86,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: 🧪 Source tests only (cross-platform matrix)
-        run: pnpm test --run src/**/*.test.ts
+        run: pnpm vitest run src/
 
       - name: 🧠 Type check
         run: pnpm type-check
@@ -117,7 +117,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: 🧪 Source tests with coverage (no build tests)
-        run: pnpm test --run --coverage src/**/*.test.ts
+        run: pnpm vitest run --coverage src/
 
       - name: 📊 Upload coverage reports
         uses: actions/upload-artifact@v4
@@ -165,7 +165,7 @@ jobs:
         run: pnpm build:all
 
       - name: 📦 Build verification tests (requires dist folder)
-        run: pnpm test --run tests/**/*.test.ts
+        run: pnpm vitest run tests/
 
       - name: 📊 Bundle size analysis
         run: pnpm build:analyze
