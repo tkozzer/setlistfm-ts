@@ -15,7 +15,7 @@ jobs:
   enhance-pr:
     runs-on: ubuntu-latest
     if: github.head_ref != 'preview' # Don't run on preview -> main PRs
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -32,12 +32,12 @@ jobs:
           PR_NUMBER="${{ github.event.pull_request.number }}"
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
           HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-          
+
           echo "pr_title=$PR_TITLE" >> $GITHUB_OUTPUT
           echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
           echo "base_sha=$BASE_SHA" >> $GITHUB_OUTPUT
           echo "head_sha=$HEAD_SHA" >> $GITHUB_OUTPUT
-          
+
           # Save PR body to file for multiline handling
           cat << 'PR_BODY_EOF' > pr_body.txt
           ${{ github.event.pull_request.body }}
@@ -48,7 +48,7 @@ jobs:
         run: |
           # Get commit messages between base and head
           COMMITS=$(git log --format="%h %s%n%b" ${{ steps.pr-details.outputs.base_sha }}..${{ steps.pr-details.outputs.head_sha }} 2>/dev/null || echo "")
-          
+
           # Handle case where no commits are found
           if [ -z "$COMMITS" ]; then
             echo "No commits found between base and head"
@@ -61,20 +61,20 @@ jobs:
             echo "chores=0" >> $GITHUB_OUTPUT
             exit 0
           fi
-          
+
           # Count conventional commits
           CONVENTIONAL_COUNT=$(echo "$COMMITS" | grep -E "^[a-f0-9]+ (feat|fix|docs|style|refactor|perf|test|chore|ci|build)(\(.+\))?:" | wc -l)
           TOTAL_COUNT=$(echo "$COMMITS" | grep -E "^[a-f0-9]+ " | wc -l)
-          
+
           # Check for breaking changes
           BREAKING_CHANGES=$(echo "$COMMITS" | grep -E "(BREAKING CHANGE:|feat!|fix!)" | wc -l)
-          
+
           # Check for feature/fix types
           FEATURES=$(echo "$COMMITS" | grep -E "^[a-f0-9]+ feat(\(.+\))?:" | wc -l)
           FIXES=$(echo "$COMMITS" | grep -E "^[a-f0-9]+ fix(\(.+\))?:" | wc -l)
           DOCS=$(echo "$COMMITS" | grep -E "^[a-f0-9]+ docs(\(.+\))?:" | wc -l)
           CHORES=$(echo "$COMMITS" | grep -E "^[a-f0-9]+ (chore|ci|build)(\(.+\))?:" | wc -l)
-          
+
           echo "commits_analyzed=$TOTAL_COUNT" >> $GITHUB_OUTPUT
           echo "conventional_commits=$CONVENTIONAL_COUNT" >> $GITHUB_OUTPUT
           echo "breaking_changes=$BREAKING_CHANGES" >> $GITHUB_OUTPUT
@@ -82,7 +82,7 @@ jobs:
           echo "fixes=$FIXES" >> $GITHUB_OUTPUT
           echo "docs=$DOCS" >> $GITHUB_OUTPUT
           echo "chores=$CHORES" >> $GITHUB_OUTPUT
-          
+
           # Save commits to file for AI analysis
           cat << 'COMMITS_EOF' > commits_analysis.txt
           $COMMITS
@@ -94,7 +94,7 @@ jobs:
           # Read current PR body
           PR_BODY=$(cat pr_body.txt)
           COMMITS=$(cat commits_analysis.txt)
-          
+
           # Create AI prompt
           cat << 'PROMPT_EOF' > ai_prompt.txt
           You are a technical writer helping to enhance a GitHub Pull Request for a TypeScript SDK library called "setlistfm-ts" (a client for the setlist.fm API).
@@ -152,10 +152,10 @@ jobs:
 
           Generate only the enhanced PR description, no other commentary.
           PROMPT_EOF
-          
+
           # Create JSON payload safely using jq
           PROMPT_CONTENT=$(cat ai_prompt.txt)
-          
+
           # Call OpenAI API with properly escaped JSON
           RESPONSE=$(jq -n \
             --arg model "${{ secrets.OPENAI_MODEL }}" \
@@ -169,7 +169,7 @@ jobs:
                   "content": $system_msg
                 },
                 {
-                  "role": "user", 
+                  "role": "user",
                   "content": $user_msg
                 }
               ],
@@ -179,7 +179,7 @@ jobs:
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
             -d @-)
-          
+
           # Extract content from response and handle errors
           if [ -n "$RESPONSE" ] && echo "$RESPONSE" | jq -e '.choices[0].message.content' > /dev/null 2>&1; then
             ENHANCED_DESCRIPTION=$(echo "$RESPONSE" | jq -r '.choices[0].message.content')
@@ -188,27 +188,27 @@ jobs:
             echo "Response: $RESPONSE"
             ENHANCED_DESCRIPTION="$PR_BODY"
           fi
-          
+
           # Fallback to basic template if both AI and original fail
           if [ -z "$ENHANCED_DESCRIPTION" ]; then
             ENHANCED_DESCRIPTION="## 📋 Summary
 
-This PR contains changes targeting the preview branch for release preparation.
+            This PR contains changes targeting the preview branch for release preparation.
 
-## 🔄 Changes
-Please see individual commits for details.
+            ## 🔄 Changes
+            Please see individual commits for details.
 
-## 📝 Commit Analysis  
-- **${{ steps.analyze-commits.outputs.commits_analyzed }}** total commits analyzed
-- **${{ steps.analyze-commits.outputs.conventional_commits }}** follow conventional format
+            ## 📝 Commit Analysis
+            - **${{ steps.analyze-commits.outputs.commits_analyzed }}** total commits analyzed
+            - **${{ steps.analyze-commits.outputs.conventional_commits }}** follow conventional format
 
-## 🧪 Testing
-Please ensure all tests pass before merging.
+            ## 🧪 Testing
+            Please ensure all tests pass before merging.
 
-## 📚 Documentation
-Review any documentation updates as needed."
+            ## 📚 Documentation
+            Review any documentation updates as needed."
           fi
-          
+
           # Save enhanced description
           cat << 'ENHANCED_EOF' > enhanced_description.txt
           $ENHANCED_DESCRIPTION
@@ -218,32 +218,32 @@ Review any documentation updates as needed."
         id: determine-labels
         run: |
           LABELS=""
-          
+
           # Add labels based on commit analysis
           if [ "${{ steps.analyze-commits.outputs.features }}" -gt 0 ]; then
             LABELS="$LABELS,feature"
           fi
-          
+
           if [ "${{ steps.analyze-commits.outputs.fixes }}" -gt 0 ]; then
             LABELS="$LABELS,bugfix"
           fi
-          
+
           if [ "${{ steps.analyze-commits.outputs.docs }}" -gt 0 ]; then
             LABELS="$LABELS,documentation"
           fi
-          
+
           if [ "${{ steps.analyze-commits.outputs.chores }}" -gt 0 ]; then
             LABELS="$LABELS,maintenance"
           fi
-          
+
           if [ "${{ steps.analyze-commits.outputs.breaking_changes }}" -gt 0 ]; then
             LABELS="$LABELS,breaking-change"
           fi
-          
+
           # Check if commits need attention (using awk instead of bc)
           CONVENTIONAL_COUNT="${{ steps.analyze-commits.outputs.conventional_commits }}"
           TOTAL_COUNT="${{ steps.analyze-commits.outputs.commits_analyzed }}"
-          
+
           if [ "$TOTAL_COUNT" -gt 0 ]; then
             # Calculate percentage using awk (more reliable than bc)
             PERCENTAGE=$(awk "BEGIN {printf \"%.0f\", ($CONVENTIONAL_COUNT / $TOTAL_COUNT) * 100}")
@@ -251,7 +251,7 @@ Review any documentation updates as needed."
               LABELS="$LABELS,needs-review"
             fi
           fi
-          
+
           # Remove leading comma and save
           LABELS=$(echo "$LABELS" | sed 's/^,//')
           echo "labels=$LABELS" >> $GITHUB_OUTPUT
@@ -262,7 +262,7 @@ Review any documentation updates as needed."
         run: |
           # Read the enhanced description
           ENHANCED_DESCRIPTION=$(cat enhanced_description.txt)
-          
+
           # Update PR description using GitHub CLI
           gh pr edit ${{ steps.pr-details.outputs.pr_number }} --body-file enhanced_description.txt
 
@@ -272,13 +272,13 @@ Review any documentation updates as needed."
         run: |
           # Auto-assign PR to repository owner
           gh pr edit ${{ steps.pr-details.outputs.pr_number }} --add-assignee ${{ github.repository_owner }}
-          
+
           # Add labels if any were determined
           if [ "${{ steps.determine-labels.outputs.labels }}" != "" ]; then
             # Convert comma-separated labels to space-separated for gh cli
             LABELS="${{ steps.determine-labels.outputs.labels }}"
             LABEL_ARRAY=$(echo "$LABELS" | tr ',' ' ')
-            
+
             # Add labels to PR
             gh pr edit ${{ steps.pr-details.outputs.pr_number }} --add-label $LABEL_ARRAY
           fi
@@ -290,12 +290,12 @@ Review any documentation updates as needed."
         run: |
           CONVENTIONAL_COUNT="${{ steps.analyze-commits.outputs.conventional_commits }}"
           TOTAL_COUNT="${{ steps.analyze-commits.outputs.commits_analyzed }}"
-          
+
           # Only proceed if we have commits to analyze
           if [ "$TOTAL_COUNT" -gt 0 ]; then
             # Calculate percentage using awk (more reliable than bc)
             PERCENTAGE=$(awk "BEGIN {printf \"%.0f\", ($CONVENTIONAL_COUNT / $TOTAL_COUNT) * 100}")
-            
+
             if [ "$PERCENTAGE" -lt 80 ]; then
             cat << 'COMMENT_EOF' > helpful_comment.txt
           ## 💡 Commit Message Suggestions
@@ -316,7 +316,7 @@ Review any documentation updates as needed."
 
           **Reference:** Check out our [Contributing Guide](CONTRIBUTING.md#commit-messages) for more details.
           COMMENT_EOF
-            
+
             gh pr comment ${{ steps.pr-details.outputs.pr_number }} --body-file helpful_comment.txt
             fi
           fi
@@ -340,5 +340,5 @@ Review any documentation updates as needed."
 
           This PR description has been enhanced by AI to follow our project standards. Thanks for contributing! 🎸
           SUMMARY_EOF
-          
-          gh pr comment ${{ steps.pr-details.outputs.pr_number }} --body-file summary_comment.txt 
+
+          gh pr comment ${{ steps.pr-details.outputs.pr_number }} --body-file summary_comment.txt
