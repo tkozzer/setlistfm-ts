@@ -106,39 +106,30 @@ jobs:
           ${{ steps.commits.outputs.commits }}
           COMMITS_EOF
 
-          # Create JSON template with placeholders
-          cat > changelog_prompt_template.json << 'EOF'
-          {
-            "model": "OPENAI_MODEL_PLACEHOLDER",
-            "messages": [
-              {
-                "role": "system",
-                "content": "You are an expert technical writer who creates changelog entries following Keep a Changelog standards. Generate entries that are FOR HUMANS, not machines - focus on what end users and developers need to know. ONLY use these standard categories: Added (new features), Changed (changes in existing functionality), Deprecated (soon-to-be removed features), Removed (now removed features), Fixed (bug fixes), Security (vulnerabilities). Be specific about technical impact but NEVER invent or hallucinate features that don't exist. If no meaningful changes are provided, generate a minimal entry like '### Changed\\n- Minor updates and improvements'."
-              },
-              {
-                "role": "user",
-                "content": "Generate a changelog entry for version VERSION_PLACEHOLDER with date DATE_PLACEHOLDER. Recent commits:\\n\\nCOMMITS_PLACEHOLDER\\n\\nIMPORTANT: If the commits list above is empty or contains no meaningful changes, respond with ONLY:\\n### Changed\\n- Minor updates and improvements\\n\\nIf you have actual commits, analyze them carefully and create entries that help users understand what changed and how it affects them. This is for the setlistfm-ts TypeScript SDK. Focus on user-facing changes, API modifications, and developer experience improvements. Be accurate and never invent features."
-              }
-            ],
-            "max_tokens": 1500,
-            "temperature": 0.3
-          }
-          EOF
+                    # Use jq to build the final JSON safely, avoiding sed issues with special characters
+          COMMITS_CONTENT=$(cat commits_temp.txt)
 
-          # Replace placeholders safely
-          sed "s/OPENAI_MODEL_PLACEHOLDER/$OPENAI_MODEL/g" changelog_prompt_template.json > changelog_prompt_with_model.json
-          sed "s/VERSION_PLACEHOLDER/$VERSION/g" changelog_prompt_with_model.json > changelog_prompt_with_version.json
-          sed "s/DATE_PLACEHOLDER/$CURRENT_DATE/g" changelog_prompt_with_version.json > changelog_prompt_with_date.json
-
-          # Escape commits content for JSON and replace placeholder
-          # This handles special characters like quotes, backslashes, and newlines
-          COMMITS_ESCAPED=$(cat commits_temp.txt | jq -Rs .)
-          # Remove the surrounding quotes that jq -Rs adds
-          COMMITS_ESCAPED=${COMMITS_ESCAPED#\"}
-          COMMITS_ESCAPED=${COMMITS_ESCAPED%\"}
-
-          # Replace the commits placeholder with escaped content
-          sed "s/COMMITS_PLACEHOLDER/$COMMITS_ESCAPED/g" changelog_prompt_with_date.json > changelog_prompt.json
+          # Build the JSON payload using jq to avoid sed escaping issues
+          jq -n \
+            --arg model "$OPENAI_MODEL" \
+            --arg version "$VERSION" \
+            --arg date "$CURRENT_DATE" \
+            --arg commits "$COMMITS_CONTENT" \
+            '{
+              "model": $model,
+              "messages": [
+                {
+                  "role": "system",
+                  "content": "You are an expert technical writer who creates changelog entries following Keep a Changelog standards. Generate entries that are FOR HUMANS, not machines - focus on what end users and developers need to know. ONLY use these standard categories: Added (new features), Changed (changes in existing functionality), Deprecated (soon-to-be removed features), Removed (now removed features), Fixed (bug fixes), Security (vulnerabilities). Be specific about technical impact but NEVER invent or hallucinate features that don't exist. If no meaningful changes are provided, generate a minimal entry like '\''### Changed\\n- Minor updates and improvements'\''."
+                },
+                {
+                  "role": "user",
+                  "content": ("Generate a changelog entry for version " + $version + " with date " + $date + ". Recent commits:\n\n" + $commits + "\n\nIMPORTANT: If the commits list above is empty or contains no meaningful changes, respond with ONLY:\n### Changed\n- Minor updates and improvements\n\nIf you have actual commits, analyze them carefully and create entries that help users understand what changed and how it affects them. This is for the setlistfm-ts TypeScript SDK. Focus on user-facing changes, API modifications, and developer experience improvements. Be accurate and never invent features.")
+                }
+              ],
+              "max_tokens": 1500,
+              "temperature": 0.3
+            }' > changelog_prompt.json
 
           # Debug: Show the JSON payload size and structure
           echo "Debug: JSON payload size: $(wc -c < changelog_prompt.json) bytes"
@@ -191,7 +182,7 @@ jobs:
           fi
 
           # Clean up temporary files
-          rm -f commits_temp.txt changelog_prompt_template.json changelog_prompt_with_model.json changelog_prompt_with_version.json changelog_prompt_with_date.json changelog_prompt.json
+          rm -f commits_temp.txt changelog_prompt.json
 
           # Save changelog entry
           echo "changelog_entry<<EOF" >> $GITHUB_OUTPUT
