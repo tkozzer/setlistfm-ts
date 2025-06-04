@@ -38,7 +38,21 @@ jobs:
 
           # Get latest changelog entry (between first two ## headers)
           if [ -f "CHANGELOG.md" ]; then
-            CHANGELOG_ENTRY=$(awk '/^## \[/{if(++count==2) exit} count==1 && !/^## \[/' CHANGELOG.md || echo "No changelog entries found")
+            CHANGELOG_ENTRY=$(awk '
+              /^## \[/ {
+                if (count == 1) exit
+                count++
+                next
+              }
+              count == 1 && NF > 0 {
+                print
+              }
+            ' CHANGELOG.md | sed '/^$/d' | head -50 || echo "No changelog entries found")
+
+            # If empty result, provide fallback
+            if [ -z "$CHANGELOG_ENTRY" ] || [ "$CHANGELOG_ENTRY" = "" ]; then
+              CHANGELOG_ENTRY="No changelog entries found for the latest version"
+            fi
           else
             CHANGELOG_ENTRY="No CHANGELOG.md file found"
           fi
@@ -47,7 +61,8 @@ jobs:
           echo "$CHANGELOG_ENTRY" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-          echo "Latest changelog entry extracted"
+          echo "Latest changelog entry extracted for version $VERSION"
+          echo "Changelog preview (first 200 chars): ${CHANGELOG_ENTRY:0:200}..."
 
       - name: 🔍 Check if PR already exists
         id: check_pr
