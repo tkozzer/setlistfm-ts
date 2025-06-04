@@ -110,14 +110,14 @@ jobs:
           cat > changelog_prompt_template.json << 'EOF'
           {
             "model": "OPENAI_MODEL_PLACEHOLDER",
-              "messages": [
+            "messages": [
               {
                 "role": "system",
                 "content": "You are an expert technical writer who creates changelog entries following Keep a Changelog standards. Generate entries that are FOR HUMANS, not machines - focus on what end users and developers need to know. ONLY use these standard categories: Added (new features), Changed (changes in existing functionality), Deprecated (soon-to-be removed features), Removed (now removed features), Fixed (bug fixes), Security (vulnerabilities). Be specific about technical impact but NEVER invent or hallucinate features that don't exist. If no meaningful changes are provided, generate a minimal entry like '### Changed\\n- Minor updates and improvements'."
               },
               {
                 "role": "user",
-                "content": "Generate a changelog entry for version VERSION_PLACEHOLDER with date DATE_PLACEHOLDER. Recent commits:\n\nCOMMITS_PLACEHOLDER\n\nIMPORTANT: If the commits list above is empty or contains no meaningful changes, respond with ONLY:\n### Changed\n- Minor updates and improvements\n\nIf you have actual commits, analyze them carefully and create entries that help users understand what changed and how it affects them. This is for the setlistfm-ts TypeScript SDK. Focus on user-facing changes, API modifications, and developer experience improvements. Be accurate and never invent features."
+                "content": "Generate a changelog entry for version VERSION_PLACEHOLDER with date DATE_PLACEHOLDER. Recent commits:\\n\\nCOMMITS_PLACEHOLDER\\n\\nIMPORTANT: If the commits list above is empty or contains no meaningful changes, respond with ONLY:\\n### Changed\\n- Minor updates and improvements\\n\\nIf you have actual commits, analyze them carefully and create entries that help users understand what changed and how it affects them. This is for the setlistfm-ts TypeScript SDK. Focus on user-facing changes, API modifications, and developer experience improvements. Be accurate and never invent features."
               }
             ],
             "max_tokens": 1500,
@@ -130,26 +130,75 @@ jobs:
           sed "s/VERSION_PLACEHOLDER/$VERSION/g" changelog_prompt_with_model.json > changelog_prompt_with_version.json
           sed "s/DATE_PLACEHOLDER/$CURRENT_DATE/g" changelog_prompt_with_version.json > changelog_prompt_with_date.json
 
-          # Replace commits placeholder with actual content
-          sed '/COMMITS_PLACEHOLDER/r commits_temp.txt' changelog_prompt_with_date.json | sed '/COMMITS_PLACEHOLDER/d' > changelog_prompt.json
+          # Escape commits content for JSON and replace placeholder
+          # This handles special characters like quotes, backslashes, and newlines
+          COMMITS_ESCAPED=$(cat commits_temp.txt | jq -Rs .)
+          # Remove the surrounding quotes that jq -Rs adds
+          COMMITS_ESCAPED=${COMMITS_ESCAPED#\"}
+          COMMITS_ESCAPED=${COMMITS_ESCAPED%\"}
+
+          # Replace the commits placeholder with escaped content
+          sed "s/COMMITS_PLACEHOLDER/$COMMITS_ESCAPED/g" changelog_prompt_with_date.json > changelog_prompt.json
+
+          # Debug: Show the JSON payload size and structure
+          echo "Debug: JSON payload size: $(wc -c < changelog_prompt.json) bytes"
+          echo "Debug: JSON structure validation:"
+          jq empty changelog_prompt.json && echo "JSON is valid" || echo "JSON is invalid"
+
+          # Fallback changelog content
+          FALLBACK_CHANGELOG="### Changed
+          - Minor updates and improvements
+          - Enhanced CI/CD pipeline
+          - Updated dependencies and tooling"
+
+          # Check if OpenAI API key is available
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "Warning: OPENAI_API_KEY not found, using fallback changelog"
+            CHANGELOG_ENTRY="$FALLBACK_CHANGELOG"
+          else
+            # Call OpenAI API with better error handling
+            echo "Calling OpenAI API..."
+            API_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer $OPENAI_API_KEY" \
+              -d @changelog_prompt.json \
+              https://api.openai.com/v1/chat/completions)
+
+            # Extract HTTP status code and response body
+            HTTP_CODE=$(echo "$API_RESPONSE" | tail -n1)
+            RESPONSE_BODY=$(echo "$API_RESPONSE" | head -n -1)
+
+            echo "Debug: HTTP Status Code: $HTTP_CODE"
+
+            # Check if API call was successful
+            if [ "$HTTP_CODE" -eq 200 ]; then
+              # Extract changelog content
+              CHANGELOG_ENTRY=$(echo "$RESPONSE_BODY" | jq -r '.choices[0].message.content // empty')
+
+              if [ -z "$CHANGELOG_ENTRY" ] || [ "$CHANGELOG_ENTRY" = "null" ]; then
+                echo "Warning: Empty response from OpenAI, using fallback"
+                echo "Debug: API Response: $RESPONSE_BODY"
+                CHANGELOG_ENTRY="$FALLBACK_CHANGELOG"
+              else
+                echo "Successfully generated changelog with OpenAI"
+              fi
+            else
+              echo "Error: OpenAI API call failed with status $HTTP_CODE"
+              echo "Debug: Error Response: $RESPONSE_BODY"
+              echo "Using fallback changelog"
+              CHANGELOG_ENTRY="$FALLBACK_CHANGELOG"
+            fi
+          fi
 
           # Clean up temporary files
-          rm -f commits_temp.txt changelog_prompt_template.json changelog_prompt_with_model.json changelog_prompt_with_version.json changelog_prompt_with_date.json
-
-          # Call OpenAI API
-          CHANGELOG_ENTRY=$(curl -s -X POST \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer $OPENAI_API_KEY" \
-            -d @changelog_prompt.json \
-            https://api.openai.com/v1/chat/completions | \
-            jq -r '.choices[0].message.content // "Failed to generate changelog entry"')
+          rm -f commits_temp.txt changelog_prompt_template.json changelog_prompt_with_model.json changelog_prompt_with_version.json changelog_prompt_with_date.json changelog_prompt.json
 
           # Save changelog entry
           echo "changelog_entry<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGELOG_ENTRY" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-          echo "Generated changelog entry:"
+          echo "Final changelog entry:"
           echo "$CHANGELOG_ENTRY"
 
       - name: 📝 Update CHANGELOG.md
