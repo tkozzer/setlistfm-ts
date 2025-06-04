@@ -7,7 +7,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
-    include: ["src/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "tests/**/*.test.ts"],
     exclude: ["node_modules", "dist", "coverage", "scripts"],
     coverage: {
       provider: "v8",
@@ -25,6 +25,7 @@ export default defineConfig({
         "**/coverage/**",
         "vitest.config.ts",
         "eslint.config.ts",
+        "rollup.config.ts",
       ],
     },
     watch: false,

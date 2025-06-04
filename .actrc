@@ -1,0 +1,6 @@
+# Act configuration for setlistfm-ts local testing
+--platform ubuntu-latest=catthehacker/ubuntu:act-latest
+--container-architecture linux/amd64
+--artifact-server-path /tmp/artifacts
+--env-file .env.act
+--verbose 

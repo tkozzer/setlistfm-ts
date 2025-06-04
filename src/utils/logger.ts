@@ -121,12 +121,17 @@ export class Logger {
 
       // Extract file and line number from stack trace
       // Format varies by environment but typically: "at functionName (file:line:column)"
+      // Handle various formats including Windows paths with backslashes
       const match = callerLine.match(/\(([^)]+):(\d+):\d+\)/)
-        || callerLine.match(/at ([^:]+):(\d+):\d+/);
+        || callerLine.match(/at ([^:]+):(\d+):\d+/)
+        || callerLine.match(/\(([^)]+\.[jt]s):(\d+):\d+\)/) // Match .js/.ts files specifically
+        || callerLine.match(/at [^(]*\(([^\\/\s]+\.[jt]s):(\d+):\d+\)/) // Match files ending in .js/.ts in parentheses
+        || callerLine.match(/at ([^\\/\s]+\.[jt]s):(\d+):\d+/); // Direct file references
 
       if (match) {
         const [, filePath, lineNumber] = match;
-        const fileName = filePath.split("/").pop() || filePath;
+        // Handle both forward slashes (Unix) and backslashes (Windows)
+        const fileName = filePath.split(/[/\\]/).pop() || filePath;
         return `${fileName}:${lineNumber}`;
       }
 
