@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.0] - 2025-06-04
+
+### Fixed
+- Completely rewrote the release preparation GitHub Actions workflow to improve robustness, maintainability, and security.
+- Resolved multiple shell interpretation issues that caused failures when commit messages or changelog entries contained special characters such as backticks, percent signs, or markdown code blocks.
+- Replaced unsafe variable expansions and  commands with safer heredoc and temporary file approaches to prevent command injection and shell execution errors during version bump detection and changelog generation.
+- Switched from -based JSON template substitution to direct JSON construction with  to handle special characters safely in OpenAI API payloads.
+- Added comprehensive error handling and fallback mechanisms for OpenAI API calls to ensure changelog generation continues gracefully even if the AI service fails or returns invalid responses.
+- Fixed SIGPIPE errors in the release workflow by replacing piped commit 8c1a17d05f74157d9a9a30aad63888d9612f0773
+Author: Tyler Kozlowski <Tyler.J.Kozlowski@gmail.com>
+Date:   Wed Jun 4 08:45:45 2025 -0500
+
+    cleaned up changlog mess
+
+commit 39822cb0beb7ed6b12436fc46f1e92f9e8f5f379
+Author: GitHub Action <action@github.com>
+Date:   Wed Jun 4 13:09:05 2025 +0000 commands with  to improve reliability.
+- Enhanced logging and debugging output throughout the release workflow for easier troubleshooting.
+- Updated the release PR workflow to use a Personal Access Token (PAT) instead of the default GitHub token, preventing permission errors when creating pull requests.
+- Added a step to ensure required GitHub labels ( and ) exist before applying them to release PRs, preventing label-not-found errors.
+- Fixed changelog extraction logic in the release PR workflow to correctly capture the latest version’s changelog entries.
+- Corrected variable expansion issues in PR description templates to ensure dynamic content is rendered properly.
+
+### Changed
+- Streamlined environment variable usage and naming conventions in release workflows for better readability and consistency.
+- Improved visual clarity of workflow output messages using Unicode arrows and standardized error messages.
+- Reduced temporary file creation and simplified cleanup in CI workflows.
+- Standardized shell declarations and code organization in workflows following best practices.
+
+These changes make the release process more reliable and secure, especially when commit messages or changelogs contain special characters, and improve the developer experience by reducing manual intervention and errors during automated releases.
+
+---
+
 ## [0.4.0] - 2025-06-04
 
 ### Changed
