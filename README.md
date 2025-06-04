@@ -1,7 +1,7 @@
 # 🎶 setlistfm-ts
 
 [![npm](https://img.shields.io/npm/v/setlistfm-ts?color=%2300B2FF&label=npm)](https://www.npmjs.com/package/setlistfm-ts)
-[![build](https://github.com/tkozzer/setlistfm-ts/actions/workflows/ci.yml/badge.svg)](https://github.com/tkozzer/setlistfm-ts/actions/workflows/test.yml)
+[![build](https://github.com/tkozzer/setlistfm-ts/actions/workflows/ci.yml/badge.svg)](https://github.com/tkozzer/setlistfm-ts/actions/workflows/ci.yml)
 [![license](https://img.shields.io/github/license/tkozzer/setlistfm-ts)](./LICENSE)
 [![stars](https://img.shields.io/github/stars/tkozzer/setlistfm-ts?style=social)](https://github.com/tkozzer/setlistfm-ts/stargazers)
 
@@ -562,18 +562,35 @@ console.log(`Daily usage: ${status.requestsThisDay}/${status.dayLimit} today`);
 
 ```
 src/
-├── client.ts           # Entry point for creating the API client
-├── endpoints/          # Grouped endpoint handlers (artists, venues, etc.)
-├── shared/             # Shared utilities like pagination, errors, metadata
-├── utils/              # HTTP logic and logger
-├── index.ts            # Public exports
+├── client.ts           # Main API client with type-safe methods
+├── endpoints/          # API endpoint implementations
+│   ├── artists/        # Artist search and retrieval
+│   ├── cities/         # City search and geographic data
+│   ├── countries/      # Country listings and validation
+│   ├── setlists/       # Setlist search and retrieval
+│   ├── users/          # User data (pending implementation)
+│   └── venues/         # Venue search and setlist data
+├── shared/             # Shared utilities and types
+│   ├── pagination.ts   # Pagination handling
+│   ├── metadata.ts     # API response metadata
+│   └── errors.ts       # Error handling and types
+├── utils/              # Core HTTP and rate limiting
+│   ├── httpClient.ts   # HTTP client with rate limiting
+│   └── rateLimiter.ts  # Smart rate limiting implementation
+└── index.ts            # Public API exports
 ```
 
 ---
 
 ## 📄 Contributing
 
-We welcome contributions! Please read the [CONTRIBUTING.md](./CONTRIBUTING.md) guide before getting started.
+We welcome contributions! This project uses a **three-branch workflow** with AI-powered automation:
+
+- **Development branches** → `preview` → `main`
+- **Automated release preparation** and changelog generation
+- **AI-enhanced PR descriptions** and professional release notes
+
+Please read our [CONTRIBUTING.md](./CONTRIBUTING.md) guide for the complete workflow and guidelines.
 
 ---
 
