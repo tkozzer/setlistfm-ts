@@ -85,10 +85,17 @@
     "vitest": "^3.2.0"
   },
   "lint-staged": {
-    "*.ts": [
+    "src/**/*.ts": [
       "pnpm lint",
       "bash -c 'pnpm type-check'",
-      "pnpm test"
+      "bash -c 'pnpm test'"
+    ],
+    "examples/**/*.ts": [
+      "pnpm lint"
+    ],
+    "*.ts": [
+      "pnpm lint",
+      "bash -c 'pnpm type-check'"
     ]
   }
 }
