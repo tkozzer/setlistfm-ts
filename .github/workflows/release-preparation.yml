@@ -1,0 +1,171 @@
+name: 🔄 Release Preparation
+
+on:
+  push:
+    branches: [preview]
+
+jobs:
+  # 🔄 Release preparation - runs on push to preview (after merge)
+  release-preparation:
+    name: 🔄 Release Preparation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history for changelog generation
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.11.1
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: pnpm
+
+      - name: 📥 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🏷️ Get last release tag
+        id: last_release
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "tag=$LAST_TAG" >> $GITHUB_OUTPUT
+          echo "Last release tag: $LAST_TAG"
+
+      - name: 📝 Get commit messages since last release
+        id: commits
+        run: |
+          COMMITS=$(git log ${{ steps.last_release.outputs.tag }}..HEAD --pretty=format:"%h %s%n%b" | head -50)
+          echo "commits<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMITS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "Recent commits since ${{ steps.last_release.outputs.tag }}:"
+          echo "$COMMITS"
+
+      - name: 🔍 Determine version bump type
+        id: version_bump
+        run: |
+          COMMIT_MSG="${{ steps.commits.outputs.commits }}"
+          
+          # Check for breaking changes (major bump)
+          if echo "$COMMIT_MSG" | grep -i "BREAKING CHANGE\|breaking:" ; then
+            echo "type=major" >> $GITHUB_OUTPUT
+            echo "Version bump: MAJOR (breaking changes detected)"
+          # Check for features (minor bump)
+          elif echo "$COMMIT_MSG" | grep -E "feat\(|feat:" ; then
+            echo "type=minor" >> $GITHUB_OUTPUT
+            echo "Version bump: MINOR (new features detected)"
+          # Default to patch
+          else
+            echo "type=patch" >> $GITHUB_OUTPUT
+            echo "Version bump: PATCH (fixes and improvements)"
+          fi
+
+      - name: 📈 Update package version
+        id: version_update
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+          
+          # Use npm version to bump
+          NEW_VERSION=$(npm version ${{ steps.version_bump.outputs.type }} --no-git-tag-version)
+          NEW_VERSION=${NEW_VERSION#v}  # Remove 'v' prefix
+          
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_VERSION"
+
+      - name: 🤖 Generate changelog entry with OpenAI
+        id: changelog
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ secrets.OPENAI_MODEL || 'gpt-4o-mini' }}
+        run: |
+          # Prepare data for OpenAI
+          CURRENT_DATE=$(date +"%Y-%m-%d")
+          VERSION="${{ steps.version_update.outputs.version }}"
+          COMMITS="${{ steps.commits.outputs.commits }}"
+          
+          # Create a payload for OpenAI API
+          cat > changelog_prompt.json << EOF
+          {
+            "model": "$OPENAI_MODEL",
+              "messages": [
+              {
+                "role": "system",
+                "content": "You are an expert technical writer who creates changelog entries following Keep a Changelog standards. Generate entries that are FOR HUMANS, not machines - focus on what end users and developers need to know. ONLY use these standard categories: Added (new features), Changed (changes in existing functionality), Deprecated (soon-to-be removed features), Removed (now removed features), Fixed (bug fixes), Security (vulnerabilities). Be specific about technical impact but NEVER invent or hallucinate features that don't exist. If no meaningful changes are provided, generate a minimal entry like '### Changed\\n- Minor updates and improvements'."
+              },
+              {
+                "role": "user",
+                "content": "Generate a changelog entry for version $VERSION with date $CURRENT_DATE. Recent commits:\n\n$COMMITS\n\nIMPORTANT: If the commits list above is empty or contains no meaningful changes, respond with ONLY:\n### Changed\n- Minor updates and improvements\n\nIf you have actual commits, analyze them carefully and create entries that help users understand what changed and how it affects them. This is for the setlistfm-ts TypeScript SDK. Focus on user-facing changes, API modifications, and developer experience improvements. Be accurate and never invent features."
+              }
+            ],
+            "max_tokens": 1500,
+            "temperature": 0.3
+          }
+          EOF
+          
+          # Call OpenAI API
+          CHANGELOG_ENTRY=$(curl -s -X POST \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $OPENAI_API_KEY" \
+            -d @changelog_prompt.json \
+            https://api.openai.com/v1/chat/completions | \
+            jq -r '.choices[0].message.content // "Failed to generate changelog entry"')
+          
+          # Save changelog entry
+          echo "changelog_entry<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG_ENTRY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          echo "Generated changelog entry:"
+          echo "$CHANGELOG_ENTRY"
+
+      - name: 📝 Update CHANGELOG.md
+        run: |
+          # Create temp file with new entry
+          echo "## [${{ steps.version_update.outputs.version }}] - $(date +%Y-%m-%d)" > new_entry.md
+          echo "" >> new_entry.md
+          echo "${{ steps.changelog.outputs.changelog_entry }}" >> new_entry.md
+          echo "" >> new_entry.md
+          echo "---" >> new_entry.md
+          echo "" >> new_entry.md
+          
+          # Insert new entry after the header in CHANGELOG.md
+          head -n 9 CHANGELOG.md > temp_changelog.md
+          cat new_entry.md >> temp_changelog.md
+          tail -n +10 CHANGELOG.md >> temp_changelog.md
+          mv temp_changelog.md CHANGELOG.md
+          
+          # Clean up
+          rm new_entry.md
+
+      - name: 💾 Commit version and changelog updates
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          git add package.json CHANGELOG.md
+          git commit -m "chore(release): bump version to ${{ steps.version_update.outputs.version }} and update changelog"
+          git push
+
+      - name: 🎉 Release preparation summary
+        run: |
+          echo "## 🎉 Release Preparation Completed!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🏷️ **Version**: ${{ steps.version_update.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "📈 **Bump Type**: ${{ steps.version_bump.outputs.type }}" >> $GITHUB_STEP_SUMMARY
+          echo "📝 **Changelog**: Generated and updated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 Next Steps:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Review the version bump and changelog entry" >> $GITHUB_STEP_SUMMARY
+          echo "2. Create PR from preview → main when ready to publish" >> $GITHUB_STEP_SUMMARY
+          echo "3. Merge to main will trigger GitHub release and npm publishing" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🚀 **Preview branch is ready for production release!**" >> $GITHUB_STEP_SUMMARY 

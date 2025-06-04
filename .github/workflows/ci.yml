@@ -1,10 +1,8 @@
 name: 🔄 CI
 
 on:
-  push:
-    branches: [main, develop]
   pull_request:
-    branches: [main, develop]
+    branches: [preview, main]
   schedule:
     # Run nightly at 2 AM UTC to catch dependency issues
     - cron: "0 2 * * *"
