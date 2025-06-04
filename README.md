@@ -23,6 +23,65 @@ yarn add setlistfm-ts
 
 ---
 
+## ⚠️ Security Notice
+
+**Important: Browser Usage and API Key Safety**
+
+This library includes UMD builds for browser environments, but **exposing API keys in frontend applications is a security risk**. Your setlist.fm API key should be treated as sensitive credentials.
+
+### ❌ Avoid These Patterns
+
+```js
+// DON'T: Hardcode API keys in frontend code
+const client = createSetlistFMClient({
+  apiKey: "your-actual-api-key-here", // ❌ Exposed to all users
+  userAgent: "MyApp"
+});
+
+// DON'T: Store API keys in client-side storage
+localStorage.setItem("apiKey", "your-api-key"); // ❌ Accessible to any script
+```
+
+### ✅ Safe Browser Usage Scenarios
+
+The browser builds are appropriate for:
+
+- **Browser Extensions**: Users provide their own API keys stored securely in extension storage
+- **Electron Applications**: API keys stored in main process, not renderer
+- **Internal Corporate Tools**: Behind authentication, no public key exposure
+- **Development/Prototyping**: Local testing with non-production keys
+- **Educational Projects**: Learning environments with temporary keys
+
+### 🛡️ Recommended Approach
+
+For production web applications, proxy API calls through your backend:
+
+```js
+// ✅ Frontend calls your backend
+const response = await fetch("/api/setlists/search", {
+  method: "POST",
+  headers: { Authorization: `Bearer ${userToken}` },
+  body: JSON.stringify({ artistName: "Radiohead" })
+});
+
+// ✅ Backend handles setlist.fm API with secure key storage
+// server.js
+const client = createSetlistFMClient({
+  apiKey: process.env.SETLISTFM_API_KEY, // ✅ Server-side only
+  userAgent: "MyApp Backend"
+});
+```
+
+### 🔑 API Key Best Practices
+
+- Store API keys in environment variables
+- Use different keys for development/production
+- Never commit keys to version control
+- Rotate keys periodically
+- Monitor usage through setlist.fm dashboard
+
+---
+
 ## 🚀 Quick Start
 
 Get started instantly with our comprehensive examples:
@@ -69,7 +128,8 @@ This project is in **active development** with working implementations for core 
 - [x] Test coverage reporting
 - [x] **Rate limiting utilities with automatic STANDARD profile**
 - [x] **Examples directory with full IDE support and automated runner**
-- [ ] CI/CD pipeline
+- [x] **Enhanced CI/CD pipeline with cross-platform testing**
+- [x] **Local CI testing with Act support and platform simulation**
 - [ ] Documentation generation
 
 ### API Coverage
@@ -184,6 +244,8 @@ console.log(setlistResults.setlist.length, "setlists found");
 - [x] **Comprehensive examples** with automated testing script
 - [x] **Real-time rate limiting monitoring** with detailed status reporting
 - [x] **ISO standard validation** (country codes, geographic data)
+- [x] **Enhanced CI/CD pipeline** with cross-platform matrix testing
+- [x] **Local CI testing support** with Act integration and platform simulation
 - [x] **Minimal dependencies** (only axios and zod)
 - [x] **100% test coverage** with comprehensive validation
 - [x] **Full IDE support** with examples directory integration
@@ -371,6 +433,30 @@ Watch mode:
 ```bash
 pnpm test:watch
 ```
+
+### Local CI Testing
+
+Test the full CI pipeline locally using [Act](https://github.com/nektos/act):
+
+```bash
+# Install Act (macOS)
+brew install act
+
+# Test quick checks
+act -j quick-checks -W .github/workflows/ci-local.yml
+
+# Test full local CI pipeline
+act -W .github/workflows/ci-local.yml
+
+# Test with dry run first
+act -W .github/workflows/ci-local.yml --dryrun
+```
+
+The `ci-local.yml` workflow mirrors the production CI with Act-optimized features:
+- ✅ **Cross-platform simulation** (Windows, macOS, multiple Ubuntu versions)
+- ✅ **Same validation steps** as production CI
+- ✅ **Enhanced platform-specific testing**
+- ✅ **Smart test separation** for optimal local experience
 
 ### Test Coverage
 
