@@ -53,12 +53,16 @@ jobs:
         id: commits
         shell: bash
         run: |
-          COMMITS=$(git log "${{ steps.last_release.outputs.tag }}..HEAD" --pretty=format:"%h %s%n%b" | head -50)
+          # use -n / --max-count to cap the output; no SIGPIPE risk
+          COMMITS=$(git log "${{ steps.last_release.outputs.tag }}..HEAD" \
+                      --max-count=50 --pretty=format:"%h %s%n%b")
+
           {
             echo "commits<<EOF"
             echo "$COMMITS"
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
+
           echo "Recent commits since ${{ steps.last_release.outputs.tag }}:"
           echo "$COMMITS"
 
