@@ -77,10 +77,14 @@ jobs:
           CHANGELOG="${{ steps.release_info.outputs.changelog }}"
           CURRENT_DATE=$(date +"%Y-%m-%d")
 
-          # Create OpenAI payload safely using jq
-          USER_PROMPT="Create a pull request description for releasing version $VERSION of setlistfm-ts TypeScript SDK. This is an automated release PR from preview to main branch. Here's the changelog for this release:
+          # Store changelog safely in temporary file to avoid shell interpretation issues
+          echo "$CHANGELOG" > changelog_temp.txt
 
-          $CHANGELOG
+          # Create user prompt template
+          cat > user_prompt_template.txt << 'EOF'
+          Create a pull request description for releasing version VERSION_PLACEHOLDER of setlistfm-ts TypeScript SDK. This is an automated release PR from preview to main branch. Here's the changelog for this release:
+
+          CHANGELOG_PLACEHOLDER
 
           Include:
           1. Brief release summary
@@ -88,7 +92,20 @@ jobs:
           3. Testing and review notes
           4. Merge instructions
 
-          Make it professional but friendly. This will be reviewed before merging to trigger the final release."
+          Make it professional but friendly. This will be reviewed before merging to trigger the final release.
+          EOF
+
+          # Replace version placeholder
+          sed "s/VERSION_PLACEHOLDER/$VERSION/g" user_prompt_template.txt > user_prompt_with_version.txt
+
+          # Replace changelog placeholder with actual content
+          sed '/CHANGELOG_PLACEHOLDER/r changelog_temp.txt' user_prompt_with_version.txt | sed '/CHANGELOG_PLACEHOLDER/d' > user_prompt_final.txt
+
+          # Read the final prompt
+          USER_PROMPT=$(cat user_prompt_final.txt)
+
+          # Clean up temporary files
+          rm -f changelog_temp.txt user_prompt_template.txt user_prompt_with_version.txt user_prompt_final.txt
 
           # Call OpenAI API with properly escaped JSON
           PR_DESCRIPTION=$(jq -n \
