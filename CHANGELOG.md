@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.0] - 2025-06-04
+
+### Added
+- Introduced a comprehensive GitHub release workflow system that automates version bumping and changelog generation using OpenAI GPT.
+- Added a new release-preparation workflow triggered on pushes to the `preview` branch, enabling automated semantic version detection and changelog updates based on conventional commit messages.
+- Created a `.env.act.example` template to facilitate local testing of GitHub workflows with proper OpenAI API integration.
+  
+### Changed
+- Updated CI workflow triggers to run on pull requests targeting `preview` and `main` branches instead of `main` and `develop`, aligning with the new three-branch workflow strategy.
+- Removed CI triggers on push events to focus validation on pull requests, improving workflow efficiency.
+- Enhanced `.gitignore` patterns and removed `.env.act` from version control to prevent accidental exposure of sensitive API keys.
+- Improved version bump detection logic to avoid false positives, ensuring accurate semantic versioning based on commit messages.
+- Refined changelog update process to safely handle special characters and prevent shell command interpretation errors.
+- Configured workflow permissions and authentication to allow automated commits and pushes of version and changelog updates by GitHub Actions.
+
+### Fixed
+- Resolved permission issues causing 403 errors when the GitHub Actions bot attempted to push version bump commits.
+- Fixed shell escaping problems in changelog updates that previously caused errors with special characters like backticks.
+- Corrected version bump detection to prevent incorrect major version increments triggered by "BREAKING CHANGE" text in commit bodies rather than commit headers.
+
+---
+
 ## [0.1.9] - 2025-06-03
 
 ### Added
