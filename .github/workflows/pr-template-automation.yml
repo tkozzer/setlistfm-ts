@@ -210,7 +210,7 @@ jobs:
           fi
 
           # Save enhanced description
-          cat << 'ENHANCED_EOF' > enhanced_description.txt
+          cat << ENHANCED_EOF > enhanced_description.txt
           $ENHANCED_DESCRIPTION
           ENHANCED_EOF
 
