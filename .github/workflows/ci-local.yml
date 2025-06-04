@@ -52,7 +52,7 @@ jobs:
         run: pnpm type-check
 
       - name: ⚡ Source tests only (no build artifacts needed)
-        run: pnpm test --run --reporter=basic src/**/*.test.ts
+        run: pnpm vitest run src/
 
   # 🧪 Cross-platform testing matrix (Enhanced for Act compatibility)
   test-matrix:
@@ -120,7 +120,7 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: 🧪 Source tests only (matrix testing)
-        run: pnpm test --run src/**/*.test.ts
+        run: pnpm vitest run src/
 
       - name: 🧠 Type check
         run: pnpm type-check
@@ -174,7 +174,7 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: 🧪 Source tests with coverage (no build tests)
-        run: pnpm test --run --coverage src/**/*.test.ts
+        run: pnpm vitest run --coverage src/
 
       - name: 📈 Coverage summary (Act compatible)
         run: |
@@ -214,7 +214,7 @@ jobs:
         run: pnpm build:all
 
       - name: 📦 Build verification tests (requires dist folder)
-        run: pnpm test --run tests/**/*.test.ts
+        run: pnpm vitest run tests/
 
       - name: 📊 Bundle size analysis
         run: pnpm build:analyze
