@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.0] - 2025-06-04
+
+### Fixed
+- Completely rewrote the release preparation GitHub Actions workflow to improve robustness, maintainability, and security.
+- Resolved multiple shell interpretation issues that caused failures when commit messages or changelog entries contained special characters such as backticks, percent signs, or markdown code blocks.
+- Replaced unsafe variable expansions and  commands with safer heredoc and temporary file approaches to prevent command injection and shell execution errors during version bump detection and changelog generation.
+- Switched from -based JSON template substitution to direct JSON construction with  to handle special characters safely in OpenAI API payloads.
+- Added comprehensive error handling and fallback mechanisms for OpenAI API calls to ensure changelog generation continues gracefully even if the AI service fails or returns invalid responses.
+- Fixed SIGPIPE errors in the release workflow by replacing piped commit 8c1a17d05f74157d9a9a30aad63888d9612f0773
+Author: Tyler Kozlowski <Tyler.J.Kozlowski@gmail.com>
+Date:   Wed Jun 4 08:45:45 2025 -0500
+
+    cleaned up changlog mess
+
+commit 39822cb0beb7ed6b12436fc46f1e92f9e8f5f379
+Author: GitHub Action <action@github.com>
+Date:   Wed Jun 4 13:09:05 2025 +0000 commands with  to improve reliability.
+- Enhanced logging and debugging output throughout the release workflow for easier troubleshooting.
+- Updated the release PR workflow to use a Personal Access Token (PAT) instead of the default GitHub token, preventing permission errors when creating pull requests.
+- Added a step to ensure required GitHub labels ( and ) exist before applying them to release PRs, preventing label-not-found errors.
+- Fixed changelog extraction logic in the release PR workflow to correctly capture the latest version’s changelog entries.
+- Corrected variable expansion issues in PR description templates to ensure dynamic content is rendered properly.
+
+### Changed
+- Streamlined environment variable usage and naming conventions in release workflows for better readability and consistency.
+- Improved visual clarity of workflow output messages using Unicode arrows and standardized error messages.
+- Reduced temporary file creation and simplified cleanup in CI workflows.
+- Standardized shell declarations and code organization in workflows following best practices.
+
+These changes make the release process more reliable and secure, especially when commit messages or changelogs contain special characters, and improve the developer experience by reducing manual intervention and errors during automated releases.
+
+---
+
+## [0.4.0] - 2025-06-04
+
+### Changed
+- Refactor CI release-preparation workflow with safe file-based commit handling, here-docs, and `jq` templating.
+- Prevent shell interpretation and SIGPIPE errors by using `--max-count`, environment variables, and quoted here-docs.
+- Improve OpenAI changelog generation with robust error handling, fallbacks, and clearer prompts.
+- Streamline logging, variable naming, and use Unicode symbols for readability.
+
+### Fixed
+- SIGPIPE errors in commit collection.
+- Shell execution failures caused by special characters in commit messages.
+
 ## [0.3.0] - 2025-06-04
 
 ### Added
@@ -31,8 +76,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Resolved GitHub Actions permissions issues by adding `contents:write` permission and enabling `persist-credentials` for proper authentication during release workflows.
 - Fixed shell escaping issues in changelog update commands to prevent command interpretation errors during CI runs.
 
----
-
 ## [0.2.0] - 2025-06-04
 
 ### Added
@@ -53,8 +96,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed shell escaping problems in changelog updates that previously caused errors with special characters like backticks.
 - Corrected version bump detection to prevent incorrect major version increments triggered by "BREAKING CHANGE" text in commit bodies rather than commit headers.
 
----
-
 ## [0.1.9] - 2025-06-03
 
 ### Added
@@ -64,7 +105,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Cross-platform simulation supporting Windows, macOS, and multiple Ubuntu versions
   - Enhanced platform-specific validation steps for comprehensive local testing
   - `.actrc` configuration file with optimized container settings for local development
-  - `.env.act` environment template for secure local testing setup
+  - `.env.act` environment template for secure local testing
 - **Act integration documentation**: Comprehensive local CI testing guidance:
   - Installation and usage instructions for Act GitHub Actions runner
   - Local workflow testing commands with dry-run options
@@ -117,8 +158,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Developer experience**: Significantly reduced feedback cycle for CI changes with local validation
 - **Production reliability**: Maintained all existing CI quality while adding comprehensive local testing capabilities
 
----
-
 ## [0.1.8] - 2025-06-03
 
 ### Added
@@ -165,8 +204,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Examples execution**: Fixed path resolution and environment setup issues in example scripts
 - **Documentation accuracy**: Updated all documentation to reflect current implementation patterns and best practices
 
----
-
 ## [0.1.7] - 2025-06-03
 
 ### Added
@@ -212,8 +249,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Test coverage gaps**: Added comprehensive endpoint exports testing to achieve 100% coverage milestone
 - **Documentation consistency**: Updated all endpoint README files to remove eslint-disable directives and maintain consistent examples
 
----
-
 ## [0.1.6] - 2025-06-03
 
 ### Enhanced
@@ -243,8 +278,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **TypeScript compilation**: Resolved parameter type issues in examples/venues/getVenueSetlists.ts
 - **Configuration consistency**: Unified approach to handling both library code and examples with appropriate tooling
-
----
 
 ## [0.1.5] - 2025-06-03
 
@@ -285,8 +318,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Data validation**: Added venue ID format validation to handle real setlist.fm API data inconsistencies
 - **Example reliability**: Enhanced examples to gracefully handle invalid venue data and API rate limits
 
----
-
 ## [0.1.4] - 2025-06-03
 
 ### Added
@@ -314,8 +345,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Version**: Bumped to 0.1.4 for countries endpoint implementation
 - **Project status**: Updated to reflect countries endpoint as fully implemented and tested
 - **Examples structure**: Added countries examples following established patterns from artists and cities
-
----
 
 ## [0.1.3] - 2025-06-03
 
@@ -349,8 +378,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **README examples**: Added cities usage examples with proper ISO country code format
 - **Feature list**: Added ISO standard validation and comprehensive examples documentation
 
----
-
 ## [0.1.2] - 2025-06-02
 
 ### Fixed
@@ -374,8 +401,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced README.md usage examples with working code snippets
 - Updated project status to show artist endpoints as completed (3/18 endpoints done)
 
----
-
 ## [0.1.1] - 2025-06-02
 
 ### Added
@@ -396,8 +421,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced feature list to show implemented functionality
 - Updated TypeScript configuration to include all test files
 - Added test coverage script and configuration
-
----
 
 ## [0.1.0] - 2025-06-02
 
