@@ -98,12 +98,14 @@ jobs:
           # Prepare data for OpenAI
           CURRENT_DATE=$(date +"%Y-%m-%d")
           VERSION="${{ steps.version_update.outputs.version }}"
-          COMMITS="${{ steps.commits.outputs.commits }}"
 
-          # Create a payload for OpenAI API
-          cat > changelog_prompt.json << EOF
+          # Store commits safely in temporary file to avoid shell interpretation issues
+          echo "${{ steps.commits.outputs.commits }}" > commits_temp.txt
+
+          # Create JSON template with placeholders
+          cat > changelog_prompt_template.json << 'EOF'
           {
-            "model": "$OPENAI_MODEL",
+            "model": "OPENAI_MODEL_PLACEHOLDER",
               "messages": [
               {
                 "role": "system",
@@ -111,13 +113,24 @@ jobs:
               },
               {
                 "role": "user",
-                "content": "Generate a changelog entry for version $VERSION with date $CURRENT_DATE. Recent commits:\n\n$COMMITS\n\nIMPORTANT: If the commits list above is empty or contains no meaningful changes, respond with ONLY:\n### Changed\n- Minor updates and improvements\n\nIf you have actual commits, analyze them carefully and create entries that help users understand what changed and how it affects them. This is for the setlistfm-ts TypeScript SDK. Focus on user-facing changes, API modifications, and developer experience improvements. Be accurate and never invent features."
+                "content": "Generate a changelog entry for version VERSION_PLACEHOLDER with date DATE_PLACEHOLDER. Recent commits:\n\nCOMMITS_PLACEHOLDER\n\nIMPORTANT: If the commits list above is empty or contains no meaningful changes, respond with ONLY:\n### Changed\n- Minor updates and improvements\n\nIf you have actual commits, analyze them carefully and create entries that help users understand what changed and how it affects them. This is for the setlistfm-ts TypeScript SDK. Focus on user-facing changes, API modifications, and developer experience improvements. Be accurate and never invent features."
               }
             ],
             "max_tokens": 1500,
             "temperature": 0.3
           }
           EOF
+
+          # Replace placeholders safely
+          sed "s/OPENAI_MODEL_PLACEHOLDER/$OPENAI_MODEL/g" changelog_prompt_template.json > changelog_prompt_with_model.json
+          sed "s/VERSION_PLACEHOLDER/$VERSION/g" changelog_prompt_with_model.json > changelog_prompt_with_version.json
+          sed "s/DATE_PLACEHOLDER/$CURRENT_DATE/g" changelog_prompt_with_version.json > changelog_prompt_with_date.json
+
+          # Replace commits placeholder with actual content
+          sed '/COMMITS_PLACEHOLDER/r commits_temp.txt' changelog_prompt_with_date.json | sed '/COMMITS_PLACEHOLDER/d' > changelog_prompt.json
+
+          # Clean up temporary files
+          rm -f commits_temp.txt changelog_prompt_template.json changelog_prompt_with_model.json changelog_prompt_with_version.json changelog_prompt_with_date.json
 
           # Call OpenAI API
           CHANGELOG_ENTRY=$(curl -s -X POST \
