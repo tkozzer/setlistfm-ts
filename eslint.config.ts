@@ -19,7 +19,6 @@ const config = antfu(
       "node_modules/**",
       "pnpm-lock.yaml",
       ".git/**",
-      ".github/**",
       ".vscode/**",
       "*.env",
       ".env*",
@@ -40,7 +39,7 @@ const config = antfu(
         "error",
         {
           case: "camelCase",
-          ignore: ["README.md", "CONTRIBUTING.md", "CHANGELOG.md"],
+          ignore: ["README.md", "CONTRIBUTING.md", "CHANGELOG.md", /.*\.ya?ml$/],
         },
       ],
       "jsdoc/check-param-names": [
