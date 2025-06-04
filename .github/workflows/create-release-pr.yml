@@ -158,14 +158,18 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION="${{ steps.release_info.outputs.version }}"
-          DESCRIPTION="${{ steps.pr_description.outputs.description }}"
 
-          # Create the PR
+          # Save PR description to file to avoid shell interpretation issues
+          cat << 'PR_BODY_EOF' > pr_description.txt
+          ${{ steps.pr_description.outputs.description }}
+          PR_BODY_EOF
+
+          # Create the PR using --body-file to avoid shell interpretation issues
           PR_URL=$(gh pr create \
             --base main \
             --head preview \
             --title "🚀 Release v$VERSION" \
-            --body "$DESCRIPTION" \
+            --body-file pr_description.txt \
             --label "release,automated" \
             --assignee "${{ github.repository_owner }}")
 
