@@ -18,7 +18,7 @@ jobs:
       - name: ⬇️ Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch full history for changelog generation
+          fetch-depth: 0 # Fetch full history for changelog generation
           token: ${{ secrets.GITHUB_TOKEN }}
           persist-credentials: true
 
@@ -56,14 +56,15 @@ jobs:
       - name: 🔍 Determine version bump type
         id: version_bump
         run: |
-          COMMIT_MSG="${{ steps.commits.outputs.commits }}"
-          
+          # Store commit messages safely in temporary file to avoid shell interpretation issues
+          echo "${{ steps.commits.outputs.commits }}" > commits_temp.txt
+
           # Check for breaking changes (major bump) - must be at start of line or after newline
-          if echo "$COMMIT_MSG" | grep -E "(^|[\n])BREAKING CHANGE:|!:" ; then
+          if grep -E "(^|[\n])BREAKING CHANGE:|!:" commits_temp.txt ; then
             echo "type=major" >> $GITHUB_OUTPUT
             echo "Version bump: MAJOR (breaking changes detected)"
           # Check for features (minor bump) - only in commit subject lines
-          elif echo "$COMMIT_MSG" | grep -E "^[a-f0-9]+ feat\(|^[a-f0-9]+ feat:" ; then
+          elif grep -E "^[a-f0-9]+ feat\(|^[a-f0-9]+ feat:" commits_temp.txt ; then
             echo "type=minor" >> $GITHUB_OUTPUT
             echo "Version bump: MINOR (new features detected)"
           # Default to patch
@@ -72,16 +73,19 @@ jobs:
             echo "Version bump: PATCH (fixes and improvements)"
           fi
 
+          # Clean up temporary file
+          rm -f commits_temp.txt
+
       - name: 📈 Update package version
         id: version_update
         run: |
           CURRENT_VERSION=$(node -p "require('./package.json').version")
           echo "Current version: $CURRENT_VERSION"
-          
+
           # Use npm version to bump
           NEW_VERSION=$(npm version ${{ steps.version_bump.outputs.type }} --no-git-tag-version)
           NEW_VERSION=${NEW_VERSION#v}  # Remove 'v' prefix
-          
+
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "New version: $NEW_VERSION"
 
@@ -95,7 +99,7 @@ jobs:
           CURRENT_DATE=$(date +"%Y-%m-%d")
           VERSION="${{ steps.version_update.outputs.version }}"
           COMMITS="${{ steps.commits.outputs.commits }}"
-          
+
           # Create a payload for OpenAI API
           cat > changelog_prompt.json << EOF
           {
@@ -114,7 +118,7 @@ jobs:
             "temperature": 0.3
           }
           EOF
-          
+
           # Call OpenAI API
           CHANGELOG_ENTRY=$(curl -s -X POST \
             -H "Content-Type: application/json" \
@@ -122,12 +126,12 @@ jobs:
             -d @changelog_prompt.json \
             https://api.openai.com/v1/chat/completions | \
             jq -r '.choices[0].message.content // "Failed to generate changelog entry"')
-          
+
           # Save changelog entry
           echo "changelog_entry<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGELOG_ENTRY" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-          
+
           echo "Generated changelog entry:"
           echo "$CHANGELOG_ENTRY"
 
@@ -136,22 +140,22 @@ jobs:
           # Create temp file with new entry
           echo "## [${{ steps.version_update.outputs.version }}] - $(date +%Y-%m-%d)" > new_entry.md
           echo "" >> new_entry.md
-          
+
           # Write changelog entry safely to avoid shell interpretation
           cat << 'CHANGELOG_EOF' >> new_entry.md
           ${{ steps.changelog.outputs.changelog_entry }}
           CHANGELOG_EOF
-          
+
           echo "" >> new_entry.md
           echo "---" >> new_entry.md
           echo "" >> new_entry.md
-          
+
           # Insert new entry after the header in CHANGELOG.md
           head -n 9 CHANGELOG.md > temp_changelog.md
           cat new_entry.md >> temp_changelog.md
           tail -n +10 CHANGELOG.md >> temp_changelog.md
           mv temp_changelog.md CHANGELOG.md
-          
+
           # Clean up
           rm new_entry.md
 
@@ -159,7 +163,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          
+
           git add package.json CHANGELOG.md
           git commit -m "chore(release): bump version to ${{ steps.version_update.outputs.version }} and update changelog"
           git push
@@ -177,4 +181,4 @@ jobs:
           echo "2. Create PR from preview → main when ready to publish" >> $GITHUB_STEP_SUMMARY
           echo "3. Merge to main will trigger GitHub release and npm publishing" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "🚀 **Preview branch is ready for production release!**" >> $GITHUB_STEP_SUMMARY 
+          echo "🚀 **Preview branch is ready for production release!**" >> $GITHUB_STEP_SUMMARY
