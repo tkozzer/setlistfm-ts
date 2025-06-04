@@ -8,8 +8,13 @@ node_modules/
 
 # Environment files
 .env
-.env.*
-!.env.act
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Act local testing (contains API keys)
+.env.act
 
 # Act (GitHub Actions local runner) files
 .input
