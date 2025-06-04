@@ -1,6 +1,6 @@
 {
   "name": "setlistfm-ts",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "packageManager": "pnpm@10.11.1",
   "description": "A TypeScript client for the setlist.fm API",
   "author": "tkozzer <tkoz.dev@gmail.com>",
@@ -25,10 +25,11 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.js"
+      "require": "./dist/index.cjs"
     }
   },
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
     "LICENSE",
@@ -36,15 +37,27 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "rollup -c",
+    "build:tsc": "tsc -p tsconfig.build.json",
+    "build:minified": "rollup -c --environment NODE_ENV:production",
+    "build:all": "pnpm build && pnpm build:minified && pnpm build:umd",
+    "build:umd": "rollup -c --environment BUILD_FORMAT:umd",
+    "build:umd:minified": "rollup -c --environment BUILD_FORMAT:umd,NODE_ENV:production",
+    "build:analyze": "pnpm build:minified && echo '📊 Bundle Size Analysis:' && ls -lh dist/index.* | grep -E '\\.(js|cjs)$'",
+    "build:verify": "pnpm build:minified && pnpm test:build",
     "test": "vitest run",
     "test:watch": "vitest watch",
     "test:coverage": "vitest run --coverage",
+    "test:build": "vitest run tests/buildVerification.test.ts",
     "lint": "eslint src examples --ext .ts",
     "lint:fix": "eslint src examples --ext .ts --fix",
     "check": "pnpm type-check && pnpm lint && pnpm test",
+    "prepack": "pnpm build:verify",
+    "prepublishOnly": "pnpm lint:src && pnpm test && pnpm build:verify",
     "prepare": "husky",
     "type-check": "tsc --noEmit",
+    "type-check:publish": "tsc -p tsconfig.publish.json --noEmit",
+    "lint:src": "eslint src --ext .ts",
     "type-check:verbose": "tsc --noEmit --listFiles --extendedDiagnostics"
   },
   "dependencies": {
@@ -53,14 +66,22 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "^4.13.2",
+    "@rollup/plugin-commonjs": "^28.0.1",
+    "@rollup/plugin-node-resolve": "^15.3.0",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^12.1.1",
     "@types/node": "^22.15.29",
     "@vitest/coverage-v8": "^3.2.0",
+
     "dotenv": "^16.5.0",
     "eslint": "^9.28.0",
     "eslint-plugin-format": "^1.0.1",
     "husky": "^9.1.7",
     "jiti": "^2.4.2",
     "lint-staged": "^16.1.0",
+    "rollup": "^4.27.4",
+    "rollup-plugin-dts": "^6.1.1",
+    "tslib": "^2.8.1",
     "typescript": "^5.8.3",
     "vitest": "^3.2.0"
   },

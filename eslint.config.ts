@@ -19,9 +19,12 @@ const config = antfu(
       "node_modules/**",
       "pnpm-lock.yaml",
       ".git/**",
+      ".github/**",
       ".vscode/**",
       "*.env",
       ".env*",
+      "docs/**",
+      "README.md",
     ],
   },
   {
@@ -71,9 +74,16 @@ const config = antfu(
     },
   },
   {
-    files: ["**/*.md", "**/*.md/*.ts"],
+    files: ["**/*.md", "**/*.md/*.ts", "README.md"],
     rules: {
       "no-console": "off", // Allow console.log in markdown examples
+      "node/no-process-env": "off",
+    },
+  },
+  {
+    files: ["rollup.config.ts", "rollup.config.js", "vitest.config.ts"],
+    rules: {
+      "node/no-process-env": "off", // Allow process.env in build configs
     },
   },
 );
