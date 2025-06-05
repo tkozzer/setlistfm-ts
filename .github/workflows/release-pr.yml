@@ -85,7 +85,7 @@ jobs:
         with:
           openai_api_key: ${{ secrets.OPENAI_API_KEY }}
           system-path: .github/prompts/pr-description.sys.md
-          template-path: .github/prompts/pr-description.tmpl.md
+          template-path: .github/prompts/pr-description.user.md
           vars: |
             VERSION=${{ steps.version.outputs.ver }}
             CHANGELOG=${{ steps.changelog.outputs.entry }}
