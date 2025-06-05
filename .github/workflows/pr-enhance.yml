@@ -67,10 +67,26 @@ jobs:
           # ---------- Conventional-commit stats ----------
           total=$(wc -l < commits.txt | xargs)
           conv=$(grep -cE '^(feat|fix|docs|style|refactor|perf|test|chore|ci|build)(\(.*\))?:' commits.txt || true)
+          files_count=$(wc -l < files.txt | xargs)
+
+          # Count specific commit types
+          feat=$(grep -cE '^[a-f0-9]+ feat(\(|:)' commits.txt || true)
+          fix=$(grep -cE '^[a-f0-9]+ fix(\(|:)' commits.txt || true)
+          docs=$(grep -cE '^[a-f0-9]+ docs(\(|:)' commits.txt || true)
+          chore=$(grep -cE '^[a-f0-9]+ chore(\(|:)' commits.txt || true)
+          ci=$(grep -cE '^[a-f0-9]+ (ci|build)(\(|:)' commits.txt || true)
+          break=$(grep -cE '^[a-f0-9]+.*BREAKING CHANGE|!:' commits.txt || true)
 
           {
             echo "total=$total"
             echo "conv=$conv"
+            echo "files_count=$files_count"
+            echo "feat=$feat"
+            echo "fix=$fix"
+            echo "docs=$docs"
+            echo "chore=$chore"
+            echo "ci=$ci"
+            echo "break=$break"
           } >> "$GITHUB_OUTPUT"
 
       # -------------------------------------------------------------------
@@ -94,17 +110,23 @@ jobs:
           {{COMMITS}}
           ```
 
-          ## Changed files
+          ## Changed files ({{FILES_COUNT}})
           ```
           {{FILES}}
           ```
 
           ---
-          👉 **Task:** Rewrite / improve the PR description following the headings *exactly*
-            and **only** using information visible above.
-            If something is unknown, write “N/A”.
+          **CRITICAL**: Base your description ONLY on the commits and files above.
 
-          Headings to produce:
+          👉 **Task:** Analyze the commits and files to determine the PRIMARY purpose of this PR:
+          - If files are mainly in `.github/`, this is likely CI/DevOps work
+          - If files are in `src/`, this is likely feature/bug work
+          - If files are `.md` files, this is likely documentation
+
+          Write a description using ONLY information visible above.
+          Use "N/A" for any section where you cannot verify information from the commits/files.
+
+          Required headings (use exactly):
 
           ## 📋 Summary
           ## 🔄 Changes
@@ -129,6 +151,7 @@ jobs:
                   d
                 }" \
             -e "s|{{TOTAL_COMMITS}}|${{ steps.meta.outputs.total }}|g" \
+            -e "s|{{FILES_COUNT}}|${{ steps.meta.outputs.files_count }}|g" \
             user_prompt.md
 
       # -------------------------------------------------------------------
@@ -142,7 +165,7 @@ jobs:
           system-path: .github/prompts/pr-enhancement.sys.md # unchanged
           template-path: user_prompt.md
           model: ${{ env.OPENAI_MODEL }}
-          temperature: 0 # deterministic
+          temperature: 0 # maximum determinism for factual accuracy
           max-tokens: 1200
 
       # -------------------------------------------------------------------
