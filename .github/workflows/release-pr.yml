@@ -94,7 +94,7 @@ jobs:
           vars: |
             VERSION=${{ steps.version.outputs.ver }}
             CHANGELOG=${{ steps.changelog.outputs.entry }}
-          model: ${{ secrets.OPENAI_MODEL || 'gpt-4.1-nano' }}
+          model: ${{ secrets.OPENAI_MODEL || 'gpt-4o-mini' }}
           temperature: 0.3
           max-tokens: 1000 # note the hyphen
 
