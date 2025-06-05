@@ -1,0 +1,204 @@
+# .github_new/workflows/pr-enhance.yml
+#
+# 🤖  Pull‑request enhancer
+# • Runs only for feature / fix branches that target `preview`
+# • Calls the local composite action (.github_new/actions/openai-chat)
+#   to generate an improved PR description from the prompt templates
+# • Adds helpful labels and an optional guidance comment
+# ---------------------------------------------------------------------
+
+name: 🤖 PR Enhance
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+    branches: [preview]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  enhance:
+    # Skip if the *source* branch is the special `preview` branch itself
+    if: github.head_ref != 'preview'
+    runs-on: ubuntu-latest
+
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-4.1-nano' }}
+
+    steps:
+      # -------------------------------------------------------------------
+      # 1) Repo checkout (needed for git log & prompt templates)
+      # -------------------------------------------------------------------
+      - name: ⬇️ Checkout repo (with full history for git log)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # -------------------------------------------------------------------
+      # 2) Gather PR + commit information
+      # -------------------------------------------------------------------
+      - name: 📑 Collect PR meta & commits
+        id: meta
+        shell: bash
+        run: |
+          # Basic PR fields
+          echo "number=${{ github.event.pull_request.number }}"   >> $GITHUB_OUTPUT
+          echo "title=${{ github.event.pull_request.title }}"     >> $GITHUB_OUTPUT
+
+          # Save current body so the AI can improve (multiline-safe)
+          printf "%s" "${{ github.event.pull_request.body }}" > pr_body.txt
+
+          # Save the commit list (hash + subject + body) between base & head
+          git log --pretty=format:"%h %s%n%b" \
+            ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} \
+            > commits.txt || touch commits.txt
+
+          # Simple conventional-commit stats for later labelling
+          total=$(grep -cE '^[0-9a-f]{7,}' commits.txt || true)
+          conv=$(grep -cE '^[0-9a-f]{7,} (feat|fix|docs|style|refactor|perf|test|chore|ci|build)(\(.*\))?:' commits.txt || true)
+          break=$(grep -cE '(BREAKING CHANGE:|feat!|fix!)' commits.txt || true)
+          feat=$(grep -cE '^[0-9a-f]{7,} feat(\(.*\))?:' commits.txt || true)
+          fix=$(grep -cE '^[0-9a-f]{7,} fix(\(.*\))?:'  commits.txt || true)
+          docs=$(grep -cE '^[0-9a-f]{7,} docs(\(.*\))?:' commits.txt || true)
+          chore=$(grep -cE '^[0-9a-f]{7,} (chore|ci|build)(\(.*\))?:' commits.txt || true)
+
+          {
+            echo "total=$total"
+            echo "conv=$conv"
+            echo "break=$break"
+            echo "feat=$feat"
+            echo "fix=$fix"
+            echo "docs=$docs"
+            echo "chore=$chore"
+          } >> "$GITHUB_OUTPUT"
+
+      # -------------------------------------------------------------------
+      # 3) Build a user‑prompt from the template (here‑doc → tmp file)
+      # -------------------------------------------------------------------
+      - name: 📝 Create user prompt from template
+        id: prompt
+        shell: bash
+        run: |
+          # slurp template, replace placeholders
+          sed \
+            -e "s|{{PR_TITLE}}|${{ steps.meta.outputs.title }}|g" \
+            -e "/{{PR_BODY}}/{
+                  r pr_body.txt
+                  d
+                }" \
+            -e "/{{COMMITS}}/{
+                  r commits.txt
+                  d
+                }" \
+            prompts/pr-enhancement.tmpl.md > user_prompt.md
+
+      # -------------------------------------------------------------------
+      # 4) Call the local composite action that wraps OpenAI Chat API
+      # -------------------------------------------------------------------
+      - name: 🤖 Generate enhanced description
+        id: ai
+        uses: ./.github_new/actions/openai-chat
+        with:
+          model: ${{ env.OPENAI_MODEL }}
+          system_prompt: prompts/pr-enhancement.sys.md
+          user_prompt_path: user_prompt.md
+          temperature: 0.3
+          max_tokens: 1000
+          output_file: enhanced.md
+          openai_api_key: ${{ env.OPENAI_API_KEY }}
+
+      # -------------------------------------------------------------------
+      # 5) Update the PR body with the AI output (fallback: keep original)
+      # -------------------------------------------------------------------
+      - name: 🛠️ Update PR description
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          body=$(cat enhanced.md 2>/dev/null || cat pr_body.txt)
+          printf "%s" "$body" > final.md
+          gh pr edit "${{ steps.meta.outputs.number }}" --body-file final.md
+
+      # -------------------------------------------------------------------
+      # 6) Determine & apply labels
+      # -------------------------------------------------------------------
+      - name: 🏷️ Determine labels
+        id: labels
+        shell: bash
+        run: |
+          labels=()
+          [ ${{ steps.meta.outputs.feat }}  -gt 0 ] && labels+=('feature')
+          [ ${{ steps.meta.outputs.fix }}   -gt 0 ] && labels+=('bugfix')
+          [ ${{ steps.meta.outputs.docs }}  -gt 0 ] && labels+=('documentation')
+          [ ${{ steps.meta.outputs.chore }} -gt 0 ] && labels+=('maintenance')
+          [ ${{ steps.meta.outputs.break }} -gt 0 ] && labels+=('breaking-change')
+
+          conv=${{ steps.meta.outputs.conv }}
+          total=${{ steps.meta.outputs.total }}
+          if [ "$total" -gt 0 ]; then
+            pct=$(awk "BEGIN{print int(($conv/$total)*100)}")
+            [ "$pct" -lt 80 ] && labels+=('needs-review')
+          fi
+
+          echo "labels=${labels[*]}" >> $GITHUB_OUTPUT
+
+      - name: ➕ Apply labels & auto-assign
+        if: steps.labels.outputs.labels != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          # ensure each label exists (idempotent)
+          for l in ${{ steps.labels.outputs.labels }}; do
+            case "$l" in
+              feature)          color="0e8a16" desc="New feature or enhancement" ;;
+              bugfix)           color="d73a4a" desc="Bug fix" ;;
+              documentation)    color="0075ca" desc="Docs improvement" ;;
+              maintenance)      color="fbca04" desc="Maintenance / chores" ;;
+              breaking-change)  color="b60205" desc="Breaking change" ;;
+              needs-review)     color="fbca04" desc="Needs commit-message review" ;;
+            esac
+            gh label create "$l" --color "$color" --description "$desc" --force >/dev/null 2>&1 || true
+          done
+
+          # add labels & assign to repo owner
+          gh pr edit "${{ steps.meta.outputs.number }}" \
+            --add-label ${{ steps.labels.outputs.labels }} \
+            --add-assignee "${{ github.repository_owner }}"
+
+      # -------------------------------------------------------------------
+      # 7) Gentle comment if commit style needs love
+      # -------------------------------------------------------------------
+      - name: 💡 Commit-message suggestions
+        if: steps.meta.outputs.total != 0 && steps.meta.outputs.conv != steps.meta.outputs.total
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          cat > tip.md <<'EOF'
+          ## 💡 Commit-message tips
+
+          Some commits don't follow our [Conventional Commits](https://www.conventionalcommits.org/) pattern.
+          Adhering to the convention helps automated changelogs and semantic versioning.
+          Feel free to polish them if time permits - thanks! ✨
+          EOF
+          gh pr comment "${{ steps.meta.outputs.number }}" --body-file tip.md
+
+      # -------------------------------------------------------------------
+      # 8) Summary for the workflow run
+      # -------------------------------------------------------------------
+      - name: 📜 Workflow summary
+        shell: bash
+        run: |
+          {
+            echo "### 🤖 PR Enhancement complete"
+            echo ""
+            echo "- **${{ steps.meta.outputs.total }}** commits analysed"
+            echo "- **${{ steps.labels.outputs.labels }}** labels applied"
+            echo ""
+            echo "Enhanced description written back to PR ➡️"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,41 @@
+name: Setup Node & pnpm (local)
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: Node.js version to install
+        type: string
+        required: true
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout the repo
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Drop a standalone pnpm binary on the PATH  🔑
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.11.1 # keep in sync with prod
+          standalone: true # <‑‑ ADDED
+          run_install: false # we install manually below
+
+      # 3. Install the requested Node.js version (now pnpm cache call works)
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: pnpm
+
+      # 4. Enable Corepack so pnpm in package.json is recognised
+      - name: Enable Corepack
+        run: corepack enable
+
+      # 5. Install dependencies once
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile

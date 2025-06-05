@@ -1,0 +1,52 @@
+name: OpenAI Chat Completion
+description: Call the OpenAI Chat Completion API with a system prompt and a user-prompt template.
+
+runs:
+  using: composite
+  steps:
+    - name: Run entrypoint
+      id: chat
+      shell: bash
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: |
+        bash "${{ github.action_path }}/entrypoint.sh" \
+          --system "${{ inputs.system-path }}" \
+          --template "${{ inputs.template-path }}" \
+          --vars "${{ inputs.vars }}" \
+          --model "${{ inputs.model }}" \
+          --temp "${{ inputs.temperature }}" \
+          --tokens "${{ inputs.max-tokens }}"
+
+inputs:
+  system-path:
+    description: Relative path to the **system** prompt file (optional).
+    required: false
+    default: ""
+  template-path:
+    description: Relative path to the **user** prompt template.
+    required: true
+  vars:
+    description: |
+      New-line-separated KEY=VALUE pairs to substitute into {{KEY}} placeholders
+      inside both prompts. Example:
+        version=1.2.3
+        changelog=* Fixed all the bugs *
+    required: false
+    default: ""
+  model:
+    description: OpenAI model name.
+    required: false
+    default: gpt-4.1-nano
+  temperature:
+    description: Sampling temperature.
+    required: false
+    default: 0.3
+  max-tokens:
+    description: max_tokens parameter.
+    required: false
+    default: 1500
+
+outputs:
+  content:
+    description: Assistant response text returned from OpenAI
