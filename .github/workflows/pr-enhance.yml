@@ -235,22 +235,34 @@ jobs:
             --add-assignee "${{ github.repository_owner }}"
 
       # -------------------------------------------------------------------
-      # 7) Gentle comment if commit style needs love
+      # 7) Post comprehensive analysis summary
       # -------------------------------------------------------------------
-      - name: 💡 Commit-message suggestions
-        if: steps.meta.outputs.total != 0 && steps.meta.outputs.conv != steps.meta.outputs.total
+      - name: 🤖 Post analysis summary
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          cat > tip.md <<'EOF'
-          ## 💡 Commit-message tips
+          cat > summary_comment.md <<'EOF'
+          ## 🤖 PR Analysis Complete
 
-          Some commits don't follow our [Conventional Commits](https://www.conventionalcommits.org/) pattern.
-          Adhering to the convention helps automated changelogs and semantic versioning.
-          Feel free to polish them if time permits - thanks! ✨
+          **Commit Analysis:**
+          - 📊 **${{ steps.meta.outputs.total }}** total commits analyzed
+          - ✅ **${{ steps.meta.outputs.conv }}** follow conventional format
+          - 🆕 **${{ steps.meta.outputs.feat }}** new features
+          - 🐛 **${{ steps.meta.outputs.fix }}** bug fixes
+          - 📚 **${{ steps.meta.outputs.docs }}** documentation updates
+          - 🔧 **${{ steps.meta.outputs.chore }}** maintenance/chores
+          - ⚙️ **${{ steps.meta.outputs.ci }}** CI/build changes
+          - ⚠️ **${{ steps.meta.outputs.break }}** breaking changes
+
+          **Files Changed:** `${{ steps.meta.outputs.files_count }}`
+
+          **Labels Added:** `${{ steps.labels.outputs.labels }}`
+
+          This PR description has been enhanced by AI to follow our project standards. Thanks for contributing! 🎸
           EOF
-          gh pr comment "${{ steps.meta.outputs.number }}" --body-file tip.md
+
+          gh pr comment "${{ steps.meta.outputs.number }}" --body-file summary_comment.md
 
       # -------------------------------------------------------------------
       # 8) Summary for the workflow run
