@@ -28,9 +28,6 @@ jobs:
           node-version: 22.x
           run-install: "true"
 
-      - name: Ensure pnpm is on PATH
-        run: echo "$(npm bin -g)" >> $GITHUB_PATH
-
       - run: pnpm lint
       - run: pnpm type-check
       - run: pnpm vitest run src/
