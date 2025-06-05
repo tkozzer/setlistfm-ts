@@ -1,0 +1,37 @@
+name: Setup Node & pnpm
+description: |
+  • Installs the requested Node.js version (with pnpm cache)
+  • Installs the exact pnpm version globally (guaranteed on PATH)
+  • Optionally runs `pnpm install --frozen-lockfile`
+
+inputs:
+  node-version:
+    description: Node.js version (e.g. `20.x`, `22.x`)
+    required: true
+  pnpm-version:
+    description: pnpm version to install
+    required: false
+    default: 10.11.1
+  run-install:
+    description: 'Set to `"true"` to run `pnpm install --frozen-lockfile`'
+    required: false
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - name: 📦 Setup pnpm ${{ inputs.pnpm-version }}
+      uses: pnpm/action-setup@v4
+      with:
+        version: ${{ inputs.pnpm-version }}
+
+    - name: 🟢 Setup Node.js ${{ inputs.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: pnpm
+
+    - name: 📥 Install dependencies
+      if: ${{ inputs.run-install == 'true' }}
+      shell: bash
+      run: pnpm install --frozen-lockfile

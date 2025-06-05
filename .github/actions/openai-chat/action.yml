@@ -1,0 +1,99 @@
+name: OpenAI Chat Completion
+description: Call the OpenAI Chat Completion API with a system prompt and a user-prompt template.
+
+# ─────────────────────────────────────────────────────────────
+#  Inputs
+# ─────────────────────────────────────────────────────────────
+inputs:
+  openai_api_key:
+    description: |
+      The OpenAI API key.
+
+      Pass the secret from your workflow, e.g.:
+
+      ```yaml
+      - uses: ./.github/actions/openai-chat
+        with:
+          openai_api_key: <YOUR_SECRET>
+      ```
+    required: true
+
+  system-path:
+    description: Relative path to the **system** prompt file (optional).
+    required: false
+    default: ""
+
+  template-path:
+    description: Relative path to the **user** prompt template (markdown or text).
+    required: true
+
+  vars:
+    description: |
+      New-line-separated `KEY=VALUE` pairs substituted into `{{KEY}}`
+      placeholders in *both* prompts. Example:
+
+      ```
+      version=1.2.3
+      changelog=* Fixed all the bugs *
+      ```
+    required: false
+    default: ""
+
+  model:
+    description: OpenAI model name.
+    required: false
+    default: gpt-4o-mini # ← safest public value
+
+  temperature:
+    description: Sampling temperature.
+    required: false
+    default: "0.3"
+
+  max-tokens:
+    description: max_tokens parameter.
+    required: false
+    default: "1500"
+
+  schema-path:
+    description: Relative path to JSON schema file for structured output (optional).
+    required: false
+    default: ""
+
+  output-path:
+    description: Relative path to output template for formatting structured response (optional).
+    required: false
+    default: ""
+
+# ─────────────────────────────────────────────────────────────
+#  Outputs
+# ─────────────────────────────────────────────────────────────
+outputs:
+  content:
+    description: Raw assistant response from OpenAI
+    value: ${{ steps.chat.outputs.content }}
+  formatted_content:
+    description: Formatted content using output template (if provided)
+    value: ${{ steps.chat.outputs.formatted_content }}
+
+# ─────────────────────────────────────────────────────────────
+#  Execution
+# ─────────────────────────────────────────────────────────────
+runs:
+  using: composite
+  steps:
+    - name: 🗨️ Call OpenAI Chat API
+      id: chat
+      shell: bash
+      env:
+        OPENAI_API_KEY: ${{ inputs.openai_api_key }}
+      run: |
+        set -euo pipefail
+        bash "${{ github.action_path }}/entrypoint.sh" \
+          --system   "${{ inputs.system-path }}" \
+          --template "${{ inputs.template-path }}" \
+          --vars     "${{ inputs.vars }}" \
+          --model    "${{ inputs.model }}" \
+          --temp     "${{ inputs.temperature }}" \
+          --tokens   "${{ inputs.max-tokens }}" \
+          --schema   "${{ inputs.schema-path }}" \
+          --output   "${{ inputs.output-path }}"
