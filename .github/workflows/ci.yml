@@ -1,54 +1,44 @@
+# .github_new/workflows/ci.yml
 name: 🔄 CI
 
 on:
   pull_request:
     branches: [preview, main]
   schedule:
-    # Run nightly at 2 AM UTC to catch dependency issues
-    - cron: "0 2 * * *"
+    - cron: "0 2 * * *" # nightly at 02 UTC
 
-# Cancel in-progress runs for PRs when new commits are pushed
+# Cancel stale runs on PRs
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# ##############################################################################
+#  🚀 Quick checks – lint, type‑check, fast unit tests (Node 22, Linux)
+# ##############################################################################
 jobs:
-  # 🚀 Quick feedback job - runs first for fast developer feedback
   quick-checks:
     name: 🚀 Quick Checks
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - name: ⬇️ Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: 📦 Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.11.1
-
-      - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v4
+      # Re‑use the central “setup Node & pnpm” workflow
+      - uses: ./.github_new/workflows/.reuse/setup-node-pnpm.yml
         with:
           node-version: 22.x
-          cache: pnpm
 
-      - name: 📥 Install dependencies
-        run: pnpm install --frozen-lockfile
+      # Fast sanity checks
+      - run: pnpm lint
+      - run: pnpm type-check
+      - run: pnpm vitest run src/
 
-      - name: 🧼 Lint check
-        run: pnpm lint
-
-      - name: 🧠 Type check
-        run: pnpm type-check
-
-      - name: ⚡ Source tests only (no build artifacts needed)
-        run: pnpm vitest run src/
-
-  # 🧪 Comprehensive testing matrix
+  # ##############################################################################
+  #  🧪 Test matrix – multi‑OS / multi‑Node
+  # ##############################################################################
   test-matrix:
-    name: 🧪 Test (Node ${{ matrix.node }} on ${{ matrix.os }})
+    name: 🧪 Test (${{ matrix.node }} on ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     needs: quick-checks
@@ -58,7 +48,6 @@ jobs:
       matrix:
         node: [18.x, 20.x, 22.x]
         os: [ubuntu-latest, windows-latest, macos-latest]
-        # Exclude some combinations to reduce CI time while maintaining coverage
         exclude:
           - os: windows-latest
             node: 18.x
@@ -66,30 +55,17 @@ jobs:
             node: 18.x
 
     steps:
-      - name: ⬇️ Checkout repository
-        uses: actions/checkout@v4
-
-      - name: 📦 Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.11.1
-
-      - name: 🟢 Setup Node.js ${{ matrix.node }}
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: ./.github_new/workflows/.reuse/setup-node-pnpm.yml
         with:
           node-version: ${{ matrix.node }}
-          cache: pnpm
 
-      - name: 📥 Install dependencies
-        run: pnpm install --frozen-lockfile
+      - run: pnpm vitest run src/
+      - run: pnpm type-check
 
-      - name: 🧪 Source tests only (cross-platform matrix)
-        run: pnpm vitest run src/
-
-      - name: 🧠 Type check
-        run: pnpm type-check
-
-  # 📊 Coverage and quality reporting (only on main combination)
+  # ##############################################################################
+  #  📊 Coverage job (Node 22, Linux)
+  # ##############################################################################
   coverage:
     name: 📊 Coverage & Quality
     runs-on: ubuntu-latest
@@ -97,44 +73,33 @@ jobs:
     needs: quick-checks
 
     steps:
-      - name: ⬇️ Checkout repository
-        uses: actions/checkout@v4
-
-      - name: 📦 Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.11.1
-
-      - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: ./.github_new/workflows/.reuse/setup-node-pnpm.yml
         with:
           node-version: 22.x
-          cache: pnpm
 
-      - name: 📥 Install dependencies
-        run: pnpm install --frozen-lockfile
+      # Emit a JSON summary so the follow‑up step never 404s
+      - run: pnpm vitest run --coverage --coverage.reporter=json-summary src/
 
-      - name: 🧪 Source tests with coverage (no build tests)
-        run: pnpm vitest run --coverage src/
-
-      - name: 📊 Upload coverage reports
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: coverage-reports
           path: coverage/
           retention-days: 30
 
-      - name: 📈 Coverage summary
+      - name: 📊 Coverage Summary
         run: |
-          echo "## 📊 Coverage Summary" >> $GITHUB_STEP_SUMMARY
-          echo "Coverage reports have been generated and uploaded as artifacts." >> $GITHUB_STEP_SUMMARY
+          echo '## 📊 Coverage Summary' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Reports uploaded as artifact.' >> "$GITHUB_STEP_SUMMARY"
           if [ -f coverage/coverage-summary.json ]; then
-            echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
-            cat coverage/coverage-summary.json >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            cat coverage/coverage-summary.json >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
           fi
 
-  # 🏗️ Build verification - test all output formats
+  # ##############################################################################
+  #  🏗️ Build verification (Node 22, Linux)
+  # ##############################################################################
   build-verification:
     name: 🏗️ Build Verification
     runs-on: ubuntu-latest
@@ -142,99 +107,44 @@ jobs:
     needs: quick-checks
 
     steps:
-      - name: ⬇️ Checkout repository
-        uses: actions/checkout@v4
-
-      - name: 📦 Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.11.1
-
-      - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: ./.github_new/workflows/.reuse/setup-node-pnpm.yml
         with:
           node-version: 22.x
-          cache: pnpm
 
-      - name: 📥 Install dependencies
-        run: pnpm install --frozen-lockfile
+      - run: pnpm build:all
+      - run: pnpm vitest run tests/
+      - run: pnpm build:analyze
 
-      - name: 🏗️ Build all formats
-        run: pnpm build:all
-
-      - name: 📦 Build verification tests (requires dist folder)
-        run: pnpm vitest run tests/
-
-      - name: 📊 Bundle size analysis
-        run: pnpm build:analyze
-
-      - name: 📤 Upload build artifacts
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
           path: dist/
           retention-days: 7
 
-      - name: 📈 Build summary
+      - name: 🏗️ Build Summary
         run: |
-          echo "## 🏗️ Build Summary" >> $GITHUB_STEP_SUMMARY
-          echo "All package formats have been built and verified successfully." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📦 Generated Artifacts:" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          ls -la dist/ >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📊 Bundle Sizes:" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          ls -lh dist/ | grep -E '\.(js|cjs)$' >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo '## 🏗️ Build Summary' >> "$GITHUB_STEP_SUMMARY"
+          ls -la dist/               >> "$GITHUB_STEP_SUMMARY"
 
-  # ✅ Success gate - all jobs must pass
+  # ##############################################################################
+  #  ✅ Success gate – block merge if any job failed
+  # ##############################################################################
   ci-success:
     name: ✅ CI Success
     runs-on: ubuntu-latest
-    needs: [quick-checks, test-matrix, coverage, build-verification]
     if: always()
+    needs:
+      - quick-checks
+      - test-matrix
+      - coverage
+      - build-verification
 
     steps:
-      - name: ✅ Check job results
+      - name: Final status check
         run: |
-          if [[ "${{ needs.quick-checks.result }}" != "success" ]]; then
-            echo "❌ Quick checks failed"
-            exit 1
-          fi
-          if [[ "${{ needs.test-matrix.result }}" != "success" ]]; then
-            echo "❌ Test matrix failed"
-            exit 1
-          fi
-          if [[ "${{ needs.coverage.result }}" != "success" ]]; then
-            echo "❌ Coverage job failed"
-            exit 1
-          fi
-          if [[ "${{ needs.build-verification.result }}" != "success" ]]; then
-            echo "❌ Build verification failed"
-            exit 1
-          fi
-          echo "✅ All CI jobs completed successfully!"
-
-      - name: 🎉 Success summary
-        run: |
-          echo "## 🎉 CI Pipeline Completed Successfully!" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ **Quick Checks**: Passed" >> $GITHUB_STEP_SUMMARY
-          echo "✅ **Test Matrix**: Passed across multiple Node.js versions and operating systems" >> $GITHUB_STEP_SUMMARY
-          echo "✅ **Coverage**: Generated and uploaded" >> $GITHUB_STEP_SUMMARY
-          echo "✅ **Build Verification**: All package formats built and verified" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🧪 Test Execution Strategy" >> $GITHUB_STEP_SUMMARY
-          echo "- **Source Tests**: 524 tests run across all matrix combinations" >> $GITHUB_STEP_SUMMARY
-          echo "- **Build Tests**: 10 verification tests run after successful build" >> $GITHUB_STEP_SUMMARY
-          echo "- **Total Coverage**: All 534 tests executed with proper separation" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🌐 Platform Coverage" >> $GITHUB_STEP_SUMMARY
-          echo "- **Operating Systems**: Ubuntu, Windows, macOS" >> $GITHUB_STEP_SUMMARY
-          echo "- **Node.js Versions**: 18.x, 20.x, 22.x (LTS + current)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Matrix Combinations**: 7 tested environments" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "The code is ready for merge! 🚀" >> $GITHUB_STEP_SUMMARY
+          for job in quick-checks test-matrix coverage build-verification; do
+            result="${{ needs[job].result }}"
+            [ "$result" != success ] && { echo "❌ $job failed"; exit 1; }
+          done
+          echo '✅ All CI jobs completed successfully!' > "$GITHUB_STEP_SUMMARY"

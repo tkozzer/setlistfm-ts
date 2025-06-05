@@ -11,7 +11,7 @@ alwaysApply: true
 
 - When asked to generate a git commit message:
   1. First, execute and review `git status` and `git diff` to understand what is staged and what is changing.
-  2. DO NOT USE TERMINAL TOOL.
+  2. DO NOT USE TERMINAL TOOL FOR `git commit`. You can use terminal tool for `git status` and `git diff`.
   3. Based on the changes, create a well-structured commit message following this format:
 
      ```md

@@ -1,0 +1,145 @@
+# --------------------------------------------------------------------------- #
+#  🔄  Release preparation ( preview → main “handoff” branch)                  #
+# --------------------------------------------------------------------------- #
+name: 🔄 Release Preparation
+
+# Fires whenever code is pushed to the preview branch (the pre‑release branch)
+on:
+  push:
+    branches: [preview]
+
+# We need to update files and push a commit
+permissions:
+  contents: write
+  pull-requests: read
+
+# --------------------------------------------------------------------------- #
+#  Re‑usable “setup” job (Node 22 + pnpm cache)                               #
+# --------------------------------------------------------------------------- #
+jobs:
+  setup:
+    uses: ./.github_new/workflows/.reuse/setup-node-pnpm.yml
+    with:
+      node-version: 22.x # keep in sync with production toolchain
+
+  # --------------------------------------------------------------------------- #
+  #  Main preparation job                                                       #
+  # --------------------------------------------------------------------------- #
+  prepare:
+    name: 🔄 Release Preparation
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      # --------------------------------------------------------------------- #
+      # 1️⃣  Repo + tooling                                                   #
+      # --------------------------------------------------------------------- #
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # corepack (pnpm) is already enabled by the reusable setup job
+      - name: 📥 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # --------------------------------------------------------------------- #
+      # 2️⃣  Identify version bump (semver heuristic)                         #
+      # --------------------------------------------------------------------- #
+      - name: 🏷️ Last released tag
+        id: last_tag
+        run: |
+          echo "tag=$(git describe --tags --abbrev=0 2>/dev/null || echo v0.0.0)" >> "$GITHUB_OUTPUT"
+
+      - name: 📝 Collect commits since last tag
+        id: commits
+        run: |
+          RANGE="${{ steps.last_tag.outputs.tag }}..HEAD"
+          COMMITS=$(git log "$RANGE" --max-count=200 --pretty=format:'%h %s%n%b')
+          {
+            echo 'commits<<EOF'
+            echo "$COMMITS"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: 🔍 Determine semver bump type
+        id: bump
+        env:
+          RAW: ${{ steps.commits.outputs.commits }}
+        run: |
+          echo "$RAW" > _c.txt
+          if grep -Eq '(^|[\n])BREAKING CHANGE:|!:' _c.txt; then
+            echo 'type=major' >> "$GITHUB_OUTPUT"
+          elif grep -Eq '^[a-f0-9]+ feat(\(|:)' _c.txt; then
+            echo 'type=minor' >> "$GITHUB_OUTPUT"
+          else
+            echo 'type=patch' >> "$GITHUB_OUTPUT"
+          fi
+          rm _c.txt
+
+      # --------------------------------------------------------------------- #
+      # 3️⃣  Bump package.json (no git tag yet)                               #
+      # --------------------------------------------------------------------- #
+      - name: 📈 Bump version
+        id: version
+        run: |
+          NEW=$(npm version ${{ steps.bump.outputs.type }} --no-git-tag-version)
+          echo "version=${NEW#v}" >> "$GITHUB_OUTPUT"
+
+      # --------------------------------------------------------------------- #
+      # 4️⃣  Generate CHANGELOG entry with OpenAI                             #
+      # --------------------------------------------------------------------- #
+      - name: 🤖 Generate changelog entry
+        id: changelog
+        uses: ./.github_new/actions/openai-chat
+        with:
+          system_prompt: .github_new/prompts/changelog.sys.md
+          user_template: .github_new/prompts/changelog.tmpl.md
+          # workflow‑wide fall‑backs keep things humming even without secrets
+          model: ${{ secrets.OPENAI_MODEL || 'gpt-4o-mini' }}
+          temperature: 0.3
+          max_tokens: 1200
+          vars: |
+            VERSION=${{ steps.version.outputs.version }}
+            COMMITS=${{ steps.commits.outputs.commits }}
+
+      # --------------------------------------------------------------------- #
+      # 5️⃣  Write / prepend the new entry to CHANGELOG.md                    #
+      # --------------------------------------------------------------------- #
+      - name: 📝 Update CHANGELOG.md
+        run: |
+          VER=${{ steps.version.outputs.version }}
+          TODAY=$(date +%Y-%m-%d)
+          ENTRY="## [$VER] - $TODAY\n\n${{ steps.changelog.outputs.content }}\n\n---\n"
+
+          { head -n 9 CHANGELOG.md; echo "$ENTRY"; tail -n +10 CHANGELOG.md; } > CHANGELOG.tmp
+          mv CHANGELOG.tmp CHANGELOG.md
+
+      # --------------------------------------------------------------------- #
+      # 6️⃣  Commit & push                                                    #
+      # --------------------------------------------------------------------- #
+      - name: 💾 Commit version + changelog
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name  "GitHub Action"
+          git config user.email "action@github.com"
+          git add package.json CHANGELOG.md
+          git commit -m "chore(release): v${{ steps.version.outputs.version }} – update changelog" \
+            || echo "Nothing to commit"
+          git push
+
+      # --------------------------------------------------------------------- #
+      # 7️⃣  Summary                                                          #
+      # --------------------------------------------------------------------- #
+      - name: 🎉 Release prep summary
+        run: |
+          {
+            echo "## 🎉 Release Preparation Complete"
+            echo ""
+            echo "- **Version:**  `${{ steps.version.outputs.version }}`"
+            echo "- **Bump type:** `${{ steps.bump.outputs.type }}`"
+            echo "- **CHANGELOG:** updated and committed"
+            echo ""
+            echo "➡️  Create a PR from **preview ➡️ main** when ready to publish."
+          } >> "$GITHUB_STEP_SUMMARY"
