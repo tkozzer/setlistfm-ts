@@ -73,10 +73,8 @@ substitute() {
     while IFS='=' read -r KEY VALUE; do
       [[ -z $KEY ]] && continue
       # Decode escaped newlines from GitHub Actions variable passing
-      local decoded_value
       decoded_value=$(printf '%s' "$VALUE" | tr '\020' '\n')
       # Escape the value for safe sed substitution
-      local escaped_value
       escaped_value=$(escape_for_sed "$decoded_value")
       # sed separator is | (we've escaped | in the value)
       text=$(printf '%s' "$text" | sed -e "s|{{${KEY}}}|${escaped_value}|g")
@@ -166,7 +164,6 @@ if [[ -n $OUTPUT ]]; then
       while IFS='=' read -r KEY VALUE; do
         [[ -z $KEY ]] && continue
         # Decode escaped newlines from GitHub Actions variable passing
-        local decoded_value
         decoded_value=$(printf '%s' "$VALUE" | tr '\020' '\n')
         escaped_value=$(escape_for_sed "$decoded_value")
         FORMATTED_CONTENT=$(printf '%s' "$FORMATTED_CONTENT" | sed -e "s|{{${KEY}}}|${escaped_value}|g")
