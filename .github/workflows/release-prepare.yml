@@ -79,7 +79,38 @@ jobs:
           echo "version=${NEW#v}" >> "$GITHUB_OUTPUT"
 
       # --------------------------------------------------------------------- #
-      # 4️⃣  Generate CHANGELOG entry with structured OpenAI output            #
+      # 4️⃣  Prepare variables for OpenAI prompt                              #
+      # --------------------------------------------------------------------- #
+      - name: 📝 Prepare changelog variables
+        id: vars
+        run: |
+          # Save commits to temporary file to handle multi-line content safely
+          cat > commits_temp.txt <<'EOF'
+          ${{ steps.commits.outputs.commits }}
+          EOF
+
+          # Read commits and escape for simple KEY=VALUE format
+          COMMITS_ESCAPED=$(cat commits_temp.txt | tr '\n' '\020' | sed 's/"/\\"/g')
+
+          # Create variables file for the OpenAI action
+          cat > changelog_vars.txt <<EOF
+          VERSION=${{ steps.version.outputs.version }}
+          COMMITS=${COMMITS_ESCAPED}
+          DATE=$(date +%Y-%m-%d)
+          EOF
+
+          # Output for GitHub Actions
+          {
+            echo 'template_vars<<EOF'
+            cat changelog_vars.txt
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+          # Clean up
+          rm -f commits_temp.txt
+
+      # --------------------------------------------------------------------- #
+      # 5️⃣  Generate CHANGELOG entry with structured OpenAI output            #
       # --------------------------------------------------------------------- #
       - name: 🤖 Generate changelog entry
         id: changelog
@@ -90,16 +121,13 @@ jobs:
           template-path: .github/prompts/changelog.user.md
           schema-path: .github/schema/changelog.schema.json
           output-path: .github/outputs/changelog.output.md
-          vars: |
-            VERSION=${{ steps.version.outputs.version }}
-            COMMITS=${{ steps.commits.outputs.commits }}
-            DATE=$(date +%Y-%m-%d)
+          vars: ${{ steps.vars.outputs.template_vars }}
           model: ${{ secrets.OPENAI_MODEL || 'gpt-4o-mini' }}
           temperature: 0.3
           max-tokens: 1200
 
       # --------------------------------------------------------------------- #
-      # 5️⃣  Write / prepend the new entry to CHANGELOG.md                    #
+      # 6️⃣  Write / prepend the new entry to CHANGELOG.md                    #
       # --------------------------------------------------------------------- #
       - name: 📝 Update CHANGELOG.md
         run: |
@@ -121,7 +149,7 @@ jobs:
           mv CHANGELOG.tmp CHANGELOG.md
 
       # --------------------------------------------------------------------- #
-      # 6️⃣  Commit & push                                                    #
+      # 7️⃣  Commit & push                                                    #
       # --------------------------------------------------------------------- #
       - name: 💾 Commit version + changelog
         env:
@@ -135,7 +163,7 @@ jobs:
           git push
 
       # --------------------------------------------------------------------- #
-      # 7️⃣  Summary                                                          #
+      # 8️⃣  Summary                                                          #
       # --------------------------------------------------------------------- #
       - name: 🎉 Release prep summary
         run: |
