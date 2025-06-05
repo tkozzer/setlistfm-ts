@@ -1,0 +1,43 @@
+name: Setup Node & pnpm
+description: Install the requested Node.js version, enable Corepack, install pnpm, and (optionally) run `pnpm install`.
+
+inputs:
+  node-version:
+    description: Node.js version (e.g. 20.x / 22.x)
+    required: true
+  pnpm-version:
+    description: pnpm version to install
+    required: false
+    default: 10.11.1
+  run-install:
+    description: 'If "true", run: pnpm install --frozen-lockfile'
+    required: false
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    # 1. Node.js with pnpm cache
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs['node-version'] }}
+        cache: pnpm
+
+    # 2. Install the specified pnpm version (no auto‑install yet)
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: ${{ inputs['pnpm-version'] }}
+        run_install: false
+
+    # 3. Enable Corepack so the locked pnpm version in package.json is recognised
+    - name: Enable Corepack
+      shell: bash
+      run: corepack enable
+
+    # 4. Optional dependency install
+    - name: Install dependencies
+      if: inputs.run-install == 'true'
+      shell: bash
+      run: pnpm install --frozen-lockfile

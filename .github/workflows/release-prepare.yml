@@ -92,7 +92,7 @@ jobs:
       # --------------------------------------------------------------------- #
       - name: 🤖 Generate changelog entry
         id: changelog
-        uses: .github/actions/openai-chat
+        uses: ./.github/actions/openai-chat
         with:
           openai_api_key: ${{ secrets.OPENAI_API_KEY }}
           system-path: .github/prompts/changelog.sys.md
