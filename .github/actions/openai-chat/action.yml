@@ -12,7 +12,7 @@ inputs:
       Pass the secret from your workflow, e.g.:
 
       ```yaml
-      - uses: .github/actions/openai-chat
+      - uses: ./.github/actions/openai-chat
         with:
           openai_api_key: <YOUR_SECRET>
       ```

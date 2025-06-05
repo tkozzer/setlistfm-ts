@@ -86,7 +86,7 @@ jobs:
       # --------------------------------------------------------------------- #
       - name: 🤖 Compose PR description
         id: body
-        uses: .github/actions/openai-chat
+        uses: ./.github/actions/openai-chat
         with:
           openai_api_key: ${{ secrets.OPENAI_API_KEY }}
           system-path: .github/prompts/pr-description.sys.md

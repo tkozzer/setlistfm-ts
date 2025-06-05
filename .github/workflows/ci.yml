@@ -7,14 +7,13 @@ on:
   schedule:
     - cron: "0 2 * * *" # nightly at 02 UTC
 
-# Cancel stale runs on PRs
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-# ##############################################################################
-#  🚀 Quick checks – lint, type‑check, fast unit tests (Node 22, Linux)
-# ##############################################################################
+# ###############################################################################
+# 🚀  Quick checks – lint, type‑check, fast unit tests (Node 22, Linux)
+# ###############################################################################
 jobs:
   quick-checks:
     name: 🚀 Quick Checks
@@ -24,19 +23,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Re‑use the central “setup Node & pnpm” workflow
-      - uses: ./.github/workflows/.reuse/setup-node-pnpm.yml
+      - uses: ./.github/actions/setup-node-pnpm
         with:
           node-version: 22.x
+          run-install: "true"
 
-      # Fast sanity checks
       - run: pnpm lint
       - run: pnpm type-check
       - run: pnpm vitest run src/
 
-  # ##############################################################################
-  #  🧪 Test matrix – multi‑OS / multi‑Node
-  # ##############################################################################
+  # ###############################################################################
+  # 🧪  Test matrix – multi‑OS / multi‑Node
+  # ###############################################################################
   test-matrix:
     name: 🧪 Test (${{ matrix.node }} on ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -56,16 +54,18 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/workflows/.reuse/setup-node-pnpm.yml
+
+      - uses: ./.github/actions/setup-node-pnpm
         with:
           node-version: ${{ matrix.node }}
+          run-install: "true"
 
       - run: pnpm vitest run src/
       - run: pnpm type-check
 
-  # ##############################################################################
-  #  📊 Coverage job (Node 22, Linux)
-  # ##############################################################################
+  # ###############################################################################
+  # 📊  Coverage job (Node 22, Linux)
+  # ###############################################################################
   coverage:
     name: 📊 Coverage & Quality
     runs-on: ubuntu-latest
@@ -74,11 +74,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/workflows/.reuse/setup-node-pnpm.yml
+
+      - uses: ./.github/actions/setup-node-pnpm
         with:
           node-version: 22.x
+          run-install: "true"
 
-      # Emit a JSON summary so the follow‑up step never 404s
       - run: pnpm vitest run --coverage --coverage.reporter=json-summary src/
 
       - uses: actions/upload-artifact@v4
@@ -97,9 +98,9 @@ jobs:
             echo '```' >> "$GITHUB_STEP_SUMMARY"
           fi
 
-  # ##############################################################################
-  #  🏗️ Build verification (Node 22, Linux)
-  # ##############################################################################
+  # ###############################################################################
+  # 🏗️  Build verification (Node 22, Linux)
+  # ###############################################################################
   build-verification:
     name: 🏗️ Build Verification
     runs-on: ubuntu-latest
@@ -108,9 +109,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/workflows/.reuse/setup-node-pnpm.yml
+
+      - uses: ./.github/actions/setup-node-pnpm
         with:
           node-version: 22.x
+          run-install: "true"
 
       - run: pnpm build:all
       - run: pnpm vitest run tests/
@@ -127,9 +130,9 @@ jobs:
           echo '## 🏗️ Build Summary' >> "$GITHUB_STEP_SUMMARY"
           ls -la dist/               >> "$GITHUB_STEP_SUMMARY"
 
-  # ##############################################################################
-  #  ✅ Success gate – block merge if any job failed
-  # ##############################################################################
+  # ###############################################################################
+  # ✅  Success gate – block merge if any job failed
+  # ###############################################################################
   ci-success:
     name: ✅ CI Success
     runs-on: ubuntu-latest
