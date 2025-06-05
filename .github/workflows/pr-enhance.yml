@@ -103,13 +103,13 @@ jobs:
         id: ai
         uses: ./.github/actions/openai-chat
         with:
-          model: ${{ env.OPENAI_MODEL }}
-          system_prompt: .github/prompts/pr-enhancement.sys.md
-          user_prompt_path: user_prompt.md
-          temperature: 0.3
-          max_tokens: 1000
-          output_file: enhanced.md
           openai_api_key: ${{ env.OPENAI_API_KEY }}
+          system-path: .github/prompts/pr-enhancement.sys.md
+          template-path: user_prompt.md
+          vars: ""
+          model: ${{ env.OPENAI_MODEL }}
+          temperature: 0.3
+          max-tokens: 1000
 
       # -------------------------------------------------------------------
       # 5) Update the PR body with the AI output (fallback: keep original)
@@ -119,7 +119,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          body=$(cat enhanced.md 2>/dev/null || cat pr_body.txt)
+          # If AI returned nothing, fall back to the existing body
+          body="${{ steps.ai.outputs.content }}"
+          if [ -z "$body" ]; then
+            body=$(cat pr_body.txt)
+          fi
           printf "%s" "$body" > final.md
           gh pr edit "${{ steps.meta.outputs.number }}" --body-file final.md
 

@@ -93,16 +93,15 @@ jobs:
         id: changelog
         uses: ./.github/actions/openai-chat
         with:
-          system_prompt: .github/prompts/changelog.sys.md
-          user_template: .github/prompts/changelog.tmpl.md
-          # workflow‑wide fall‑backs keep things humming even without secrets
           openai_api_key: ${{ secrets.OPENAI_API_KEY }}
-          model: ${{ secrets.OPENAI_MODEL || 'gpt-4.1-nano' }}
-          temperature: 0.3
-          max_tokens: 1200
+          system-path: .github/prompts/changelog.sys.md
+          template-path: .github/prompts/changelog.tmpl.md
           vars: |
             VERSION=${{ steps.version.outputs.version }}
             COMMITS=${{ steps.commits.outputs.commits }}
+          model: ${{ secrets.OPENAI_MODEL || 'gpt-4.1-nano' }}
+          temperature: 0.3
+          max-tokens: 1200
 
       # --------------------------------------------------------------------- #
       # 5️⃣  Write / prepend the new entry to CHANGELOG.md                    #

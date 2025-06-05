@@ -87,15 +87,15 @@ jobs:
         id: body
         uses: ./.github/actions/openai-chat
         with:
-          system_prompt: .github/prompts/pr-description.sys.md
-          user_template: .github/prompts/pr-description.tmpl.md
           openai_api_key: ${{ secrets.OPENAI_API_KEY }}
-          model: ${{ secrets.OPENAI_MODEL || 'gpt-4.1-nano' }}
-          temperature: 0.3
-          max_tokens: 1000
+          system-path: .github/prompts/pr-description.sys.md
+          template-path: .github/prompts/pr-description.tmpl.md
           vars: |
             VERSION=${{ steps.version.outputs.ver }}
             CHANGELOG=${{ steps.changelog.outputs.entry }}
+          model: ${{ secrets.OPENAI_MODEL || 'gpt-4.1-nano' }}
+          temperature: 0.3
+          max-tokens: 1000 # note the hyphen
 
       # --------------------------------------------------------------------- #
       # 5️⃣  Ensure required labels exist                                     #
