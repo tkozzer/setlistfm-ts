@@ -101,7 +101,7 @@ jobs:
       # -------------------------------------------------------------------
       - name: 🤖 Generate enhanced description
         id: ai
-        uses: ./.github/actions/openai-chat
+        uses: .github/actions/openai-chat
         with:
           openai_api_key: ${{ env.OPENAI_API_KEY }}
           system-path: .github/prompts/pr-enhancement.sys.md

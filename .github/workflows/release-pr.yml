@@ -19,7 +19,7 @@ jobs:
   #  Re‑usable tooling (Node 22 + pnpm cache)                                   #
   # --------------------------------------------------------------------------- #
   setup:
-    uses: ./.github/workflows/.reuse/setup-node-pnpm.yml
+    uses: .github/workflows/.reuse/setup-node-pnpm.yml
     with:
       node-version: 22.x
 
@@ -85,7 +85,7 @@ jobs:
       # --------------------------------------------------------------------- #
       - name: 🤖 Compose PR description
         id: body
-        uses: ./.github/actions/openai-chat
+        uses: .github/actions/openai-chat
         with:
           openai_api_key: ${{ secrets.OPENAI_API_KEY }}
           system-path: .github/prompts/pr-description.sys.md
