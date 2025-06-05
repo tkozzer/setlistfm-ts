@@ -75,7 +75,8 @@ jobs:
           perf=$(grep -cE '^[a-f0-9]+ perf(\(.*\))?:' commits.txt || true)
           test=$(grep -cE '^[a-f0-9]+ test(\(.*\))?:' commits.txt || true)
           chore=$(grep -cE '^[a-f0-9]+ chore(\(.*\))?:' commits.txt || true)
-          ci=$(grep -cE '^[a-f0-9]+ (ci|build)(\(.*\))?:' commits.txt || true)
+          # CI detection: matches both direct ci/build commits AND scoped ci/build commits
+          ci=$(grep -cE '^[a-f0-9]+ ((ci|build)(\(.*\))?:|.*\((ci|build)\):)' commits.txt || true)
           break=$(grep -cE '^[a-f0-9]+.*BREAKING CHANGE|!:' commits.txt || true)
 
           # Calculate total conventional commits by summing individual types
@@ -276,10 +277,9 @@ jobs:
           gh pr comment "${{ steps.meta.outputs.number }}" --body-file summary_comment.md
 
       # -------------------------------------------------------------------
-      # 8) Add helpful comment if conventional commit adherence is low
+      # 8) Post commit quality feedback
       # -------------------------------------------------------------------
-      - name: 💡 Add helpful comment if needed
-        if: steps.meta.outputs.conv < steps.meta.outputs.total
+      - name: 📊 Post commit quality feedback
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
@@ -295,32 +295,41 @@ jobs:
             PERCENTAGE=$(awk "BEGIN {printf \"%.0f\", ($CONVENTIONAL_COUNT / $TOTAL_COUNT) * 100}")
             echo "Debug: PERCENTAGE=$PERCENTAGE"
 
-            if [ "$PERCENTAGE" -lt 80 ]; then
-              echo "Debug: Posting helpful comment (percentage < 80%)"
-              cat > helpful_comment.md <<'EOF'
-          ## 💡 Commit Message Suggestions
+            # Determine feedback message based on percentage
+            if [ "$PERCENTAGE" -ge 80 ]; then
+              FEEDBACK_MESSAGE="🎉 **Great work!** Your commit messages follow our conventional format consistently."
+              EMOJI="🎸"
+            else
+              FEEDBACK_MESSAGE="💡 **Needs improvement** - Consider following our [Conventional Commits](https://www.conventionalcommits.org/) format more consistently."
+              EMOJI="📝"
+            fi
 
-          I noticed some commits could follow our [Conventional Commits](https://www.conventionalcommits.org/) format better. Here are some examples:
+            # Always post a comment with commit statistics
+            cat > commit_feedback.md <<EOF
+          ## $EMOJI Commit Message Quality Report
 
-          **Current style** → **Suggested format**
-          - `fixed pagination issue` → `fix(api): resolve pagination boundary error`
-          - `updated docs` → `docs(readme): add usage examples for new endpoints`
-          - `small refactor` → `refactor(utils): simplify error handling logic`
+          **Conventional Commit Adherence:** **$CONVENTIONAL_COUNT** out of **$TOTAL_COUNT** commits (**$PERCENTAGE%**)
+
+          $FEEDBACK_MESSAGE
+
+          ### Conventional Commit Examples:
+          - \`feat(api): add new endpoint for user profiles\`
+          - \`fix(ui): resolve button alignment issue\`
+          - \`docs(readme): update installation instructions\`
+          - \`refactor(utils): simplify error handling logic\`
+          - \`chore(deps): update dependencies to latest versions\`
 
           **Why this helps:**
-          - 🤖 Our automated changelog generation reads these patterns
-          - 📋 Makes it easier to understand changes at a glance
-          - 🔄 Helps with semantic versioning decisions
-
-          No worries though - your PR looks great overall! These are just suggestions for future commits. 😊
+          - 🤖 Automated changelog generation
+          - 📋 Clear understanding of changes at a glance
+          - 🔄 Better semantic versioning decisions
+          - 🚀 Improved project maintainability
 
           **Reference:** Check out our [Contributing Guide](CONTRIBUTING.md#commit-messages) for more details.
           EOF
 
-              gh pr comment "${{ steps.meta.outputs.number }}" --body-file helpful_comment.md
-            else
-              echo "Debug: Skipping helpful comment (percentage >= 80%)"
-            fi
+            gh pr comment "${{ steps.meta.outputs.number }}" --body-file commit_feedback.md
+            echo "Posted commit quality feedback (${PERCENTAGE}% conventional)"
           else
             echo "Debug: No commits to analyze"
           fi
