@@ -72,11 +72,11 @@ REQUEST=$(
     {
       "model": $model,
       "messages":
-        ( ($sys | length) == 0
-          ? []
-          : [ { "role": "system", "content": $sys } ]
-        )
-        + [ { "role": "user", "content": $user } ],
+        ( if ($sys | length) == 0
+          then [ { "role": "user",   "content": $user } ]
+          else [ { "role": "system", "content": $sys  },
+                { "role": "user",   "content": $user } ]
+          end ),
       "temperature": ($temp   | tonumber),
       "max_tokens":  ($tokens | tonumber)
     }'
