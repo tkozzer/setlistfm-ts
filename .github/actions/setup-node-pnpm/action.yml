@@ -1,38 +1,46 @@
 name: Setup Node & pnpm
-description: Install the requested Node.js version, enable Corepack, prepare the desired pnpm version, then (optionally) run `pnpm install`.
+description: |
+  • Installs the requested Node.js version (with pnpm cache)
+  • Installs / activates an exact pnpm version via pnpm/action-setup
+  • Optionally runs `pnpm install --frozen-lockfile`
 
 inputs:
   node-version:
     description: Node.js version (e.g. 20.x / 22.x)
     required: true
   pnpm-version:
-    description: pnpm version to activate with Corepack
+    description: pnpm version to install
     required: false
     default: 10.11.1
   run-install:
-    description: 'If "true", run: pnpm install --frozen-lockfile'
+    description: true ➜ run pnpm install --frozen-lockfile
     required: false
     default: "true"
 
 runs:
   using: composite
   steps:
-    # 1) Node (with pnpm cache)
+    # #######################################################################
+    # 1) Node.js (adds Node bin dir to PATH and enables pnpm cache)
+    # #######################################################################
     - name: Setup Node
       uses: actions/setup-node@v4
       with:
-        node-version: ${{ inputs['node-version'] }}
+        node-version: ${{ inputs.node-version }}
         cache: pnpm
 
-    # 2) Enable + prepare the exact pnpm version via Corepack
-    - name: Prepare pnpm
-      shell: bash
-      run: |
-        corepack enable
-        corepack prepare pnpm@${{ inputs['pnpm-version'] }} --activate
-        pnpm --version
+    # #######################################################################
+    # 2) Reliable pnpm binary (adds pnpm to PATH automatically)
+    # #######################################################################
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: ${{ inputs.pnpm-version }}
+        run_install: false # we handle install in next step (optional)
 
+    # #######################################################################
     # 3) Optional dependency install
+    # #######################################################################
     - name: Install dependencies
       if: inputs.run-install == 'true'
       shell: bash
