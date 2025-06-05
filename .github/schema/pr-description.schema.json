@@ -1,0 +1,97 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Release PR Description Schema",
+  "description": "Schema for generating structured release Pull Request descriptions",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Brief one-line description of the release focus"
+    },
+    "overview": {
+      "type": "string",
+      "description": "1-2 paragraph summary of the release focusing on user impact"
+    },
+    "whats_new": {
+      "type": "array",
+      "description": "Key new features or capabilities in this release",
+      "items": {
+        "type": "string"
+      }
+    },
+    "changes": {
+      "type": "object",
+      "description": "Changes organized by category",
+      "properties": {
+        "features": {
+          "type": "array",
+          "description": "New functionality added",
+          "items": { "type": "string" }
+        },
+        "bug_fixes": {
+          "type": "array",
+          "description": "Issues and bugs resolved",
+          "items": { "type": "string" }
+        },
+        "improvements": {
+          "type": "array",
+          "description": "Enhancements to existing features",
+          "items": { "type": "string" }
+        },
+        "internal": {
+          "type": "array",
+          "description": "Internal improvements (CI/CD, refactoring, etc.)",
+          "items": { "type": "string" }
+        },
+        "documentation": {
+          "type": "array",
+          "description": "Documentation updates and improvements",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "testing_notes": {
+      "type": "string",
+      "description": "Testing approach and quality assurance information"
+    },
+    "documentation_notes": {
+      "type": "string",
+      "description": "Documentation updates or important docs to review"
+    },
+    "breaking_changes": {
+      "type": "array",
+      "description": "Breaking changes with migration guidance (empty if none)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "change": {
+            "type": "string",
+            "description": "Description of the breaking change"
+          },
+          "migration": {
+            "type": "string",
+            "description": "Migration guidance for users"
+          }
+        },
+        "required": ["change", "migration"],
+        "additionalProperties": false
+      }
+    },
+    "merge_instructions": {
+      "type": "string",
+      "description": "Merge process and any special considerations"
+    }
+  },
+  "required": [
+    "title",
+    "overview",
+    "whats_new",
+    "changes",
+    "testing_notes",
+    "documentation_notes",
+    "breaking_changes",
+    "merge_instructions"
+  ],
+  "additionalProperties": false
+}

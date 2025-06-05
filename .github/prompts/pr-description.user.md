@@ -1,19 +1,18 @@
-## 🚀 Release {{VERSION}}
+Please generate a professional GitHub Pull Request description for releasing version {{VERSION}} of the setlistfm-ts SDK.
 
-### 📋 Overview
+## Release Information
 
-{{OVERVIEW}}
+**Version:** {{VERSION}}
 
-### 📝 Changelog
-
+**Changelog:**
 {{CHANGELOG}}
 
-### 🧪 Testing Notes
+## Instructions
 
-{{TESTING}}
+Create a comprehensive PR description that helps reviewers understand:
 
-### 🔄 Merge Instructions
+1. What's being released in this version
+2. The impact and value of the changes
+3. Any important considerations for the release
 
-- Ensure all checks pass
-- Review changelog for accuracy
-- Squash‑and‑merge into **main**
+Focus on clarity and user impact. This PR will merge preview → main to publish the release.

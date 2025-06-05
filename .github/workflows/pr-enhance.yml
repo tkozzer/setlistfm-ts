@@ -138,7 +138,7 @@ jobs:
           system-path: .github/prompts/pr-enhancement.sys.md
           template-path: .github/prompts/pr-enhancement.user.md
           schema-path: .github/schema/pr-enhancement.schema.json
-          output-path: .github/outputs/pr-enhancement.output.md
+          output-path: .github/outputs/pr-enhancement.tmpl.md
           vars: ${{ steps.vars.outputs.template_vars }}
           model: ${{ env.OPENAI_MODEL }}
           temperature: 0 # maximum determinism for factual accuracy
