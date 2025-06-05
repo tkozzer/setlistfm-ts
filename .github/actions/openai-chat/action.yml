@@ -8,12 +8,13 @@ inputs:
   openai_api_key:
     description: |
       The OpenAI API key.
-      **Pass your secret from the workflow**:
+
+      Pass the secret from your workflow, e.g.:
 
       ```yaml
       - uses: ./.github/actions/openai-chat
         with:
-          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          openai_api_key: <YOUR_SECRET>
       ```
     required: true
 
@@ -41,7 +42,7 @@ inputs:
   model:
     description: OpenAI model name.
     required: false
-    default: gpt-4.1-nano
+    default: gpt-4o-mini # ← safest public value
 
   temperature:
     description: Sampling temperature.
