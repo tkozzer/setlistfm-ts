@@ -2,7 +2,7 @@
 name: Setup Node & pnpm
 description: |
   • Installs the requested Node.js version (with pnpm cache)
-  • Activates the exact pnpm version via **Corepack**
+  • Installs the exact pnpm version globally (guaranteed on PATH)
   • Optionally runs `pnpm install --frozen-lockfile`
 
 inputs:
@@ -10,7 +10,7 @@ inputs:
     description: Node.js version (e.g. `20.x`, `22.x`)
     required: true
   pnpm-version:
-    description: pnpm version to activate with Corepack
+    description: pnpm version to install
     required: false
     default: 10.11.1
   run-install:
@@ -21,33 +21,30 @@ inputs:
 runs:
   using: composite
   steps:
-    # ────────────────────────────────────────────────────────────────
+    # ───────────────────────────────────────────────────────────────
     # 1. Node.js + pnpm cache
-    # ────────────────────────────────────────────────────────────────
+    # ───────────────────────────────────────────────────────────────
     - name: Setup Node
       uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
         cache: pnpm
 
-    # ────────────────────────────────────────────────────────────────
-    # 2. Exact pnpm via Corepack  ➜  adds it to the PATH
-    # ────────────────────────────────────────────────────────────────
-    - name: Enable Corepack & activate pnpm
+    # ───────────────────────────────────────────────────────────────
+    # 2. Install pnpm **globally** and expose its bin dir
+    # ───────────────────────────────────────────────────────────────
+    - name: Install pnpm
       shell: bash
       run: |
-        set -e
-        corepack enable
-        corepack prepare "pnpm@${{ inputs.pnpm-version }}" --activate
-        if ! command -v pnpm >/dev/null 2>&1; then
-          echo "pnpm not found after Corepack activation, installing globally..."
-          npm install -g pnpm@${{ inputs.pnpm-version }}"
-        fi
+        set -euo pipefail
+        npm install -g "pnpm@${{ inputs.pnpm-version }}"
+        PNPM_BIN=$(npm bin -g)
+        echo "$PNPM_BIN" >> "$GITHUB_PATH"
         pnpm --version
 
-    # ────────────────────────────────────────────────────────────────
-    # 3. (Optional) install dependencies
-    # ────────────────────────────────────────────────────────────────
+    # ───────────────────────────────────────────────────────────────
+    # 3. (Optional) install project deps
+    # ───────────────────────────────────────────────────────────────
     - name: Install dependencies
       if: inputs.run-install == 'true'
       shell: bash
