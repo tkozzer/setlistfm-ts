@@ -1,4 +1,4 @@
-# .github_new/workflows/ci.yml
+# .github/workflows/ci.yml
 name: 🔄 CI
 
 on:
@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v4
 
       # Re‑use the central “setup Node & pnpm” workflow
-      - uses: ./.github_new/workflows/.reuse/setup-node-pnpm.yml
+      - uses: ./.github/workflows/.reuse/setup-node-pnpm.yml
         with:
           node-version: 22.x
 
@@ -56,7 +56,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github_new/workflows/.reuse/setup-node-pnpm.yml
+      - uses: ./.github/workflows/.reuse/setup-node-pnpm.yml
         with:
           node-version: ${{ matrix.node }}
 
@@ -74,7 +74,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github_new/workflows/.reuse/setup-node-pnpm.yml
+      - uses: ./.github/workflows/.reuse/setup-node-pnpm.yml
         with:
           node-version: 22.x
 
@@ -108,7 +108,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github_new/workflows/.reuse/setup-node-pnpm.yml
+      - uses: ./.github/workflows/.reuse/setup-node-pnpm.yml
         with:
           node-version: 22.x
 

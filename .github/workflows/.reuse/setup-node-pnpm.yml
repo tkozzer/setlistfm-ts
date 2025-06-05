@@ -1,4 +1,4 @@
-# .github_new/workflows/.reuse/setup-node-pnpm.yml
+# .github/workflows/.reuse/setup-node-pnpm.yml
 name: Setup Node & pnpm
 
 on:
