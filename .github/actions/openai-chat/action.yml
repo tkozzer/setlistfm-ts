@@ -1,52 +1,83 @@
 name: OpenAI Chat Completion
 description: Call the OpenAI Chat Completion API with a system prompt and a user-prompt template.
 
-runs:
-  using: composite
-  steps:
-    - name: Run entrypoint
-      id: chat
-      shell: bash
-      env:
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      run: |
-        bash "${{ github.action_path }}/entrypoint.sh" \
-          --system "${{ inputs.system-path }}" \
-          --template "${{ inputs.template-path }}" \
-          --vars "${{ inputs.vars }}" \
-          --model "${{ inputs.model }}" \
-          --temp "${{ inputs.temperature }}" \
-          --tokens "${{ inputs.max-tokens }}"
-
+# ─────────────────────────────────────────────────────────────
+#  Inputs
+# ─────────────────────────────────────────────────────────────
 inputs:
+  openai_api_key:
+    description: |
+      The OpenAI API key.
+      **Pass your secret from the workflow**:
+
+      ```yaml
+      - uses: ./.github/actions/openai-chat
+        with:
+          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+      ```
+    required: true
+
   system-path:
     description: Relative path to the **system** prompt file (optional).
     required: false
     default: ""
+
   template-path:
-    description: Relative path to the **user** prompt template.
+    description: Relative path to the **user** prompt template (markdown or text).
     required: true
+
   vars:
     description: |
-      New-line-separated KEY=VALUE pairs to substitute into {{KEY}} placeholders
-      inside both prompts. Example:
-        version=1.2.3
-        changelog=* Fixed all the bugs *
+      New-line-separated `KEY=VALUE` pairs substituted into `{{KEY}}`
+      placeholders in *both* prompts. Example:
+
+      ```
+      version=1.2.3
+      changelog=* Fixed all the bugs *
+      ```
     required: false
     default: ""
+
   model:
     description: OpenAI model name.
     required: false
     default: gpt-4.1-nano
+
   temperature:
     description: Sampling temperature.
     required: false
-    default: 0.3
+    default: "0.3"
+
   max-tokens:
     description: max_tokens parameter.
     required: false
-    default: 1500
+    default: "1500"
 
+# ─────────────────────────────────────────────────────────────
+#  Outputs
+# ─────────────────────────────────────────────────────────────
 outputs:
   content:
     description: Assistant response text returned from OpenAI
+    value: ${{ steps.chat.outputs.content }}
+
+# ─────────────────────────────────────────────────────────────
+#  Execution
+# ─────────────────────────────────────────────────────────────
+runs:
+  using: composite
+  steps:
+    - name: 🗨️ Call OpenAI Chat API
+      id: chat
+      shell: bash
+      env:
+        OPENAI_API_KEY: ${{ inputs.openai_api_key }}
+      run: |
+        set -euo pipefail
+        bash "${{ github.action_path }}/entrypoint.sh" \
+          --system   "${{ inputs.system-path }}" \
+          --template "${{ inputs.template-path }}" \
+          --vars     "${{ inputs.vars }}" \
+          --model    "${{ inputs.model }}" \
+          --temp     "${{ inputs.temperature }}" \
+          --tokens   "${{ inputs.max-tokens }}"
