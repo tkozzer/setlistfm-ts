@@ -38,8 +38,7 @@ runs:
       run: |
         corepack enable
         corepack prepare "pnpm@${{ inputs.pnpm-version }}" --activate
-        echo "PNPM_HOME=$(corepack where pnpm)" >> "$GITHUB_ENV"
-        echo "$(corepack where pnpm)" >> "$GITHUB_PATH"
+        echo "$(dirname "$(corepack where pnpm)")" >> "$GITHUB_PATH"
         pnpm --version
 
     # ────────────────────────────────────────────────────────────────
