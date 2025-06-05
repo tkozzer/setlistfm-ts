@@ -64,16 +64,22 @@ jobs:
 
           # ---------- Conventional-commit stats ----------
           total=$(wc -l < commits.txt | xargs)
-          conv=$(grep -cE '^[a-f0-9]+ (feat|fix|docs|style|refactor|perf|test|chore|ci|build)(\(.*\))?:' commits.txt || true)
           files_count=$(wc -l < files.txt | xargs)
 
-          # Count specific commit types
-          feat=$(grep -cE '^[a-f0-9]+ feat(\(|:)' commits.txt || true)
-          fix=$(grep -cE '^[a-f0-9]+ fix(\(|:)' commits.txt || true)
-          docs=$(grep -cE '^[a-f0-9]+ docs(\(|:)' commits.txt || true)
-          chore=$(grep -cE '^[a-f0-9]+ chore(\(|:)' commits.txt || true)
-          ci=$(grep -cE '^[a-f0-9]+ (ci|build)(\(|:)|^[a-f0-9]+ \w+\((ci|build)\):' commits.txt || true)
+          # Count specific commit types with consistent regex patterns
+          feat=$(grep -cE '^[a-f0-9]+ feat(\(.*\))?:' commits.txt || true)
+          fix=$(grep -cE '^[a-f0-9]+ fix(\(.*\))?:' commits.txt || true)
+          docs=$(grep -cE '^[a-f0-9]+ docs(\(.*\))?:' commits.txt || true)
+          style=$(grep -cE '^[a-f0-9]+ style(\(.*\))?:' commits.txt || true)
+          refactor=$(grep -cE '^[a-f0-9]+ refactor(\(.*\))?:' commits.txt || true)
+          perf=$(grep -cE '^[a-f0-9]+ perf(\(.*\))?:' commits.txt || true)
+          test=$(grep -cE '^[a-f0-9]+ test(\(.*\))?:' commits.txt || true)
+          chore=$(grep -cE '^[a-f0-9]+ chore(\(.*\))?:' commits.txt || true)
+          ci=$(grep -cE '^[a-f0-9]+ (ci|build)(\(.*\))?:' commits.txt || true)
           break=$(grep -cE '^[a-f0-9]+.*BREAKING CHANGE|!:' commits.txt || true)
+
+          # Calculate total conventional commits by summing individual types
+          conv=$((feat + fix + docs + style + refactor + perf + test + chore + ci))
 
           {
             echo "total=$total"
@@ -82,6 +88,10 @@ jobs:
             echo "feat=$feat"
             echo "fix=$fix"
             echo "docs=$docs"
+            echo "style=$style"
+            echo "refactor=$refactor"
+            echo "perf=$perf"
+            echo "test=$test"
             echo "chore=$chore"
             echo "ci=$ci"
             echo "break=$break"
@@ -166,11 +176,16 @@ jobs:
         shell: bash
         run: |
           labels=()
-          [ ${{ steps.meta.outputs.feat }}  -gt 0 ] && labels+=('feature')
-          [ ${{ steps.meta.outputs.fix }}   -gt 0 ] && labels+=('bugfix')
-          [ ${{ steps.meta.outputs.docs }}  -gt 0 ] && labels+=('documentation')
-          [ ${{ steps.meta.outputs.chore }} -gt 0 ] && labels+=('maintenance')
-          [ ${{ steps.meta.outputs.break }} -gt 0 ] && labels+=('breaking-change')
+          [ ${{ steps.meta.outputs.feat }}     -gt 0 ] && labels+=('feature')
+          [ ${{ steps.meta.outputs.fix }}      -gt 0 ] && labels+=('bugfix')
+          [ ${{ steps.meta.outputs.docs }}     -gt 0 ] && labels+=('documentation')
+          [ ${{ steps.meta.outputs.chore }}    -gt 0 ] && labels+=('maintenance')
+          [ ${{ steps.meta.outputs.refactor }} -gt 0 ] && labels+=('refactor')
+          [ ${{ steps.meta.outputs.perf }}     -gt 0 ] && labels+=('performance')
+          [ ${{ steps.meta.outputs.test }}     -gt 0 ] && labels+=('testing')
+          [ ${{ steps.meta.outputs.style }}    -gt 0 ] && labels+=('style')
+          [ ${{ steps.meta.outputs.ci }}       -gt 0 ] && labels+=('ci-cd')
+          [ ${{ steps.meta.outputs.break }}    -gt 0 ] && labels+=('breaking-change')
 
           conv=${{ steps.meta.outputs.conv }}
           total=${{ steps.meta.outputs.total }}
@@ -194,6 +209,11 @@ jobs:
               bugfix)           color="d73a4a" desc="Bug fix" ;;
               documentation)    color="0075ca" desc="Docs improvement" ;;
               maintenance)      color="fbca04" desc="Maintenance / chores" ;;
+              refactor)         color="1d76db" desc="Code refactoring" ;;
+              performance)      color="ff6b6b" desc="Performance improvement" ;;
+              testing)          color="ff9500" desc="Testing related changes" ;;
+              style)            color="f9c74f" desc="Code style changes" ;;
+              ci-cd)            color="6f42c1" desc="CI/CD pipeline changes" ;;
               breaking-change)  color="b60205" desc="Breaking change" ;;
               needs-review)     color="fbca04" desc="Needs commit-message review" ;;
             esac
@@ -227,6 +247,10 @@ jobs:
           - 🆕 **${{ steps.meta.outputs.feat }}** new features
           - 🐛 **${{ steps.meta.outputs.fix }}** bug fixes
           - 📚 **${{ steps.meta.outputs.docs }}** documentation updates
+          - 🎨 **${{ steps.meta.outputs.style }}** code style changes
+          - ♻️ **${{ steps.meta.outputs.refactor }}** refactoring
+          - ⚡ **${{ steps.meta.outputs.perf }}** performance improvements
+          - 🧪 **${{ steps.meta.outputs.test }}** testing updates
           - 🔧 **${{ steps.meta.outputs.chore }}** maintenance/chores
           - ⚙️ **${{ steps.meta.outputs.ci }}** CI/build changes
           - ⚠️ **${{ steps.meta.outputs.break }}** breaking changes
@@ -252,12 +276,16 @@ jobs:
           CONVENTIONAL_COUNT="${{ steps.meta.outputs.conv }}"
           TOTAL_COUNT="${{ steps.meta.outputs.total }}"
 
+          echo "Debug: CONVENTIONAL_COUNT=$CONVENTIONAL_COUNT, TOTAL_COUNT=$TOTAL_COUNT"
+
           # Only proceed if we have commits to analyze
           if [ "$TOTAL_COUNT" -gt 0 ]; then
             # Calculate percentage using awk (more reliable than bc)
             PERCENTAGE=$(awk "BEGIN {printf \"%.0f\", ($CONVENTIONAL_COUNT / $TOTAL_COUNT) * 100}")
+            echo "Debug: PERCENTAGE=$PERCENTAGE"
 
             if [ "$PERCENTAGE" -lt 80 ]; then
+              echo "Debug: Posting helpful comment (percentage < 80%)"
               cat > helpful_comment.md <<'EOF'
           ## 💡 Commit Message Suggestions
 
@@ -279,7 +307,11 @@ jobs:
           EOF
 
               gh pr comment "${{ steps.meta.outputs.number }}" --body-file helpful_comment.md
+            else
+              echo "Debug: Skipping helpful comment (percentage >= 80%)"
             fi
+          else
+            echo "Debug: No commits to analyze"
           fi
 
       # -------------------------------------------------------------------
