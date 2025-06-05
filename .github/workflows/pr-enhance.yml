@@ -1,0 +1,359 @@
+# 🤖  Pull‑request enhancer
+# • Runs only for feature / fix branches that target `preview`
+# • Calls the local composite action (.github/actions/openai-chat)
+#   to generate an improved PR description from the prompt templates
+# • Adds helpful labels and an optional guidance comment
+# ---------------------------------------------------------------------
+
+name: 🤖 PR Enhance
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+    branches: [preview]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  enhance:
+    # Skip if the *source* branch is the special `preview` branch itself
+    if: github.head_ref != 'preview'
+    runs-on: ubuntu-latest
+
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-4o-mini' }}
+
+    steps:
+      # -------------------------------------------------------------------
+      # 1) Repo checkout (needed for git log & prompt templates)
+      # -------------------------------------------------------------------
+      - name: ⬇️ Checkout repo (with full history for git log)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # -------------------------------------------------------------------
+      # 2) Gather PR + commit information
+      # -------------------------------------------------------------------
+      - name: 📑 Collect PR meta & commits
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # ---------- Basic PR fields ----------
+          echo "number=${{ github.event.pull_request.number }}"   >> "$GITHUB_OUTPUT"
+          echo "title=${{ github.event.pull_request.title }}"     >> "$GITHUB_OUTPUT"
+
+          # ---------- Save the original body ----------
+          printf "%s" "${{ github.event.pull_request.body || '' }}" > pr_body.txt
+
+          # ---------- Commit list (hash  subject) ----------
+          git log --pretty=format:"%h %s" \
+            ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} \
+            > commits.txt || touch commits.txt
+
+          # ---------- Changed files ----------
+          git diff --name-only \
+            ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} \
+            > files.txt || true
+
+          # ---------- Conventional-commit stats ----------
+          total=$(wc -l < commits.txt | xargs)
+          files_count=$(wc -l < files.txt | xargs)
+
+          # Count specific commit types with consistent regex patterns
+          feat=$(grep -cE '^[a-f0-9]+ feat(\(.*\))?:' commits.txt || true)
+          fix=$(grep -cE '^[a-f0-9]+ fix(\(.*\))?:' commits.txt || true)
+          docs=$(grep -cE '^[a-f0-9]+ docs(\(.*\))?:' commits.txt || true)
+          style=$(grep -cE '^[a-f0-9]+ style(\(.*\))?:' commits.txt || true)
+          refactor=$(grep -cE '^[a-f0-9]+ refactor(\(.*\))?:' commits.txt || true)
+          perf=$(grep -cE '^[a-f0-9]+ perf(\(.*\))?:' commits.txt || true)
+          test=$(grep -cE '^[a-f0-9]+ test(\(.*\))?:' commits.txt || true)
+          chore=$(grep -cE '^[a-f0-9]+ chore(\(.*\))?:' commits.txt || true)
+          # CI detection: matches both direct ci/build commits AND scoped ci/build commits
+          ci=$(grep -cE '^[a-f0-9]+ ((ci|build)(\(.*\))?:|.*\((ci|build)\):)' commits.txt || true)
+          break=$(grep -cE '^[a-f0-9]+.*BREAKING CHANGE|!:' commits.txt || true)
+
+          # Calculate total conventional commits by summing individual types
+          conv=$((feat + fix + docs + style + refactor + perf + test + chore + ci))
+
+          {
+            echo "total=$total"
+            echo "conv=$conv"
+            echo "files_count=$files_count"
+            echo "feat=$feat"
+            echo "fix=$fix"
+            echo "docs=$docs"
+            echo "style=$style"
+            echo "refactor=$refactor"
+            echo "perf=$perf"
+            echo "test=$test"
+            echo "chore=$chore"
+            echo "ci=$ci"
+            echo "break=$break"
+          } >> "$GITHUB_OUTPUT"
+
+      # -------------------------------------------------------------------
+      # 3) Prepare variables for prompt template
+      # -------------------------------------------------------------------
+      - name: 📝 Prepare prompt variables
+        id: vars
+        shell: bash
+        run: |
+          # Read file contents into variables (multiline-safe)
+          PR_BODY=$(cat pr_body.txt)
+          COMMITS=$(cat commits.txt)
+          FILES=$(cat files.txt)
+
+          # Create variables string for the template system (escape for simple KEY=VALUE format)
+          {
+            echo "PR_TITLE=${{ steps.meta.outputs.title }}"
+            echo "PR_BODY=$(echo "$PR_BODY" | tr '\n' ' ' | sed 's/"/\\"/g')"
+            echo "TOTAL_COMMITS=${{ steps.meta.outputs.total }}"
+            echo "FILES_COUNT=${{ steps.meta.outputs.files_count }}"
+            echo "COMMITS=$(echo "$COMMITS" | tr '\n' '; ' | sed 's/"/\\"/g')"
+            echo "FILES=$(echo "$FILES" | tr '\n' '; ' | sed 's/"/\\"/g')"
+          } > template_vars.txt
+
+          # Output for GitHub Actions (escape newlines)
+          {
+            echo 'template_vars<<EOF'
+            cat template_vars.txt
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      # -------------------------------------------------------------------
+      # 4) Call the OpenAI Chat API with structured output
+      # -------------------------------------------------------------------
+      - name: 🤖 Generate enhanced description
+        id: ai
+        uses: ./.github/actions/openai-chat
+        with:
+          openai_api_key: ${{ env.OPENAI_API_KEY }}
+          system-path: .github/prompts/pr-enhancement.sys.md
+          template-path: .github/prompts/pr-enhancement.user.md
+          schema-path: .github/schema/pr-enhancement.schema.json
+          output-path: .github/templates/pr-enhancement.tmpl.md
+          vars: ${{ steps.vars.outputs.template_vars }}
+          model: ${{ env.OPENAI_MODEL }}
+          temperature: 0 # maximum determinism for factual accuracy
+          max-tokens: 1200
+
+      # -------------------------------------------------------------------
+      # 5) Update the PR body safely
+      # -------------------------------------------------------------------
+      - name: 🛠️ Update PR description
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Debug output to understand what we received
+          echo "=== AI Output Debug ==="
+          echo "Raw content length: $(echo '${{ steps.ai.outputs.content }}' | wc -c)"
+          echo "Formatted content length: $(echo '${{ steps.ai.outputs.formatted_content }}' | wc -c)"
+          echo "======================="
+
+          # Write AI outputs to temporary files first
+          cat > formatted_temp.md <<'FORMATTED_EOF'
+          ${{ steps.ai.outputs.formatted_content }}
+          FORMATTED_EOF
+
+          cat > raw_temp.md <<'RAW_EOF'
+          ${{ steps.ai.outputs.content }}
+          RAW_EOF
+
+          # Determine which content to use based on file size and content
+          if [ -s formatted_temp.md ] && [ "$(head -c 4 formatted_temp.md)" != "null" ]; then
+            echo "Using formatted content"
+            cp formatted_temp.md final.md
+          elif [ -s raw_temp.md ] && [ "$(head -c 4 raw_temp.md)" != "null" ]; then
+            echo "Using raw content"
+            cp raw_temp.md final.md
+          else
+            echo "No AI content available, using original PR body"
+            cp pr_body.txt final.md
+          fi
+
+          # Clean up temporary files
+          rm -f formatted_temp.md raw_temp.md
+
+          # Verify we have content before updating
+          if [ -s final.md ]; then
+            echo "Updating PR description with $(wc -l < final.md) lines"
+            gh pr edit "${{ steps.meta.outputs.number }}" --body-file final.md
+          else
+            echo "ERROR: No content to write, keeping original description"
+          fi
+
+      # -------------------------------------------------------------------
+      # 6) Determine & apply labels
+      # -------------------------------------------------------------------
+      - name: 🏷️ Determine labels
+        id: labels
+        shell: bash
+        run: |
+          labels=()
+          [ ${{ steps.meta.outputs.feat }}     -gt 0 ] && labels+=('feature')
+          [ ${{ steps.meta.outputs.fix }}      -gt 0 ] && labels+=('bugfix')
+          [ ${{ steps.meta.outputs.docs }}     -gt 0 ] && labels+=('documentation')
+          [ ${{ steps.meta.outputs.chore }}    -gt 0 ] && labels+=('maintenance')
+          [ ${{ steps.meta.outputs.refactor }} -gt 0 ] && labels+=('refactor')
+          [ ${{ steps.meta.outputs.perf }}     -gt 0 ] && labels+=('performance')
+          [ ${{ steps.meta.outputs.test }}     -gt 0 ] && labels+=('testing')
+          [ ${{ steps.meta.outputs.style }}    -gt 0 ] && labels+=('style')
+          [ ${{ steps.meta.outputs.ci }}       -gt 0 ] && labels+=('ci-cd')
+          [ ${{ steps.meta.outputs.break }}    -gt 0 ] && labels+=('breaking-change')
+
+          conv=${{ steps.meta.outputs.conv }}
+          total=${{ steps.meta.outputs.total }}
+          if [ "$total" -gt 0 ]; then
+            pct=$(awk "BEGIN{print int(($conv/$total)*100)}")
+            [ "$pct" -lt 80 ] && labels+=('needs-review')
+          fi
+
+          echo "labels=${labels[*]}" >> $GITHUB_OUTPUT
+
+      - name: ➕ Apply labels & auto-assign
+        if: steps.labels.outputs.labels != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          # ensure each label exists (idempotent)
+          for l in ${{ steps.labels.outputs.labels }}; do
+            case "$l" in
+              feature)          color="0e8a16" desc="New feature or enhancement" ;;
+              bugfix)           color="d73a4a" desc="Bug fix" ;;
+              documentation)    color="0075ca" desc="Docs improvement" ;;
+              maintenance)      color="fbca04" desc="Maintenance / chores" ;;
+              refactor)         color="1d76db" desc="Code refactoring" ;;
+              performance)      color="ff6b6b" desc="Performance improvement" ;;
+              testing)          color="ff9500" desc="Testing related changes" ;;
+              style)            color="f9c74f" desc="Code style changes" ;;
+              ci-cd)            color="6f42c1" desc="CI/CD pipeline changes" ;;
+              breaking-change)  color="b60205" desc="Breaking change" ;;
+              needs-review)     color="fbca04" desc="Needs commit-message review" ;;
+            esac
+            gh label create "$l" --color "$color" --description "$desc" --force >/dev/null 2>&1 || true
+          done
+
+          # add labels & assign to repo owner
+          LABEL_ARGS=""
+          for l in ${{ steps.labels.outputs.labels }}; do
+            LABEL_ARGS="$LABEL_ARGS --add-label $l"
+          done
+
+          gh pr edit "${{ steps.meta.outputs.number }}" \
+            $LABEL_ARGS \
+            --add-assignee "${{ github.repository_owner }}"
+
+      # -------------------------------------------------------------------
+      # 7) Post comprehensive analysis summary
+      # -------------------------------------------------------------------
+      - name: 🤖 Post analysis summary
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          cat > summary_comment.md <<'EOF'
+          ## 🤖 PR Analysis Complete
+
+          **Commit Analysis:**
+          - 📊 **${{ steps.meta.outputs.total }}** total commits analyzed
+          - ✅ **${{ steps.meta.outputs.conv }}** follow conventional format
+          - 🆕 **${{ steps.meta.outputs.feat }}** new features
+          - 🐛 **${{ steps.meta.outputs.fix }}** bug fixes
+          - 📚 **${{ steps.meta.outputs.docs }}** documentation updates
+          - 🎨 **${{ steps.meta.outputs.style }}** code style changes
+          - ♻️ **${{ steps.meta.outputs.refactor }}** refactoring
+          - ⚡ **${{ steps.meta.outputs.perf }}** performance improvements
+          - 🧪 **${{ steps.meta.outputs.test }}** testing updates
+          - 🔧 **${{ steps.meta.outputs.chore }}** maintenance/chores
+          - ⚙️ **${{ steps.meta.outputs.ci }}** CI/build changes
+          - ⚠️ **${{ steps.meta.outputs.break }}** breaking changes
+
+          **Files Changed:** `${{ steps.meta.outputs.files_count }}`
+
+          **Labels Added:** `${{ steps.labels.outputs.labels }}`
+
+          This PR description has been enhanced by AI to follow our project standards. Thanks for contributing! 🎸
+          EOF
+
+          gh pr comment "${{ steps.meta.outputs.number }}" --body-file summary_comment.md
+
+      # -------------------------------------------------------------------
+      # 8) Post commit quality feedback
+      # -------------------------------------------------------------------
+      - name: 📊 Post commit quality feedback
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          CONVENTIONAL_COUNT="${{ steps.meta.outputs.conv }}"
+          TOTAL_COUNT="${{ steps.meta.outputs.total }}"
+
+          echo "Debug: CONVENTIONAL_COUNT=$CONVENTIONAL_COUNT, TOTAL_COUNT=$TOTAL_COUNT"
+
+          # Only proceed if we have commits to analyze
+          if [ "$TOTAL_COUNT" -gt 0 ]; then
+            # Calculate percentage using awk (more reliable than bc)
+            PERCENTAGE=$(awk "BEGIN {printf \"%.0f\", ($CONVENTIONAL_COUNT / $TOTAL_COUNT) * 100}")
+            echo "Debug: PERCENTAGE=$PERCENTAGE"
+
+            # Determine feedback message based on percentage
+            if [ "$PERCENTAGE" -ge 80 ]; then
+              FEEDBACK_MESSAGE="🎉 **Great work!** Your commit messages follow our conventional format consistently."
+              EMOJI="🎸"
+            else
+              FEEDBACK_MESSAGE="💡 **Needs improvement** - Consider following our [Conventional Commits](https://www.conventionalcommits.org/) format more consistently."
+              EMOJI="📝"
+            fi
+
+            # Always post a comment with commit statistics
+            cat > commit_feedback.md <<EOF
+          ## $EMOJI Commit Message Quality Report
+
+          **Conventional Commit Adherence:** **$CONVENTIONAL_COUNT** out of **$TOTAL_COUNT** commits (**$PERCENTAGE%**)
+
+          $FEEDBACK_MESSAGE
+
+          ### Conventional Commit Examples:
+          - \`feat(api): add new endpoint for user profiles\`
+          - \`fix(ui): resolve button alignment issue\`
+          - \`docs(readme): update installation instructions\`
+          - \`refactor(utils): simplify error handling logic\`
+          - \`chore(deps): update dependencies to latest versions\`
+
+          **Why this helps:**
+          - 🤖 Automated changelog generation
+          - 📋 Clear understanding of changes at a glance
+          - 🔄 Better semantic versioning decisions
+          - 🚀 Improved project maintainability
+
+          **Reference:** Check out our [Contributing Guide](CONTRIBUTING.md#commit-messages) for more details.
+          EOF
+
+            gh pr comment "${{ steps.meta.outputs.number }}" --body-file commit_feedback.md
+            echo "Posted commit quality feedback (${PERCENTAGE}% conventional)"
+          else
+            echo "Debug: No commits to analyze"
+          fi
+
+      # -------------------------------------------------------------------
+      # 9) Summary for the workflow run
+      # -------------------------------------------------------------------
+      - name: 📜 Workflow summary
+        shell: bash
+        run: |
+          {
+            echo "### 🤖 PR Enhancement complete"
+            echo ""
+            echo "- **${{ steps.meta.outputs.total }}** commits analysed"
+            echo "- **${{ steps.labels.outputs.labels }}** labels applied"
+            echo ""
+            echo "Enhanced description written back to PR ➡️"
+          } >> "$GITHUB_STEP_SUMMARY"

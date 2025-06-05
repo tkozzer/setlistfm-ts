@@ -1,0 +1,36 @@
+{
+  "invalid_json": "{ this is not valid json }",
+  "empty_object": {},
+  "null_values": {
+    "field1": null,
+    "field2": "",
+    "field3": "actual_value"
+  },
+  "special_characters": {
+    "unicode": "Ñiño 测试 🎵 Россия العربية",
+    "symbols": "!@#$%^&*()_+-=[]{}|;':\",./<>?",
+    "escape_sequences": "Line 1\nLine 2\tTabbed\r\nWindows line ending",
+    "quotes": "Single 'quotes' and \"double quotes\" and `backticks`"
+  },
+  "large_content": {
+    "description": "This is a very long description that contains a lot of text to test how the system handles large content. This is a very long description that contains a lot of text to test how the system handles large content. This is a very long description that contains a lot of text to test how the system handles large content. This text is repeated multiple times to simulate large content processing scenarios."
+  },
+  "nested_structure": {
+    "level1": {
+      "level2": {
+        "level3": {
+          "level4": {
+            "deep_value": "Found at level 4"
+          }
+        }
+      }
+    }
+  },
+  "mixed_data_types": {
+    "string": "text",
+    "number": 42,
+    "boolean": true,
+    "array": [1, "two", true, null],
+    "object": { "nested": "value" }
+  }
+}
