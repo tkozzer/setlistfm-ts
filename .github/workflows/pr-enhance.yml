@@ -117,14 +117,18 @@ jobs:
       - name: 🛠️ Update PR description
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
         run: |
-          # If AI returned nothing, fall back to the existing body
-          body="${{ steps.ai.outputs.content }}"
-          if [ -z "$body" ]; then
-            body=$(cat pr_body.txt)
+          # Write AI output (which may be multi-line) to a file safely
+          cat > final.md <<'EOF'
+          ${{ steps.ai.outputs.content }}
+          EOF
+
+          # Fallback: if the AI returned nothing, reuse the original body
+          if [ ! -s final.md ]; then
+            cp pr_body.txt final.md
           fi
-          printf "%s" "$body" > final.md
+
+          # Update the pull-request body using the file
           gh pr edit "${{ steps.meta.outputs.number }}" --body-file final.md
 
       # -------------------------------------------------------------------
