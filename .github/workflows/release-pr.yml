@@ -1,0 +1,143 @@
+# --------------------------------------------------------------------------- #
+#  🚀  Create / update Release Pull‑Request (preview → main)                  #
+# --------------------------------------------------------------------------- #
+name: 🚀 Create Release PR
+
+# Trigger as soon as the “Release Preparation” workflow finishes successfully
+on:
+  workflow_run:
+    workflows: [🔄 Release Preparation]
+    types: [completed]
+    branches: [preview]
+
+permissions:
+  contents: write # we may push labels
+  pull-requests: write # create / edit PRs
+
+jobs:
+  # --------------------------------------------------------------------------- #
+  #  Main job – create or update the release PR                                 #
+  # --------------------------------------------------------------------------- #
+  release-pr:
+    name: 🚀 Create / Update Release PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    env:
+      GH_TOKEN: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
+
+    steps:
+      # --------------------------------------------------------------------- #
+      # 1️⃣  Repo checkout & setup                                            #
+      # --------------------------------------------------------------------- #
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ env.GH_TOKEN }}
+
+      - name: 🛠️ Setup Node & pnpm
+        uses: ./.github/actions/setup-node-pnpm
+        with:
+          node-version: 22.x
+
+      # --------------------------------------------------------------------- #
+      # 2️⃣  Gather release metadata                                          #
+      # --------------------------------------------------------------------- #
+      - name: 📦 Version
+        id: version
+        run: |
+          echo "ver=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: 📝 Latest changelog entry
+        id: changelog
+        run: |
+          if [[ -f CHANGELOG.md ]]; then
+            awk '
+              /^## \[/ { if (++count==2) exit; next }
+              count==1 { print }
+            ' CHANGELOG.md | sed '/^$/d' > _entry.txt
+          fi
+          [[ ! -s _entry.txt ]] && echo "No changelog entries found for the latest version" > _entry.txt
+          {
+            echo 'entry<<EOF'
+            cat _entry.txt
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+          rm _entry.txt
+
+      # --------------------------------------------------------------------- #
+      # 3️⃣  Does a preview→main PR already exist ?                            #
+      # --------------------------------------------------------------------- #
+      - name: 🔍 Check for existing PR
+        id: check
+        run: |
+          PR=$(gh pr list --base main --head preview --json number --jq '.[0].number // empty')
+          echo "exists=${PR:+true}"   >> "$GITHUB_OUTPUT"
+          echo "pr_number=${PR:-0}"   >> "$GITHUB_OUTPUT"
+
+      # --------------------------------------------------------------------- #
+      # 4️⃣  Generate (or regenerate) PR body with OpenAI                     #
+      # --------------------------------------------------------------------- #
+      - name: 🤖 Compose PR description
+        id: body
+        uses: ./.github/actions/openai-chat
+        with:
+          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          system-path: .github/prompts/pr-description.sys.md
+          template-path: .github/prompts/pr-description.user.md
+          vars: |
+            VERSION=${{ steps.version.outputs.ver }}
+            CHANGELOG=${{ steps.changelog.outputs.entry }}
+          model: ${{ secrets.OPENAI_MODEL || 'gpt-4o-mini' }}
+          temperature: 0.3
+          max-tokens: 1000 # note the hyphen
+
+      # --------------------------------------------------------------------- #
+      # 5️⃣  Ensure required labels exist                                     #
+      # --------------------------------------------------------------------- #
+      - name: 🏷️ Ensure labels
+        run: |
+          for l in release automated; do
+            gh label create "$l" --description "$l related" --color "0052cc" --force >/dev/null 2>&1 || true
+          done
+
+      # --------------------------------------------------------------------- #
+      # 6️⃣  Create or update the PR                                          #
+      # --------------------------------------------------------------------- #
+      - name: 🛠️ Create PR
+        id: create
+        if: steps.check.outputs.exists != 'true'
+        run: |
+          PR_URL=$(gh pr create \
+            --base main \
+            --head preview \
+            --title "🚀 Release v${{ steps.version.outputs.ver }}" \
+            --body "${{ steps.body.outputs.content }}" \
+            --label "release,automated" \
+            --assignee "${{ github.repository_owner }}")
+          echo "url=$PR_URL" >> "$GITHUB_OUTPUT"
+          echo "number=$(echo "$PR_URL" | grep -o '[0-9]\+$')" >> "$GITHUB_OUTPUT"
+
+      - name: 🔄 Update existing PR
+        if: steps.check.outputs.exists == 'true'
+        run: |
+          gh pr edit ${{ steps.check.outputs.pr_number }} \
+            --title "🚀 Release v${{ steps.version.outputs.ver }}" \
+            --body "${{ steps.body.outputs.content }}" \
+            --add-label release,automated \
+            --add-assignee "${{ github.repository_owner }}"
+
+      # --------------------------------------------------------------------- #
+      # 7️⃣  Summary                                                          #
+      # --------------------------------------------------------------------- #
+      - name: 📋 Summary
+        run: |
+          PR_NUM=${{ steps.check.outputs.exists == 'true' && steps.check.outputs.pr_number || steps.create.outputs.number }}
+          echo "## 🚀 Release PR Ready" >> "$GITHUB_STEP_SUMMARY"
+          echo ""                        >> "$GITHUB_STEP_SUMMARY"
+          echo "- **PR #${PR_NUM}** : preview → main" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Version:** v${{ steps.version.outputs.ver }}"       >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Labels:** release, automated"                       >> "$GITHUB_STEP_SUMMARY"
+          echo ""                                                      >> "$GITHUB_STEP_SUMMARY"
+          echo "Please review & merge to publish the release! 🎸"       >> "$GITHUB_STEP_SUMMARY"

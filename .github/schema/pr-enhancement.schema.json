@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PR Enhancement Schema",
+  "description": "Structured format for enhanced Pull Request descriptions",
+  "type": "object",
+  "properties": {
+    "summary": {
+      "type": "string",
+      "description": "One-paragraph overview of the PR's primary purpose",
+      "minLength": 1
+    },
+    "changes": {
+      "type": "array",
+      "description": "List of changes made in this PR, either as flat strings or grouped by theme",
+      "items": {
+        "oneOf": [
+          {
+            "type": "string",
+            "minLength": 1
+          },
+          {
+            "type": "object",
+            "properties": {
+              "theme": {
+                "type": "string",
+                "description": "Category or theme of the changes",
+                "minLength": 1
+              },
+              "changes": {
+                "type": "array",
+                "description": "List of specific changes under this theme",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1
+              }
+            },
+            "required": ["theme", "changes"],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "minItems": 1
+    },
+    "testing": {
+      "type": "string",
+      "description": "Testing status based on visible test file changes",
+      "minLength": 1
+    },
+    "documentation": {
+      "type": "string",
+      "description": "Documentation changes based on visible .md file changes",
+      "minLength": 1
+    },
+    "commit_analysis": {
+      "type": "object",
+      "description": "Analysis of commit message quality and conventions",
+      "properties": {
+        "conventional_commits": {
+          "type": "integer",
+          "description": "Number of commits following conventional format",
+          "minimum": 0
+        },
+        "total_commits": {
+          "type": "integer",
+          "description": "Total number of commits analyzed",
+          "minimum": 1
+        },
+        "suggestions": {
+          "type": "string",
+          "description": "Suggestions for improving commit messages (if any)",
+          "minLength": 1
+        }
+      },
+      "required": ["conventional_commits", "total_commits"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["summary", "changes", "testing", "documentation", "commit_analysis"],
+  "additionalProperties": false
+}
