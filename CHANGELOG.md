@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.0] - 2025-06-05
+
+### Added
+
+- Introduced a structured output system for OpenAI workflows, enhancing JSON schema validation and template processing for changelog and PR enhancement workflows.
+- Enhanced CI commit detection to recognize scope-based patterns like 'refactor(ci):' and provide educational guidance for conventional commit messages.
+
+### Changed
+
+- Refactored CI workflows to modernize and streamline the CI/CD infrastructure, improving maintainability and organization.
+- Updated the commit analysis system to provide a comprehensive summary of PR statistics, including commit types and file changes, enhancing user experience.
+
+### Fixed
+
+- Resolved issues with handling nested changes structures in PR enhancement, ensuring proper formatting of AI-generated content.
+- Fixed multiple bugs related to template processing in GitHub Actions, including handling of multi-line content and special characters to prevent errors during changelog generation.
+- Addressed inconsistencies in commit counting and regex patterns for conventional commit detection, ensuring accurate analysis and labeling.
+
+---
+
 ## [0.5.0] - 2025-06-04
 
 ### Fixed

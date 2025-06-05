@@ -1,154 +1,115 @@
-# Local CI workflow optimized for Act (nektos/act) testing
-# 🚨 DO NOT RUN ON GITHUB - This is for local development only
-# Mirrors the production CI pipeline with Act-compatible enhancements
-# Usage: act -W .github/workflows/ci-local.yml
-# Install Act: https://github.com/nektos/act
-# GitHub execution: Only manual workflow_dispatch (for testing purposes)
+# 🚨 LOCAL‑ONLY CI mirror for `act`.  Never enable on GitHub.
+# run with:  act workflow_dispatch -W .github/workflows/ci-local.yml
 name: 🏠 CI Local (Production Mirror)
 
 on:
-  # Only run manually - this workflow is designed for local Act testing
   workflow_dispatch:
-    inputs:
-      reason:
-        description: 'Reason for manual run (this workflow is intended for local Act usage)'
-        required: false
-        default: 'Manual testing of local CI workflow'
 
-# Concurrency control for manual runs
 concurrency:
   group: ci-local-${{ github.run_id }}
   cancel-in-progress: true
 
+# ##############################################################################
+#  QUICK CHECKS (Node 22, Ubuntu)
+# ##############################################################################
 jobs:
-  # 🚀 Quick feedback job - runs first for fast developer feedback
   quick-checks:
     name: 🚀 Quick Checks
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - name: ⬇️ Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: 📦 Setup pnpm
-        uses: pnpm/action-setup@v4
+      # --- pnpm, then Node (cache works) ------------------------------------
+      - uses: pnpm/action-setup@v4
         with:
           version: 10.11.1
+          standalone: true
+          run_install: false # install after cache step
 
-      - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22.x
           cache: pnpm
 
-      - name: 📥 Install dependencies
-        run: pnpm install --no-frozen-lockfile
+      - run: corepack enable
+      - run: pnpm install --no-frozen-lockfile
 
-      - name: 🧼 Lint check
-        run: pnpm lint
+      # --- fast sanity checks -----------------------------------------------
+      - run: pnpm lint
+      - run: pnpm type-check
+      - run: pnpm vitest run src/
 
-      - name: 🧠 Type check
-        run: pnpm type-check
-
-      - name: ⚡ Source tests only (no build artifacts needed)
-        run: pnpm vitest run src/
-
-  # 🧪 Cross-platform testing matrix (Enhanced for Act compatibility)
+  # ##############################################################################
+  #  CROSS‑PLATFORM MATRIX (Act Linux containers)
+  # ##############################################################################
   test-matrix:
-    name: 🧪 Test (Node ${{ matrix.node }} on ${{ matrix.platform_name }})
-    runs-on: ${{ matrix.runs_on }}
+    name: 🧪 Test (${{ matrix.node }} on ${{ matrix.platform_name }})
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: quick-checks
 
     strategy:
       fail-fast: false
       matrix:
-        # Enhanced matrix with cross-platform simulation
         include:
-          # Linux variants with different Node versions
           - node: 18.x
-            runs_on: ubuntu-latest
-            platform_name: "Ubuntu 22.04"
-            container_image: "catthehacker/ubuntu:act-22.04"
-            use_container: true
-          
+            platform_name: Ubuntu 22.04
+            container_image: catthehacker/ubuntu:act-22.04
           - node: 20.x
-            runs_on: ubuntu-latest  
-            platform_name: "Ubuntu 20.04"
-            container_image: "catthehacker/ubuntu:act-20.04"
-            use_container: true
-            
+            platform_name: Ubuntu 20.04
+            container_image: catthehacker/ubuntu:act-20.04
           - node: 22.x
-            runs_on: ubuntu-latest
-            platform_name: "Ubuntu Latest"
-            container_image: "catthehacker/ubuntu:act-latest"
-            use_container: true
-
-          # Simulated Windows environment (Act compatible)
+            platform_name: Ubuntu Latest
+            container_image: catthehacker/ubuntu:act-latest
           - node: 22.x
-            runs_on: ubuntu-latest
-            platform_name: "Windows Sim"
-            container_image: "mcr.microsoft.com/windows/nanoserver:ltsc2022"
-            use_container: false  # Fallback to Ubuntu with Windows-style testing
+            platform_name: Windows Sim
             simulate_windows: true
-
-          # Simulated macOS environment (Act compatible) 
           - node: 22.x
-            runs_on: ubuntu-latest
-            platform_name: "macOS Sim"
-            container_image: "ubuntu:latest"
-            use_container: false  # Fallback to Ubuntu with macOS-style testing
+            platform_name: macOS Sim
             simulate_macos: true
 
-    steps:
-      - name: ⬇️ Checkout repository
-        uses: actions/checkout@v4
+    container:
+      image: ${{ matrix.container_image }}
+      options: --privileged
 
-      - name: 📦 Setup pnpm
-        uses: pnpm/action-setup@v4
+    steps:
+      - uses: actions/checkout@v4
+
+      # --- pnpm then Node ----------------------------------------------------
+      - uses: pnpm/action-setup@v4
         with:
           version: 10.11.1
+          standalone: true
+          run_install: false
 
-      - name: 🟢 Setup Node.js ${{ matrix.node }}
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
           cache: pnpm
 
-      - name: 📥 Install dependencies
-        run: pnpm install --no-frozen-lockfile
+      - run: corepack enable
+      - run: pnpm install --no-frozen-lockfile
 
-      - name: 🧪 Source tests only (matrix testing)
-        run: pnpm vitest run src/
+      # --- tests -------------------------------------------------------------
+      - run: pnpm vitest run src/
+      - run: pnpm type-check
 
-      - name: 🧠 Type check
-        run: pnpm type-check
-
-      # Platform-specific validation steps
-      - name: 🪟 Windows-specific validation
+      - name: 🪟 Windows simulation checks
         if: matrix.simulate_windows == true
-        run: |
-          echo "🪟 Simulating Windows environment validations"
-          echo "  • Testing Windows line endings compatibility"
-          echo "  • Validating cross-platform path handling"
-          echo "  • Checking Windows-specific Node.js behaviors"
-          # Test Windows-style paths
-          node -e "console.log('Windows path test:', require('path').win32.join('src', 'test', 'file.ts'))"
+        run: node -e "console.log(require('path').win32.join('src','demo','file.ts'))"
 
-      - name: 🍎 macOS-specific validation  
+      - name: 🍎 macOS simulation checks
         if: matrix.simulate_macos == true
         run: |
-          echo "🍎 Simulating macOS environment validations"
-          echo "  • Testing case-sensitive filesystem behaviors"
-          echo "  • Validating Unix-style path handling"
-          echo "  • Checking macOS-specific Node.js behaviors"
-          # Test case sensitivity
-          touch test-file.tmp
-          ls -la test-file.tmp
-          rm test-file.tmp
+          touch test.tmp
+          ls -la test.tmp
+          rm test.tmp
 
-  # 📊 Coverage and quality reporting (Act compatible - no artifacts)
+  # ##############################################################################
+  #  COVERAGE  (Node 22)
+  # ##############################################################################
   coverage:
     name: 📊 Coverage & Quality
     runs-on: ubuntu-latest
@@ -156,36 +117,32 @@ jobs:
     needs: quick-checks
 
     steps:
-      - name: ⬇️ Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: 📦 Setup pnpm
-        uses: pnpm/action-setup@v4
+      # --- pnpm then Node ----------------------------------------------------
+      - uses: pnpm/action-setup@v4
         with:
           version: 10.11.1
+          standalone: true
+          run_install: false
 
-      - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22.x
           cache: pnpm
 
-      - name: 📥 Install dependencies
-        run: pnpm install --no-frozen-lockfile
+      - run: corepack enable
+      - run: pnpm install --no-frozen-lockfile
 
-      - name: 🧪 Source tests with coverage (no build tests)
-        run: pnpm vitest run --coverage src/
+      # --- coverage run ------------------------------------------------------
+      - run: pnpm vitest run --coverage src/
+      - run: |
+          echo "📊 Coverage summary"
+          [ -f coverage/coverage-summary.json ] && cat coverage/coverage-summary.json || true
 
-      - name: 📈 Coverage summary (Act compatible)
-        run: |
-          echo "📊 Coverage Summary"
-          echo "Coverage reports have been generated locally."
-          if [ -f coverage/coverage-summary.json ]; then
-            echo "Coverage Summary:"
-            cat coverage/coverage-summary.json
-          fi
-
-  # 🏗️ Build verification - test all output formats  
+  # ##############################################################################
+  #  BUILD VERIFICATION  (Node 22)
+  # ##############################################################################
   build-verification:
     name: 🏗️ Build Verification
     runs-on: ubuntu-latest
@@ -193,85 +150,50 @@ jobs:
     needs: quick-checks
 
     steps:
-      - name: ⬇️ Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: 📦 Setup pnpm
-        uses: pnpm/action-setup@v4
+      # --- pnpm then Node ----------------------------------------------------
+      - uses: pnpm/action-setup@v4
         with:
           version: 10.11.1
+          standalone: true
+          run_install: false
 
-      - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22.x
           cache: pnpm
 
-      - name: 📥 Install dependencies
-        run: pnpm install --no-frozen-lockfile
+      - run: corepack enable
+      - run: pnpm install --no-frozen-lockfile
 
-      - name: 🏗️ Build all formats
-        run: pnpm build:all
-
-      - name: 📦 Build verification tests (requires dist folder)
-        run: pnpm vitest run tests/
-
-      - name: 📊 Bundle size analysis
-        run: pnpm build:analyze
-
-      - name: 📈 Build summary (Act compatible)
-        run: |
+      # --- build & size checks ----------------------------------------------
+      - run: pnpm build:all
+      - run: pnpm vitest run tests/
+      - run: pnpm build:analyze
+      - run: |
           echo "🏗️ Build Summary"
-          echo "All package formats have been built and verified successfully."
-          echo ""
-          echo "📦 Generated Artifacts:"
           ls -la dist/
-          echo ""
-          echo "📊 Bundle Sizes:"
-          ls -lh dist/ | grep -E '\.(js|cjs)$' || echo "No JS files found"
+          ls -lh dist/ | grep -E '\.(js|cjs)$' || true
 
-  # ✅ Success gate - all jobs must pass (Act compatible)
+  # ##############################################################################
+  #  SUCCESS GATE
+  # ##############################################################################
   ci-success:
     name: ✅ CI Success
     runs-on: ubuntu-latest
-    needs: [quick-checks, test-matrix, coverage, build-verification]
     if: always()
+    needs:
+      - quick-checks
+      - test-matrix
+      - coverage
+      - build-verification
 
     steps:
-      - name: ✅ Check job results
-        run: |
-          if [[ "${{ needs.quick-checks.result }}" != "success" ]]; then
-            echo "❌ Quick checks failed"
-            exit 1
-          fi
-          if [[ "${{ needs.test-matrix.result }}" != "success" ]]; then
-            echo "❌ Test matrix failed"
-            exit 1
-          fi
-          if [[ "${{ needs.coverage.result }}" != "success" ]]; then
-            echo "❌ Coverage job failed"
-            exit 1
-          fi
-          if [[ "${{ needs.build-verification.result }}" != "success" ]]; then
-            echo "❌ Build verification failed"
-            exit 1
-          fi
-          echo "✅ All CI jobs completed successfully!"
-
-      - name: 🎉 Success summary (Act compatible)
-        run: |
-          echo "🎉 CI Pipeline Completed Successfully!"
-          echo ""
-          echo "✅ Quick Checks: Passed"
-          echo "✅ Test Matrix: Passed across Node.js versions and platform simulations"
-          echo "✅ Coverage: Generated and validated"
-          echo "✅ Build Verification: All package formats built and verified"
-          echo ""
-          echo "Platforms tested:"
-          echo "  • Ubuntu 22.04 (Node 18.x)"
-          echo "  • Ubuntu 20.04 (Node 20.x)" 
-          echo "  • Ubuntu Latest (Node 22.x)"
-          echo "  • Windows Simulation (Node 22.x)"
-          echo "  • macOS Simulation (Node 22.x)"
-          echo ""
-          echo "The code is ready for merge! 🚀"
+      - run: |
+          set -e
+          [ "${{ needs.quick-checks.result }}" = success ] || { echo "❌ quick-checks failed"; exit 1; }
+          [ "${{ needs.test-matrix.result }}"   = success ] || { echo "❌ test-matrix failed"; exit 1; }
+          [ "${{ needs.coverage.result }}"      = success ] || { echo "❌ coverage failed"; exit 1; }
+          [ "${{ needs.build-verification.result }}" = success ] || { echo "❌ build-verification failed"; exit 1; }
+          echo "All local CI jobs passed 🎉"

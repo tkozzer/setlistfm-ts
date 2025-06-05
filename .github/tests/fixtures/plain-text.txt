@@ -1,0 +1,17 @@
+This is a plain text mock file for testing the generic processor with non-JSON content.
+
+It contains multiple lines of text including:
+- Special characters: !@#$%^&*()
+- Unicode content: Ñiño 测试 🎵 Россия العربية
+- Different formatting styles
+
+The content simulates a typical text-based input that might be processed
+by the generic processor when no specific JSON structure is available.
+
+This allows testing of:
+1. Plain text handling
+2. Template substitution with {{content}} placeholder
+3. Character encoding preservation
+4. Line break handling
+
+End of plain text mock content. 

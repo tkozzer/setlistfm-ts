@@ -1,0 +1,37 @@
+{
+  "project_name": "SetlistFM TypeScript SDK",
+  "version": "2.1.0",
+  "release_date": "2024-01-15",
+  "author": "tkozzer",
+  "description": "A comprehensive TypeScript SDK for interacting with the Setlist.fm API, providing type-safe access to concert setlists, artist information, venue details, and more.",
+  "features": [
+    "Full TypeScript support with comprehensive type definitions",
+    "Complete API endpoint coverage for all Setlist.fm resources",
+    "Built-in rate limiting and error handling",
+    "Extensible architecture for custom implementations",
+    "Comprehensive documentation and examples"
+  ],
+  "technologies": {
+    "language": "TypeScript",
+    "runtime": "Node.js",
+    "build_tool": "Rollup",
+    "testing": "Vitest",
+    "linting": "ESLint",
+    "formatting": "Prettier"
+  },
+  "statistics": {
+    "total_endpoints": 25,
+    "code_coverage": "94%",
+    "bundle_size": "23.4KB",
+    "dependencies": 3,
+    "dev_dependencies": 15
+  },
+  "repository": {
+    "url": "https://github.com/tkozzer/setlistfm-ts",
+    "license": "MIT",
+    "issues": 2,
+    "stars": 47,
+    "forks": 8
+  },
+  "content": "This SDK provides a modern, type-safe way to interact with the Setlist.fm API. Built with TypeScript from the ground up, it offers comprehensive coverage of all API endpoints while maintaining excellent developer experience through detailed documentation and examples."
+}
