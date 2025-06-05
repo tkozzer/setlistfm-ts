@@ -18,7 +18,7 @@ permissions:
 # --------------------------------------------------------------------------- #
 jobs:
   setup:
-    uses: ./.github_new/workflows/.reuse/setup-node-pnpm.yml
+    uses: ./.github/workflows/.reuse/setup-node-pnpm.yml
     with:
       node-version: 22.x # keep in sync with production toolchain
 
@@ -91,10 +91,10 @@ jobs:
       # --------------------------------------------------------------------- #
       - name: 🤖 Generate changelog entry
         id: changelog
-        uses: ./.github_new/actions/openai-chat
+        uses: ./.github/actions/openai-chat
         with:
-          system_prompt: .github_new/prompts/changelog.sys.md
-          user_template: .github_new/prompts/changelog.tmpl.md
+          system_prompt: .github/prompts/changelog.sys.md
+          user_template: .github/prompts/changelog.tmpl.md
           # workflow‑wide fall‑backs keep things humming even without secrets
           model: ${{ secrets.OPENAI_MODEL || 'gpt-4o-mini' }}
           temperature: 0.3

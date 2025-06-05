@@ -1,5 +1,5 @@
 # 🚨 LOCAL‑ONLY CI mirror for `act`.  Never enable on GitHub.
-# run with:  act workflow_dispatch -W .github_new/workflows/ci-local.yml
+# run with:  act workflow_dispatch -W .github/workflows/ci-local.yml
 name: 🏠 CI Local (Production Mirror)
 
 on:

@@ -1,8 +1,8 @@
-# .github_new/workflows/pr-enhance.yml
+# .github/workflows/pr-enhance.yml
 #
 # 🤖  Pull‑request enhancer
 # • Runs only for feature / fix branches that target `preview`
-# • Calls the local composite action (.github_new/actions/openai-chat)
+# • Calls the local composite action (.github/actions/openai-chat)
 #   to generate an improved PR description from the prompt templates
 # • Adds helpful labels and an optional guidance comment
 # ---------------------------------------------------------------------
@@ -101,7 +101,7 @@ jobs:
       # -------------------------------------------------------------------
       - name: 🤖 Generate enhanced description
         id: ai
-        uses: ./.github_new/actions/openai-chat
+        uses: ./.github/actions/openai-chat
         with:
           model: ${{ env.OPENAI_MODEL }}
           system_prompt: prompts/pr-enhancement.sys.md
