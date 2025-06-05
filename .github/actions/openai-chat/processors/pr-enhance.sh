@@ -82,11 +82,43 @@ fi
 #  Process changes array using shared utilities                              #
 # --------------------------------------------------------------------------- #
 if json_field_exists "$CONTENT" "changes"; then
-  formatted_changes=$(format_as_bullet_list "$CONTENT" "changes")
-  
-  if [[ -n $formatted_changes ]]; then
-    # Replace the {{#each changes}}...{{/each}} block using shared utility
-    FORMATTED_CONTENT=$(replace_each_block "$FORMATTED_CONTENT" "changes" "$formatted_changes")
+  # Check if changes has nested structure with themes
+  if echo "$CONTENT" | jq -e '.changes[0].theme' >/dev/null 2>&1; then
+    # Handle nested structure with themes
+    changes_section=""
+    
+    # Create temp file for processing
+    changes_temp=$(mktemp)
+    echo "$CONTENT" | jq -c '.changes[]' 2>/dev/null > "$changes_temp"
+    
+    while IFS= read -r change_obj; do
+      [[ -z $change_obj ]] && continue
+      theme=$(echo "$change_obj" | jq -r '.theme // "Other"')
+      changes_section="$changes_section- **$theme:**"$'\n'
+      
+      # Get the nested changes array for this theme
+      items_temp=$(mktemp)
+      echo "$change_obj" | jq -r '.changes[]? // empty' > "$items_temp"
+      
+      while IFS= read -r change_item; do
+        [[ -z $change_item ]] && continue
+        changes_section="$changes_section  - $change_item"$'\n'
+      done < "$items_temp"
+      rm -f "$items_temp"
+      
+    done < "$changes_temp"
+    rm -f "$changes_temp"
+    
+    # Replace the {{#each changes}}...{{/each}} block
+    FORMATTED_CONTENT=$(replace_each_block "$FORMATTED_CONTENT" "changes" "$changes_section")
+  else
+    # Handle simple flat array structure
+    formatted_changes=$(format_as_bullet_list "$CONTENT" "changes")
+    
+    if [[ -n $formatted_changes ]]; then
+      # Replace the {{#each changes}}...{{/each}} block using shared utility
+      FORMATTED_CONTENT=$(replace_each_block "$FORMATTED_CONTENT" "changes" "$formatted_changes")
+    fi
   fi
 fi
 

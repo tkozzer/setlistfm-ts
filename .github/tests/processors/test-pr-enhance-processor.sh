@@ -354,7 +354,43 @@ test_missing_fields() {
   run_content_test "Missing fields handling" "$test_data" "Test with missing fields"
 }
 
-# Test 14: Plain text variable substitution
+# Test 14: Nested theme structure for changes
+test_nested_changes() {
+  local test_data='{
+    "summary": "Testing nested theme structure for changes",
+    "changes": [
+      {
+        "theme": "CI Improvements",
+        "changes": [
+          "Refactored OpenAI chat action with modular processors",
+          "Added test mode support with mock fixtures",
+          "Enhanced error handling and logging"
+        ]
+      },
+      {
+        "theme": "Documentation",
+        "changes": [
+          "Updated template file naming convention",
+          "Added comprehensive test suite documentation"
+        ]
+      }
+    ],
+    "testing": "Added tests for both flat and nested change structures",
+    "documentation": "Updated schema to support both formats",
+    "commit_analysis": {
+      "total_commits": 10,
+      "conventional_commits": 8,
+      "suggestions": "Good commit hygiene with clear themes"
+    }
+  }'
+  
+  run_content_test "Nested changes - CI theme" "$test_data" "CI Improvements"
+  run_content_test "Nested changes - Documentation theme" "$test_data" "Documentation"
+  run_content_test "Nested changes - modular processors" "$test_data" "modular processors"
+  run_content_test "Nested changes - schema format" "$test_data" "support both formats"
+}
+
+# Test 15: Plain text variable substitution
 test_plain_variables() {
   local test_data='{
     "summary": "Plain text variables test",
@@ -393,6 +429,7 @@ main() {
   test_invalid_json
   test_missing_template
   test_missing_fields
+  test_nested_changes
   test_plain_variables
   
   echo "🏁 PR enhance processor tests completed!"

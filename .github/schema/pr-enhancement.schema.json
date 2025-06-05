@@ -11,10 +11,35 @@
     },
     "changes": {
       "type": "array",
-      "description": "List of specific changes made in this PR",
+      "description": "List of changes made in this PR, either as flat strings or grouped by theme",
       "items": {
-        "type": "string",
-        "minLength": 1
+        "oneOf": [
+          {
+            "type": "string",
+            "minLength": 1
+          },
+          {
+            "type": "object",
+            "properties": {
+              "theme": {
+                "type": "string",
+                "description": "Category or theme of the changes",
+                "minLength": 1
+              },
+              "changes": {
+                "type": "array",
+                "description": "List of specific changes under this theme",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1
+              }
+            },
+            "required": ["theme", "changes"],
+            "additionalProperties": false
+          }
+        ]
       },
       "minItems": 1
     },

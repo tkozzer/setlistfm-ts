@@ -1,16 +1,31 @@
 {
   "summary": "This pull request introduces a comprehensive authentication overhaul with OAuth 2.0 support, enhanced security measures, and improved user experience. The changes include new API endpoints, refactored middleware, and extensive testing coverage to ensure robust authentication flows.",
   "changes": [
-    "Implemented OAuth 2.0 authentication with support for Google, GitHub, and Microsoft providers",
-    "Added JWT token-based session management with automatic refresh capabilities",
-    "Created new user profile management endpoints with enhanced privacy controls",
-    "Implemented comprehensive input validation and sanitization across all forms",
-    "Added real-time notification system using WebSockets for instant updates",
-    "Enhanced error handling with user-friendly messages and detailed logging",
-    "Implemented advanced search functionality with filters and sorting options",
-    "Added dark mode support with user preference persistence",
-    "Created comprehensive audit logging for security and compliance",
-    "Optimized database queries resulting in 40% performance improvement"
+    {
+      "theme": "Authentication & Security",
+      "changes": [
+        "Implemented OAuth 2.0 authentication with support for Google, GitHub, and Microsoft providers",
+        "Added JWT token-based session management with automatic refresh capabilities",
+        "Implemented comprehensive input validation and sanitization across all forms",
+        "Created comprehensive audit logging for security and compliance"
+      ]
+    },
+    {
+      "theme": "API & Backend",
+      "changes": [
+        "Created new user profile management endpoints with enhanced privacy controls",
+        "Enhanced error handling with user-friendly messages and detailed logging",
+        "Optimized database queries resulting in 40% performance improvement"
+      ]
+    },
+    {
+      "theme": "User Experience",
+      "changes": [
+        "Added real-time notification system using WebSockets for instant updates",
+        "Implemented advanced search functionality with filters and sorting options",
+        "Added dark mode support with user preference persistence"
+      ]
+    }
   ],
   "testing": "Comprehensive testing strategy implemented including:\n• Unit tests with 95% code coverage across all new modules\n• Integration tests covering OAuth flows end-to-end with all providers\n• Security penetration testing for authentication vulnerabilities\n• Performance testing under high load (10,000+ concurrent users)\n• Cross-browser compatibility testing (Chrome, Firefox, Safari, Edge)\n• Mobile responsiveness testing on various device sizes\n• Automated regression testing to ensure no breaking changes\n• Manual exploratory testing of user workflows and edge cases",
   "documentation": "Complete documentation update including:\n• Updated API reference documentation with new authentication endpoints\n• Step-by-step OAuth setup guide for developers and administrators\n• Security best practices guide for implementing authentication\n• Migration guide from legacy authentication to new OAuth system\n• Troubleshooting guide for common authentication issues\n• Updated deployment instructions with new environment variables\n• Added code examples and sample implementations\n• Created architectural decision records (ADRs) for design choices",
