@@ -28,7 +28,6 @@ jobs:
       - uses: ./.github/workflows/.reuse/setup-node-pnpm.yml
         with:
           node-version: 22.x
-        secrets: inherit
 
       # Fast sanity checks
       - run: pnpm lint
@@ -60,7 +59,6 @@ jobs:
       - uses: ./.github/workflows/.reuse/setup-node-pnpm.yml
         with:
           node-version: ${{ matrix.node }}
-        secrets: inherit
 
       - run: pnpm vitest run src/
       - run: pnpm type-check
@@ -79,7 +77,6 @@ jobs:
       - uses: ./.github/workflows/.reuse/setup-node-pnpm.yml
         with:
           node-version: 22.x
-        secrets: inherit
 
       # Emit a JSON summary so the follow‑up step never 404s
       - run: pnpm vitest run --coverage --coverage.reporter=json-summary src/
@@ -114,7 +111,6 @@ jobs:
       - uses: ./.github/workflows/.reuse/setup-node-pnpm.yml
         with:
           node-version: 22.x
-        secrets: inherit
 
       - run: pnpm build:all
       - run: pnpm vitest run tests/
