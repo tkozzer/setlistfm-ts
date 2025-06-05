@@ -36,9 +36,14 @@ runs:
     - name: Enable Corepack & activate pnpm
       shell: bash
       run: |
+        set -e
         corepack enable
         corepack prepare "pnpm@${{ inputs.pnpm-version }}" --activate
-        echo "$(dirname "$(corepack where pnpm)")" >> "$GITHUB_PATH"
+        export PATH="$(dirname "$(corepack where pnpm)"):$PATH"
+        if ! command -v pnpm >/dev/null 2>&1; then
+          echo "pnpm not found after Corepack activation, installing globally..."
+          npm install -g pnpm@${{ inputs.pnpm-version }}
+        fi
         pnpm --version
 
     # ────────────────────────────────────────────────────────────────
