@@ -27,7 +27,7 @@ jobs:
 
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-4.1-nano' }}
+      OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-4o-mini' }}
 
     steps:
       # -------------------------------------------------------------------
@@ -45,46 +45,76 @@ jobs:
         id: meta
         shell: bash
         run: |
-          # Basic PR fields
-          echo "number=${{ github.event.pull_request.number }}"   >> $GITHUB_OUTPUT
-          echo "title=${{ github.event.pull_request.title }}"     >> $GITHUB_OUTPUT
+          set -euo pipefail
 
-          # Save current body so the AI can improve (multiline-safe)
-          printf "%s" "${{ github.event.pull_request.body }}" > pr_body.txt
+          # ---------- Basic PR fields ----------
+          echo "number=${{ github.event.pull_request.number }}"   >> "$GITHUB_OUTPUT"
+          echo "title=${{ github.event.pull_request.title }}"     >> "$GITHUB_OUTPUT"
 
-          # Save the commit list (hash + subject + body) between base & head
-          git log --pretty=format:"%h %s%n%b" \
+          # ---------- Save the original body ----------
+          printf "%s" "${{ github.event.pull_request.body || '' }}" > pr_body.txt
+
+          # ---------- Commit list (hash  subject) ----------
+          git log --pretty=format:"%h %s" \
             ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} \
             > commits.txt || touch commits.txt
 
-          # Simple conventional-commit stats for later labelling
-          total=$(grep -cE '^[0-9a-f]{7,}' commits.txt || true)
-          conv=$(grep -cE '^[0-9a-f]{7,} (feat|fix|docs|style|refactor|perf|test|chore|ci|build)(\(.*\))?:' commits.txt || true)
-          break=$(grep -cE '(BREAKING CHANGE:|feat!|fix!)' commits.txt || true)
-          feat=$(grep -cE '^[0-9a-f]{7,} feat(\(.*\))?:' commits.txt || true)
-          fix=$(grep -cE '^[0-9a-f]{7,} fix(\(.*\))?:'  commits.txt || true)
-          docs=$(grep -cE '^[0-9a-f]{7,} docs(\(.*\))?:' commits.txt || true)
-          chore=$(grep -cE '^[0-9a-f]{7,} (chore|ci|build)(\(.*\))?:' commits.txt || true)
+          # ---------- Changed files ----------
+          git diff --name-only \
+            ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} \
+            > files.txt || true
+
+          # ---------- Conventional-commit stats ----------
+          total=$(wc -l < commits.txt | xargs)
+          conv=$(grep -cE '^(feat|fix|docs|style|refactor|perf|test|chore|ci|build)(\(.*\))?:' commits.txt || true)
 
           {
             echo "total=$total"
             echo "conv=$conv"
-            echo "break=$break"
-            echo "feat=$feat"
-            echo "fix=$fix"
-            echo "docs=$docs"
-            echo "chore=$chore"
           } >> "$GITHUB_OUTPUT"
 
       # -------------------------------------------------------------------
-      # 3) Build a user‑prompt from the template (here‑doc → tmp file)
+      # 3) Build a structured user prompt
       # -------------------------------------------------------------------
-      - name: 📝 Create user prompt from template
+      - name: 📝 Create user prompt
         id: prompt
         shell: bash
         run: |
-          # slurp template, replace placeholders
-          sed \
+          cat > user_prompt.md <<'EOF'
+          # Pull-request data (for the AI)
+
+          ## Title
+          {{PR_TITLE}}
+
+          ## Current body
+          {{PR_BODY}}
+
+          ## Commits ({{TOTAL_COMMITS}})
+          ```
+          {{COMMITS}}
+          ```
+
+          ## Changed files
+          ```
+          {{FILES}}
+          ```
+
+          ---
+          👉 **Task:** Rewrite / improve the PR description following the headings *exactly*
+            and **only** using information visible above.
+            If something is unknown, write “N/A”.
+
+          Headings to produce:
+
+          ## 📋 Summary
+          ## 🔄 Changes
+          ## 📝 Commit Analysis
+          ## 🧪 Testing
+          ## 📚 Documentation
+          EOF
+
+          # Replace placeholders with real content (multiline-safe)
+          sed -i \
             -e "s|{{PR_TITLE}}|${{ steps.meta.outputs.title }}|g" \
             -e "/{{PR_BODY}}/{
                   r pr_body.txt
@@ -94,41 +124,44 @@ jobs:
                   r commits.txt
                   d
                 }" \
-            .github/prompts/pr-enhancement.tmpl.md > user_prompt.md
+            -e "/{{FILES}}/{
+                  r files.txt
+                  d
+                }" \
+            -e "s|{{TOTAL_COMMITS}}|${{ steps.meta.outputs.total }}|g" \
+            user_prompt.md
 
       # -------------------------------------------------------------------
-      # 4) Call the local composite action that wraps OpenAI Chat API
+      # 4) Call the OpenAI Chat API (low‑temperature, strong model)
       # -------------------------------------------------------------------
       - name: 🤖 Generate enhanced description
         id: ai
         uses: ./.github/actions/openai-chat
         with:
           openai_api_key: ${{ env.OPENAI_API_KEY }}
-          system-path: .github/prompts/pr-enhancement.sys.md
+          system-path: .github/prompts/pr-enhancement.sys.md # unchanged
           template-path: user_prompt.md
-          vars: ""
           model: ${{ env.OPENAI_MODEL }}
-          temperature: 0.3
-          max-tokens: 1000
+          temperature: 0 # deterministic
+          max-tokens: 1200
 
       # -------------------------------------------------------------------
-      # 5) Update the PR body with the AI output (fallback: keep original)
+      # 5) Update the PR body safely
       # -------------------------------------------------------------------
       - name: 🛠️ Update PR description
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Write AI output (which may be multi-line) to a file safely
+          # Write AI output verbatim
           cat > final.md <<'EOF'
           ${{ steps.ai.outputs.content }}
           EOF
 
-          # Fallback: if the AI returned nothing, reuse the original body
+          # Fallback to original body if the model produced nothing
           if [ ! -s final.md ]; then
             cp pr_body.txt final.md
           fi
 
-          # Update the pull-request body using the file
           gh pr edit "${{ steps.meta.outputs.number }}" --body-file final.md
 
       # -------------------------------------------------------------------
