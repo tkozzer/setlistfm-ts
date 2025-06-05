@@ -230,8 +230,13 @@ jobs:
           done
 
           # add labels & assign to repo owner
+          LABEL_ARGS=""
+          for l in ${{ steps.labels.outputs.labels }}; do
+            LABEL_ARGS="$LABEL_ARGS --add-label $l"
+          done
+
           gh pr edit "${{ steps.meta.outputs.number }}" \
-            --add-label ${{ steps.labels.outputs.labels }} \
+            $LABEL_ARGS \
             --add-assignee "${{ github.repository_owner }}"
 
       # -------------------------------------------------------------------
