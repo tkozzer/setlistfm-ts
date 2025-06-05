@@ -1,52 +1,50 @@
+# .github/actions/setup-node-pnpm/action.yml
 name: Setup Node & pnpm
 description: |
   • Installs the requested Node.js version (with pnpm cache)
-  • Installs / activates an exact pnpm version via pnpm/action-setup
+  • Activates the exact pnpm version via **Corepack**
   • Optionally runs `pnpm install --frozen-lockfile`
 
 inputs:
   node-version:
-    description: Node.js version (e.g. 20.x / 22.x)
+    description: Node.js version (e.g. `20.x`, `22.x`)
     required: true
   pnpm-version:
-    description: pnpm version to install
+    description: pnpm version to activate with Corepack
     required: false
     default: 10.11.1
   run-install:
-    description: true ➜ run pnpm install --frozen-lockfile
+    description: 'Set to `"true"` to run `pnpm install --frozen-lockfile`'
     required: false
     default: "true"
 
 runs:
   using: composite
   steps:
-    # #######################################################################
-    # 1) Node.js (adds Node bin dir to PATH and enables pnpm cache)
-    # #######################################################################
+    # ────────────────────────────────────────────────────────────────
+    # 1. Node.js + pnpm cache
+    # ────────────────────────────────────────────────────────────────
     - name: Setup Node
       uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
         cache: pnpm
 
-    # #######################################################################
-    # 2) Reliable pnpm binary (adds pnpm to PATH automatically)
-    # #######################################################################
-    - name: Install pnpm
-      id: pnpm
-      uses: pnpm/action-setup@v4
-      with:
-        version: ${{ inputs.pnpm-version }}
-        run_install: false # we handle install in next step (optional)
-
-    - name: Add pnpm to PATH
+    # ────────────────────────────────────────────────────────────────
+    # 2. Exact pnpm via Corepack  ➜  adds it to the PATH
+    # ────────────────────────────────────────────────────────────────
+    - name: Enable Corepack & activate pnpm
       shell: bash
       run: |
-        echo "$PNPM_HOME" >> "$GITHUB_PATH"
+        corepack enable
+        corepack prepare "pnpm@${{ inputs.pnpm-version }}" --activate
+        echo "PNPM_HOME=$(corepack where pnpm)" >> "$GITHUB_ENV"
+        echo "$(corepack where pnpm)" >> "$GITHUB_PATH"
+        pnpm --version
 
-    # #######################################################################
-    # 3) Optional dependency install
-    # #######################################################################
+    # ────────────────────────────────────────────────────────────────
+    # 3. (Optional) install dependencies
+    # ────────────────────────────────────────────────────────────────
     - name: Install dependencies
       if: inputs.run-install == 'true'
       shell: bash
