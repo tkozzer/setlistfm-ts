@@ -18,9 +18,10 @@ permissions:
 # --------------------------------------------------------------------------- #
 jobs:
   setup:
-    uses: .github/workflows/.reuse/setup-node-pnpm.yml
+    uses: ./.github/workflows/.reuse/setup-node-pnpm.yml
     with:
       node-version: 22.x # keep in sync with production toolchain
+    secrets: inherit
 
   # --------------------------------------------------------------------------- #
   #  Main preparation job                                                       #
