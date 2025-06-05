@@ -158,15 +158,17 @@ jobs:
           echo "======================="
 
           # Write AI output (prefer formatted, fallback to raw)
-          FORMATTED_CONTENT='${{ steps.ai.outputs.formatted_content }}'
-          RAW_CONTENT='${{ steps.ai.outputs.content }}'
-
-          if [ -n "$FORMATTED_CONTENT" ] && [ "$FORMATTED_CONTENT" != "null" ]; then
+          # Use heredoc to safely handle multi-line content
+          if [ -n "${{ steps.ai.outputs.formatted_content }}" ] && [ "${{ steps.ai.outputs.formatted_content }}" != "null" ]; then
             echo "Using formatted content"
-            echo "$FORMATTED_CONTENT" > final.md
-          elif [ -n "$RAW_CONTENT" ] && [ "$RAW_CONTENT" != "null" ]; then
+            cat > final.md <<'FORMATTED_EOF'
+          ${{ steps.ai.outputs.formatted_content }}
+          FORMATTED_EOF
+          elif [ -n "${{ steps.ai.outputs.content }}" ] && [ "${{ steps.ai.outputs.content }}" != "null" ]; then
             echo "Using raw content"
-            echo "$RAW_CONTENT" > final.md
+            cat > final.md <<'RAW_EOF'
+          ${{ steps.ai.outputs.content }}
+          RAW_EOF
           else
             echo "No AI content available, using original PR body"
             cp pr_body.txt final.md
