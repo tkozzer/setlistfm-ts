@@ -45,6 +45,7 @@ substitute() {
   if [[ -n $VARS ]]; then
     while IFS='=' read -r KEY VALUE; do
       [[ -z $KEY ]] && continue
+      # sed separator is | to avoid escaping /
       text=$(printf '%s' "$text" | sed -e "s|{{${KEY}}}|${VALUE//|/\\|}|g")
     done <<< "$VARS"
   fi
@@ -59,19 +60,27 @@ PROMPT_USER=$(substitute "$PROMPT_USER")
 ###############################################################################
 [[ -z ${OPENAI_API_KEY:-} ]] && { echo "❌ OPENAI_API_KEY secret not set" >&2; exit 1; }
 
-REQUEST=$(jq -n \
-  --arg model "$MODEL" \
-  --arg sys   "$PROMPT_SYS" \
-  --arg user  "$PROMPT_USER" \
-  --argjson temp "$TEMP" \
-  --argjson tok  "$TOKENS" \
-  '{
-    model: $model,
-    messages: ( $sys == "" ? [] : [{role:"system", content:$sys}] )
-              + [{role:"user", content:$user}],
-    temperature: $temp,
-    max_tokens: $tok
-  }')
+# jq 1.5‑compatible payload construction
+REQUEST=$(
+  jq -n \
+    --arg model  "$MODEL" \
+    --arg sys    "$PROMPT_SYS" \
+    --arg user   "$PROMPT_USER" \
+    --arg temp   "$TEMP" \
+    --arg tokens "$TOKENS" \
+    '
+    {
+      "model": $model,
+      "messages":
+        ( ($sys | length) == 0
+          ? []
+          : [ { "role": "system", "content": $sys } ]
+        )
+        + [ { "role": "user", "content": $user } ],
+      "temperature": ($temp   | tonumber),
+      "max_tokens":  ($tokens | tonumber)
+    }'
+)
 
 RESPONSE=$(curl -sS \
   -H "Content-Type: application/json" \
