@@ -70,6 +70,13 @@ escape_for_sed() {
 substitute() {
   local text="$1"
   if [[ -n $VARS ]]; then
+    # Decode base64 vars if it looks like base64 (no newlines, only base64 chars)
+    if echo "$VARS" | grep -qE '^[A-Za-z0-9+/=]*$' && [[ $(echo "$VARS" | wc -l) -eq 1 ]]; then
+      DECODED_VARS=$(echo "$VARS" | base64 -d)
+    else
+      DECODED_VARS="$VARS"
+    fi
+    
     while IFS='=' read -r KEY VALUE; do
       [[ -z $KEY ]] && continue
       # Decode escaped newlines from GitHub Actions variable passing
@@ -78,7 +85,7 @@ substitute() {
       escaped_value=$(escape_for_sed "$decoded_value")
       # sed separator is | (we've escaped | in the value)
       text=$(printf '%s' "$text" | sed -e "s|{{${KEY}}}|${escaped_value}|g")
-    done <<< "$VARS"
+    done <<< "$DECODED_VARS"
   fi
   printf '%s' "$text"
 }
@@ -161,13 +168,20 @@ if [[ -n $OUTPUT ]]; then
     
     # Add VARS to context for VERSION, DATE, etc.
     if [[ -n $VARS ]]; then
+      # Decode base64 vars if it looks like base64 (no newlines, only base64 chars)
+      if echo "$VARS" | grep -qE '^[A-Za-z0-9+/=]*$' && [[ $(echo "$VARS" | wc -l) -eq 1 ]]; then
+        DECODED_VARS=$(echo "$VARS" | base64 -d)
+      else
+        DECODED_VARS="$VARS"
+      fi
+      
       while IFS='=' read -r KEY VALUE; do
         [[ -z $KEY ]] && continue
         # Decode escaped newlines from GitHub Actions variable passing
         decoded_value=$(printf '%s' "$VALUE" | tr '\020' '\n')
         escaped_value=$(escape_for_sed "$decoded_value")
         FORMATTED_CONTENT=$(printf '%s' "$FORMATTED_CONTENT" | sed -e "s|{{${KEY}}}|${escaped_value}|g")
-      done <<< "$VARS"
+      done <<< "$DECODED_VARS"
     fi
     
     # JSON field substitution - handle both simple and nested properties

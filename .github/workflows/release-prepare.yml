@@ -92,19 +92,16 @@ jobs:
           # Read commits and escape for simple KEY=VALUE format
           COMMITS_ESCAPED=$(cat commits_temp.txt | tr '\n' '\020' | sed 's/"/\\"/g')
 
-          # Create variables file for the OpenAI action
-          cat > changelog_vars.txt <<EOF
-          VERSION=${{ steps.version.outputs.version }}
+          # Create variables in a single line format for safe GitHub Actions passing
+          TEMPLATE_VARS="VERSION=${{ steps.version.outputs.version }}
           COMMITS=${COMMITS_ESCAPED}
-          DATE=$(date +%Y-%m-%d)
-          EOF
+          DATE=$(date +%Y-%m-%d)"
 
-          # Output for GitHub Actions
-          {
-            echo 'template_vars<<EOF'
-            cat changelog_vars.txt
-            echo 'EOF'
-          } >> "$GITHUB_OUTPUT"
+          # Encode the entire vars block as base64 to avoid shell parsing issues
+          VARS_ENCODED=$(echo "$TEMPLATE_VARS" | base64 -w 0)
+
+          # Output for GitHub Actions as a single line
+          echo "template_vars=${VARS_ENCODED}" >> "$GITHUB_OUTPUT"
 
           # Clean up
           rm -f commits_temp.txt
