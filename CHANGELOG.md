@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.7.0] - 2025-06-05
+
+### Added
+
+- Introduced comprehensive documentation for automated workflows in README.md, detailing all GitHub Actions workflows and their benefits.
+- Enhanced commit analysis system in PR workflow to provide detailed feedback on commit quality, including educational suggestions for improving commit messages.
+- Implemented structured output system for OpenAI workflows, supporting JSON schema validation and template processing for improved changelog and PR enhancement outputs.
+
+### Changed
+
+- Updated documentation paths and fixed broken references to ensure accurate guidance for contributors.
+- Refactored CI workflows to streamline processes, removing legacy workflows and improving structure for better maintainability.
+- Modified AI prompts for PR enhancements to improve factual accuracy and prevent misleading descriptions based on commit messages.
+
+### Fixed
+
+- Resolved issues with nested changes structure handling in the PR enhancement processor, ensuring proper formatting of AI-generated content.
+- Fixed multi-line variable handling in GitHub Actions to prevent bad substitution errors and improve template processing reliability.
+- Addressed regex metacharacter handling issues to ensure robust template substitutions, preventing errors with special characters in commit messages.
+
+---
+
 ## [0.6.0] - 2025-06-05
 
 ### Added
