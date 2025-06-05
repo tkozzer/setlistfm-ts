@@ -94,7 +94,7 @@ jobs:
                   r commits.txt
                   d
                 }" \
-            prompts/pr-enhancement.tmpl.md > user_prompt.md
+            .github/prompts/pr-enhancement.tmpl.md > user_prompt.md
 
       # -------------------------------------------------------------------
       # 4) Call the local composite action that wraps OpenAI Chat API
@@ -104,7 +104,7 @@ jobs:
         uses: ./.github/actions/openai-chat
         with:
           model: ${{ env.OPENAI_MODEL }}
-          system_prompt: prompts/pr-enhancement.sys.md
+          system_prompt: .github/prompts/pr-enhancement.sys.md
           user_prompt_path: user_prompt.md
           temperature: 0.3
           max_tokens: 1000
