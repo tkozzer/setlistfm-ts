@@ -150,23 +150,34 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Write formatted AI output (or fallback to raw if no template was used)
-          if [ -n "${{ steps.ai.outputs.formatted_content }}" ]; then
-            cat > final.md <<'EOF'
-          ${{ steps.ai.outputs.formatted_content }}
-          EOF
-          else
-            cat > final.md <<'EOF'
-          ${{ steps.ai.outputs.content }}
-          EOF
-          fi
+          # Debug output to understand what we received
+          echo "=== AI Output Debug ==="
+          echo "Raw content length: $(echo '${{ steps.ai.outputs.content }}' | wc -c)"
+          echo "Formatted content length: $(echo '${{ steps.ai.outputs.formatted_content }}' | wc -c)"
+          echo "======================="
 
-          # Fallback to original body if the model produced nothing
-          if [ ! -s final.md ]; then
+          # Write AI output (prefer formatted, fallback to raw)
+          FORMATTED_CONTENT='${{ steps.ai.outputs.formatted_content }}'
+          RAW_CONTENT='${{ steps.ai.outputs.content }}'
+
+          if [ -n "$FORMATTED_CONTENT" ] && [ "$FORMATTED_CONTENT" != "null" ]; then
+            echo "Using formatted content"
+            echo "$FORMATTED_CONTENT" > final.md
+          elif [ -n "$RAW_CONTENT" ] && [ "$RAW_CONTENT" != "null" ]; then
+            echo "Using raw content"
+            echo "$RAW_CONTENT" > final.md
+          else
+            echo "No AI content available, using original PR body"
             cp pr_body.txt final.md
           fi
 
-          gh pr edit "${{ steps.meta.outputs.number }}" --body-file final.md
+          # Verify we have content before updating
+          if [ -s final.md ]; then
+            echo "Updating PR description with $(wc -l < final.md) lines"
+            gh pr edit "${{ steps.meta.outputs.number }}" --body-file final.md
+          else
+            echo "ERROR: No content to write, keeping original description"
+          fi
 
       # -------------------------------------------------------------------
       # 6) Determine & apply labels
