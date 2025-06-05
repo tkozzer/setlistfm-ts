@@ -81,10 +81,12 @@ substitute() {
       [[ -z $KEY ]] && continue
       # Decode escaped newlines from GitHub Actions variable passing
       decoded_value=$(printf '%s' "$VALUE" | tr '\020' '\n')
-      # Escape the value for safe sed substitution
-      escaped_value=$(escape_for_sed "$decoded_value")
-      # sed separator is | (we've escaped | in the value)
-      text=$(printf '%s' "$text" | sed -e "s|{{${KEY}}}|${escaped_value}|g")
+      
+      # Use bash parameter substitution for multi-line content (safer than sed)
+      # Create the pattern to replace
+      pattern="{{${KEY}}}"
+      # Use bash built-in string replacement (handles newlines safely)
+      text="${text//$pattern/$decoded_value}"
     done <<< "$DECODED_VARS"
   fi
   printf '%s' "$text"
@@ -179,8 +181,10 @@ if [[ -n $OUTPUT ]]; then
         [[ -z $KEY ]] && continue
         # Decode escaped newlines from GitHub Actions variable passing
         decoded_value=$(printf '%s' "$VALUE" | tr '\020' '\n')
-        escaped_value=$(escape_for_sed "$decoded_value")
-        FORMATTED_CONTENT=$(printf '%s' "$FORMATTED_CONTENT" | sed -e "s|{{${KEY}}}|${escaped_value}|g")
+        
+        # Use bash parameter substitution for multi-line content (safer than sed)
+        pattern="{{${KEY}}}"
+        FORMATTED_CONTENT="${FORMATTED_CONTENT//$pattern/$decoded_value}"
       done <<< "$DECODED_VARS"
     fi
     
@@ -191,8 +195,9 @@ if [[ -n $OUTPUT ]]; then
       key=$(echo "$field" | cut -d':' -f1 | tr -d '"')
       value=$(echo "$CONTENT" | jq -r ".$key // empty" 2>/dev/null || echo "")
       if [[ -n $value && $value != "null" ]]; then
-        escaped_value=$(escape_for_sed "$value")
-        FORMATTED_CONTENT=$(printf '%s' "$FORMATTED_CONTENT" | sed -e "s|{{${key}}}|${escaped_value}|g")
+        # Use bash parameter substitution (safer for any content)
+        pattern="{{${key}}}"
+        FORMATTED_CONTENT="${FORMATTED_CONTENT//$pattern/$value}"
       fi
     done <<< "$(echo "$CONTENT" | jq -r 'to_entries[] | select(.value | type == "string" or type == "number") | "\(.key):\(.value)"' 2>/dev/null || true)"
     
@@ -203,14 +208,15 @@ if [[ -n $OUTPUT ]]; then
       conventional_commits=$(echo "$CONTENT" | jq -r '.commit_analysis.conventional_commits // 0')
       suggestions=$(echo "$CONTENT" | jq -r '.commit_analysis.suggestions // "N/A"')
       
-      FORMATTED_CONTENT=$(printf '%s' "$FORMATTED_CONTENT" | sed "s|{{commit_analysis.total_commits}}|$total_commits|g")
-      FORMATTED_CONTENT=$(printf '%s' "$FORMATTED_CONTENT" | sed "s|{{commit_analysis.conventional_commits}}|$conventional_commits|g")
+      # Use bash parameter substitution for commit analysis fields
+      FORMATTED_CONTENT="${FORMATTED_CONTENT//\{\{commit_analysis.total_commits\}\}/$total_commits}"
+      FORMATTED_CONTENT="${FORMATTED_CONTENT//\{\{commit_analysis.conventional_commits\}\}/$conventional_commits}"
       
       # Handle suggestions carefully (could contain special characters)
       if [[ $suggestions != "N/A" && $suggestions != "null" ]]; then
         # Only replace if suggestions block exists
         FORMATTED_CONTENT=$(printf '%s' "$FORMATTED_CONTENT" | sed "/{{#if commit_analysis.suggestions}}/,/{{\/if}}/d")
-        FORMATTED_CONTENT=$(printf '%s' "$FORMATTED_CONTENT" | sed "s|{{commit_analysis.suggestions}}|$suggestions|g")
+        FORMATTED_CONTENT="${FORMATTED_CONTENT//\{\{commit_analysis.suggestions\}\}/$suggestions}"
       else
         # Remove the entire conditional block
         FORMATTED_CONTENT=$(printf '%s' "$FORMATTED_CONTENT" | sed "/{{#if commit_analysis.suggestions}}/,/{{\/if}}/d")
@@ -319,9 +325,8 @@ if [[ -n $OUTPUT ]]; then
   else
     # For non-structured response, just do variable substitution
     FORMATTED_CONTENT=$(substitute "$OUTPUT_TEMPLATE")
-    # Replace {{content}} with the raw response
-    escaped_content=$(escape_for_sed "$CONTENT")
-    FORMATTED_CONTENT=$(printf '%s' "$FORMATTED_CONTENT" | sed -e "s|{{content}}|${escaped_content}|g")
+    # Replace {{content}} with the raw response using bash parameter substitution
+    FORMATTED_CONTENT="${FORMATTED_CONTENT//\{\{content\}\}/$CONTENT}"
   fi
 else
   FORMATTED_CONTENT="$CONTENT"
