@@ -131,23 +131,32 @@ jobs:
           ls -la dist/               >> "$GITHUB_STEP_SUMMARY"
 
   # ###############################################################################
-  # ✅  Success gate – block merge if any job failed
+  # ✅  Success gate – marks the check green only if every upstream job succeeded
   # ###############################################################################
   ci-success:
     name: ✅ CI Success
     runs-on: ubuntu-latest
-    if: always()
+
+    # 1) We still need the results of these jobs, so keep the `needs` block.
     needs:
       - quick-checks
       - test-matrix
       - coverage
       - build-verification
 
+    # 2) `always()` ensures the job itself runs even if an upstream job failed,
+    #    so we can inspect their results.  The rest of the expression blocks the
+    #    *steps* if any result ≠ 'success', which turns the job red / failed.
+    if: >
+      ${{
+        always() &&
+        needs.quick-checks.result == 'success' &&
+        needs.test-matrix.result == 'success' &&
+        needs.coverage.result == 'success' &&
+        needs.build-verification.result == 'success'
+      }}
+
     steps:
-      - name: Final status check
+      - name: All jobs passed
         run: |
-          for job in quick-checks test-matrix coverage build-verification; do
-            result="${{ needs[job].result }}"
-            [ "$result" != success ] && { echo "❌ $job failed"; exit 1; }
-          done
-          echo '✅ All CI jobs completed successfully!' > "$GITHUB_STEP_SUMMARY"
+          echo '✅ All CI jobs completed successfully!' >> "$GITHUB_STEP_SUMMARY"
