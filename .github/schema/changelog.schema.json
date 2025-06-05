@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Changelog Entry Schema",
+  "description": "Structured format for changelog entries following Keep a Changelog standards",
+  "type": "object",
+  "properties": {
+    "added": {
+      "type": "array",
+      "description": "New features or functionality",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "default": []
+    },
+    "changed": {
+      "type": "array",
+      "description": "Changes to existing functionality",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "default": []
+    },
+    "deprecated": {
+      "type": "array",
+      "description": "Features that will be removed in upcoming releases",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "default": []
+    },
+    "removed": {
+      "type": "array",
+      "description": "Features removed in this release",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "default": []
+    },
+    "fixed": {
+      "type": "array",
+      "description": "Bug fixes",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "default": []
+    },
+    "security": {
+      "type": "array",
+      "description": "Security-related changes",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "default": []
+    }
+  },
+  "additionalProperties": false
+}

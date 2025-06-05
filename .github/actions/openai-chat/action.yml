@@ -54,13 +54,26 @@ inputs:
     required: false
     default: "1500"
 
+  schema-path:
+    description: Relative path to JSON schema file for structured output (optional).
+    required: false
+    default: ""
+
+  output-path:
+    description: Relative path to output template for formatting structured response (optional).
+    required: false
+    default: ""
+
 # ─────────────────────────────────────────────────────────────
 #  Outputs
 # ─────────────────────────────────────────────────────────────
 outputs:
   content:
-    description: Assistant response text returned from OpenAI
+    description: Raw assistant response from OpenAI
     value: ${{ steps.chat.outputs.content }}
+  formatted_content:
+    description: Formatted content using output template (if provided)
+    value: ${{ steps.chat.outputs.formatted_content }}
 
 # ─────────────────────────────────────────────────────────────
 #  Execution
@@ -81,4 +94,6 @@ runs:
           --vars     "${{ inputs.vars }}" \
           --model    "${{ inputs.model }}" \
           --temp     "${{ inputs.temperature }}" \
-          --tokens   "${{ inputs.max-tokens }}"
+          --tokens   "${{ inputs.max-tokens }}" \
+          --schema   "${{ inputs.schema-path }}" \
+          --output   "${{ inputs.output-path }}"

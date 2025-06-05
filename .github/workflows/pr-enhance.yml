@@ -1,5 +1,3 @@
-# .github/workflows/pr-enhance.yml
-#
 # 🤖  Pull‑request enhancer
 # • Runs only for feature / fix branches that target `preview`
 # • Calls the local composite action (.github/actions/openai-chat)
@@ -90,80 +88,47 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       # -------------------------------------------------------------------
-      # 3) Build a structured user prompt
+      # 3) Prepare variables for prompt template
       # -------------------------------------------------------------------
-      - name: 📝 Create user prompt
-        id: prompt
+      - name: 📝 Prepare prompt variables
+        id: vars
         shell: bash
         run: |
-          cat > user_prompt.md <<'EOF'
-          # Pull-request data (for the AI)
+          # Read file contents into variables (multiline-safe)
+          PR_BODY=$(cat pr_body.txt)
+          COMMITS=$(cat commits.txt)
+          FILES=$(cat files.txt)
 
-          ## Title
-          {{PR_TITLE}}
+          # Create variables string for the template system (escape for simple KEY=VALUE format)
+          {
+            echo "PR_TITLE=${{ steps.meta.outputs.title }}"
+            echo "PR_BODY=$(echo "$PR_BODY" | tr '\n' ' ' | sed 's/"/\\"/g')"
+            echo "TOTAL_COMMITS=${{ steps.meta.outputs.total }}"
+            echo "FILES_COUNT=${{ steps.meta.outputs.files_count }}"
+            echo "COMMITS=$(echo "$COMMITS" | tr '\n' '; ' | sed 's/"/\\"/g')"
+            echo "FILES=$(echo "$FILES" | tr '\n' '; ' | sed 's/"/\\"/g')"
+          } > template_vars.txt
 
-          ## Current body
-          {{PR_BODY}}
-
-          ## Commits ({{TOTAL_COMMITS}})
-          ```
-          {{COMMITS}}
-          ```
-
-          ## Changed files ({{FILES_COUNT}})
-          ```
-          {{FILES}}
-          ```
-
-          ---
-          **CRITICAL**: Base your description ONLY on the commits and files above.
-
-          👉 **Task:** Analyze the commits and files to determine the PRIMARY purpose of this PR:
-          - If files are mainly in `.github/`, this is likely CI/DevOps work
-          - If files are in `src/`, this is likely feature/bug work
-          - If files are `.md` files, this is likely documentation
-
-          Write a description using ONLY information visible above.
-          Use "N/A" for any section where you cannot verify information from the commits/files.
-
-          Required headings (use exactly):
-
-          ## 📋 Summary
-          ## 🔄 Changes
-          ## 📝 Commit Analysis
-          ## 🧪 Testing
-          ## 📚 Documentation
-          EOF
-
-          # Replace placeholders with real content (multiline-safe)
-          sed -i \
-            -e "s|{{PR_TITLE}}|${{ steps.meta.outputs.title }}|g" \
-            -e "/{{PR_BODY}}/{
-                  r pr_body.txt
-                  d
-                }" \
-            -e "/{{COMMITS}}/{
-                  r commits.txt
-                  d
-                }" \
-            -e "/{{FILES}}/{
-                  r files.txt
-                  d
-                }" \
-            -e "s|{{TOTAL_COMMITS}}|${{ steps.meta.outputs.total }}|g" \
-            -e "s|{{FILES_COUNT}}|${{ steps.meta.outputs.files_count }}|g" \
-            user_prompt.md
+          # Output for GitHub Actions (escape newlines)
+          {
+            echo 'template_vars<<EOF'
+            cat template_vars.txt
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
 
       # -------------------------------------------------------------------
-      # 4) Call the OpenAI Chat API (low‑temperature, strong model)
+      # 4) Call the OpenAI Chat API with structured output
       # -------------------------------------------------------------------
       - name: 🤖 Generate enhanced description
         id: ai
         uses: ./.github/actions/openai-chat
         with:
           openai_api_key: ${{ env.OPENAI_API_KEY }}
-          system-path: .github/prompts/pr-enhancement.sys.md # unchanged
-          template-path: user_prompt.md
+          system-path: .github/prompts/pr-enhancement.sys.md
+          template-path: .github/prompts/pr-enhancement.user.md
+          schema-path: .github/schema/pr-enhancement.schema.json
+          output-path: .github/outputs/pr-enhancement.output.md
+          vars: ${{ steps.vars.outputs.template_vars }}
           model: ${{ env.OPENAI_MODEL }}
           temperature: 0 # maximum determinism for factual accuracy
           max-tokens: 1200
@@ -175,10 +140,16 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Write AI output verbatim
-          cat > final.md <<'EOF'
+          # Write formatted AI output (or fallback to raw if no template was used)
+          if [ -n "${{ steps.ai.outputs.formatted_content }}" ]; then
+            cat > final.md <<'EOF'
+          ${{ steps.ai.outputs.formatted_content }}
+          EOF
+          else
+            cat > final.md <<'EOF'
           ${{ steps.ai.outputs.content }}
           EOF
+          fi
 
           # Fallback to original body if the model produced nothing
           if [ ! -s final.md ]; then
