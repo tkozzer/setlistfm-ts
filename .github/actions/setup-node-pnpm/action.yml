@@ -33,10 +33,16 @@ runs:
     # 2) Reliable pnpm binary (adds pnpm to PATH automatically)
     # #######################################################################
     - name: Install pnpm
+      id: pnpm
       uses: pnpm/action-setup@v4
       with:
         version: ${{ inputs.pnpm-version }}
         run_install: false # we handle install in next step (optional)
+
+    - name: Add pnpm to PATH
+      shell: bash
+      run: |
+        echo "$PNPM_HOME" >> "$GITHUB_PATH"
 
     # #######################################################################
     # 3) Optional dependency install
