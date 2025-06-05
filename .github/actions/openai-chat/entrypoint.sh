@@ -43,14 +43,40 @@ load_file() {
 PROMPT_SYS=$(load_file "$SYSTEM")
 PROMPT_USER=$(load_file "$TEMPLATE")
 
+# Escape special regex characters for sed substitution
+escape_for_sed() {
+  local text="$1"
+  # Escape all regex metacharacters: \ . * + ? ^ $ { } ( ) [ ] |
+  # Note: backslash must be escaped first
+  text="${text//\\/\\\\}"  # \ -> \\
+  text="${text//./\\.}"    # . -> \.
+  text="${text//\*/\\*}"   # * -> \*
+  text="${text//+/\\+}"    # + -> \+
+  text="${text//\?/\\?}"   # ? -> \?
+  text="${text//^/\\^}"    # ^ -> \^
+  text="${text//$/\\$}"    # $ -> \$
+  text="${text//{/\\{}"    # { -> \{
+  # Use a different approach for } since bash has issues with the syntax
+  text=$(printf '%s' "$text" | sed 's/}/\\}/g')  # } -> \}
+  text="${text//(/\\(}"    # ( -> \(
+  text="${text//)/\\)}"    # ) -> \)
+  text="${text//\[/\\[}"   # [ -> \[
+  text="${text//\]/\\]}"   # ] -> \]
+  text="${text//|/\\|}"    # | -> \|
+  printf '%s' "$text"
+}
+
 # Substitute {{KEY}} placeholders in both prompts
 substitute() {
   local text="$1"
   if [[ -n $VARS ]]; then
     while IFS='=' read -r KEY VALUE; do
       [[ -z $KEY ]] && continue
-      # sed separator is | to avoid escaping /
-      text=$(printf '%s' "$text" | sed -e "s|{{${KEY}}}|${VALUE//|/\\|}|g")
+      # Escape the value for safe sed substitution
+      local escaped_value
+      escaped_value=$(escape_for_sed "$VALUE")
+      # sed separator is | (we've escaped | in the value)
+      text=$(printf '%s' "$text" | sed -e "s|{{${KEY}}}|${escaped_value}|g")
     done <<< "$VARS"
   fi
   printf '%s' "$text"
@@ -136,7 +162,8 @@ if [[ -n $OUTPUT ]]; then
     if [[ -n $VARS ]]; then
       while IFS='=' read -r KEY VALUE; do
         [[ -z $KEY ]] && continue
-        FORMATTED_CONTENT=$(printf '%s' "$FORMATTED_CONTENT" | sed -e "s|{{${KEY}}}|${VALUE//|/\\|}|g")
+        escaped_value=$(escape_for_sed "$VALUE")
+        FORMATTED_CONTENT=$(printf '%s' "$FORMATTED_CONTENT" | sed -e "s|{{${KEY}}}|${escaped_value}|g")
       done <<< "$VARS"
     fi
     
@@ -147,7 +174,8 @@ if [[ -n $OUTPUT ]]; then
       key=$(echo "$field" | cut -d':' -f1 | tr -d '"')
       value=$(echo "$CONTENT" | jq -r ".$key // empty" 2>/dev/null || echo "")
       if [[ -n $value && $value != "null" ]]; then
-        FORMATTED_CONTENT=$(printf '%s' "$FORMATTED_CONTENT" | sed -e "s|{{${key}}}|${value//|/\\|}|g")
+        escaped_value=$(escape_for_sed "$value")
+        FORMATTED_CONTENT=$(printf '%s' "$FORMATTED_CONTENT" | sed -e "s|{{${key}}}|${escaped_value}|g")
       fi
     done <<< "$(echo "$CONTENT" | jq -r 'to_entries[] | select(.value | type == "string" or type == "number") | "\(.key):\(.value)"' 2>/dev/null || true)"
     
@@ -275,7 +303,8 @@ if [[ -n $OUTPUT ]]; then
     # For non-structured response, just do variable substitution
     FORMATTED_CONTENT=$(substitute "$OUTPUT_TEMPLATE")
     # Replace {{content}} with the raw response
-    FORMATTED_CONTENT=$(printf '%s' "$FORMATTED_CONTENT" | sed -e "s|{{content}}|${CONTENT//|/\\|}|g")
+    escaped_content=$(escape_for_sed "$CONTENT")
+    FORMATTED_CONTENT=$(printf '%s' "$FORMATTED_CONTENT" | sed -e "s|{{content}}|${escaped_content}|g")
   fi
 else
   FORMATTED_CONTENT="$CONTENT"
