@@ -19,9 +19,10 @@ jobs:
   #  Re‑usable tooling (Node 22 + pnpm cache)                                   #
   # --------------------------------------------------------------------------- #
   setup:
-    uses: .github/workflows/.reuse/setup-node-pnpm.yml
+    uses: ./.github/workflows/.reuse/setup-node-pnpm.yml
     with:
       node-version: 22.x
+    secrets: inherit
 
   # --------------------------------------------------------------------------- #
   #  Main job – create or update the release PR                                 #
