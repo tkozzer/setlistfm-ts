@@ -39,7 +39,7 @@ const config = antfu(
         "error",
         {
           case: "camelCase",
-          ignore: ["README.md", "CONTRIBUTING.md", "CHANGELOG.md", /.*\.ya?ml$/, /.*\.tmpl\.md$/, /.*\.sys\.md$/],
+          ignore: ["README.md", "CONTRIBUTING.md", "CHANGELOG.md", /.*\.ya?ml$/, /.*\.user\.md$/, /.*\.sys\.md$/, /.*\.output\.md$/, /.*\.schema\.json$/],
         },
       ],
       "jsdoc/check-param-names": [

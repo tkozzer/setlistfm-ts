@@ -16,20 +16,10 @@ permissions:
 
 jobs:
   # --------------------------------------------------------------------------- #
-  #  Re‑usable tooling (Node 22 + pnpm cache)                                   #
-  # --------------------------------------------------------------------------- #
-  setup:
-    uses: ./.github/workflows/.reuse/setup-node-pnpm.yml
-    with:
-      node-version: 22.x
-    secrets: inherit
-
-  # --------------------------------------------------------------------------- #
   #  Main job – create or update the release PR                                 #
   # --------------------------------------------------------------------------- #
   release-pr:
     name: 🚀 Create / Update Release PR
-    needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 10
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
@@ -39,12 +29,17 @@ jobs:
 
     steps:
       # --------------------------------------------------------------------- #
-      # 1️⃣  Repo checkout                                                    #
+      # 1️⃣  Repo checkout & setup                                            #
       # --------------------------------------------------------------------- #
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ env.GH_TOKEN }}
+
+      - name: 🛠️ Setup Node & pnpm
+        uses: ./.github/actions/setup-node-pnpm
+        with:
+          node-version: 22.x
 
       # --------------------------------------------------------------------- #
       # 2️⃣  Gather release metadata                                          #

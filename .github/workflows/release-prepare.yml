@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------- #
-#  🔄  Release preparation ( preview → main “handoff” branch)                  #
+#  🔄  Release preparation ( preview → main "handoff" branch)                  #
 # --------------------------------------------------------------------------- #
 name: 🔄 Release Preparation
 
@@ -14,21 +14,11 @@ permissions:
   pull-requests: read
 
 # --------------------------------------------------------------------------- #
-#  Re‑usable “setup” job (Node 22 + pnpm cache)                               #
+#  Main preparation job                                                       #
 # --------------------------------------------------------------------------- #
 jobs:
-  setup:
-    uses: ./.github/workflows/.reuse/setup-node-pnpm.yml
-    with:
-      node-version: 22.x # keep in sync with production toolchain
-    secrets: inherit
-
-  # --------------------------------------------------------------------------- #
-  #  Main preparation job                                                       #
-  # --------------------------------------------------------------------------- #
   prepare:
     name: 🔄 Release Preparation
-    needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -40,9 +30,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      # corepack (pnpm) is already enabled by the reusable setup job
-      - name: 📥 Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: 🛠️ Setup Node & pnpm
+        uses: ./.github/actions/setup-node-pnpm
+        with:
+          node-version: 22.x
 
       # --------------------------------------------------------------------- #
       # 2️⃣  Identify version bump (semver heuristic)                         #
@@ -88,7 +79,7 @@ jobs:
           echo "version=${NEW#v}" >> "$GITHUB_OUTPUT"
 
       # --------------------------------------------------------------------- #
-      # 4️⃣  Generate CHANGELOG entry with OpenAI                             #
+      # 4️⃣  Generate CHANGELOG entry with structured OpenAI output            #
       # --------------------------------------------------------------------- #
       - name: 🤖 Generate changelog entry
         id: changelog
@@ -96,10 +87,13 @@ jobs:
         with:
           openai_api_key: ${{ secrets.OPENAI_API_KEY }}
           system-path: .github/prompts/changelog.sys.md
-          template-path: .github/prompts/changelog.tmpl.md
+          template-path: .github/prompts/changelog.user.md
+          schema-path: .github/schema/changelog.schema.json
+          output-path: .github/outputs/changelog.output.md
           vars: |
             VERSION=${{ steps.version.outputs.version }}
             COMMITS=${{ steps.commits.outputs.commits }}
+            DATE=$(date +%Y-%m-%d)
           model: ${{ secrets.OPENAI_MODEL || 'gpt-4o-mini' }}
           temperature: 0.3
           max-tokens: 1200
@@ -111,9 +105,19 @@ jobs:
         run: |
           VER=${{ steps.version.outputs.version }}
           TODAY=$(date +%Y-%m-%d)
-          ENTRY="## [$VER] - $TODAY\n\n${{ steps.changelog.outputs.content }}\n\n---\n"
 
-          { head -n 9 CHANGELOG.md; echo "$ENTRY"; tail -n +10 CHANGELOG.md; } > CHANGELOG.tmp
+          # Use formatted content if available, otherwise fall back to raw content
+          if [ -n "${{ steps.changelog.outputs.formatted_content }}" ]; then
+            CHANGELOG_CONTENT="${{ steps.changelog.outputs.formatted_content }}"
+          else
+            CHANGELOG_CONTENT="${{ steps.changelog.outputs.content }}"
+          fi
+
+          # The formatted output already includes the ## [version] - date header
+          # So we can use it directly, just add a separator
+          ENTRY="$CHANGELOG_CONTENT\n\n---\n"
+
+          { head -n 9 CHANGELOG.md; echo -e "$ENTRY"; tail -n +10 CHANGELOG.md; } > CHANGELOG.tmp
           mv CHANGELOG.tmp CHANGELOG.md
 
       # --------------------------------------------------------------------- #
