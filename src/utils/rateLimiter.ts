@@ -167,8 +167,12 @@ export class RateLimiter {
 
     // Check if approaching limits and call callback
     if (this.config.onRateLimitApproached) {
-      const secondsRemaining = this.config.requestsPerSecond! - this.state.requestsThisSecond;
-      const dayRemaining = this.config.requestsPerDay! - this.state.requestsThisDay;
+      const secondsRemaining = this.config.requestsPerSecond !== undefined
+        ? this.config.requestsPerSecond - this.state.requestsThisSecond
+        : Infinity;
+      const dayRemaining = this.config.requestsPerDay !== undefined
+        ? this.config.requestsPerDay - this.state.requestsThisDay
+        : Infinity;
       const remaining = Math.min(secondsRemaining, dayRemaining);
 
       if (remaining <= 2) { // Approaching limit
