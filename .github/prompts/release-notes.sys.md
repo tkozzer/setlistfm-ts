@@ -45,6 +45,19 @@ Follow the established project style and structure from the release notes creati
 - Typically aim for 2–4 total sections.
 - Omit a section entirely if there are no entries.
 
+## Commit Analysis Integration
+
+Use the provided commit statistics to determine section organization:
+- **feat_count > 0**: Include a features section (🚀 or ✨)
+- **fix_count > 0**: Include a bug fixes section (🐛)
+- **ci_count > 0**: Include a CI/DevOps section (🤖 or 🔧)
+- **docs_count > 0**: Include a documentation section (📚)
+- **chore_count > 0**: Include a maintenance section (🔄 or 🛠️)
+
+When `breaking_changes_detected` is true, ensure breaking changes are prominently featured and use appropriate warning language.
+
+Prioritize sections based on commit counts - the highest count should be the primary section theme.
+
 ## Examples of Good Bullet Points
 
 - **Improved CI caching** speeds up builds by 30%.

@@ -2,11 +2,29 @@
 
 {{summary}}
 
-## {{primary_section.emoji}} {{primary_section.title}}
+{{#if (gt commit_analysis.feat_count 0)}}
+## ✨ New Features
 
 {{#each primary_section.features}}
 - {{this}}
 {{/each}}
+{{/if}}
+
+{{#if (gt commit_analysis.fix_count 0)}}
+## 🐛 Bug Fixes
+
+{{#each bug_fixes}}
+- {{this}}
+{{/each}}
+{{/if}}
+
+{{#if (gt commit_analysis.ci_count 0)}}
+## 🤖 CI/DevOps Improvements
+
+{{#each ci_improvements}}
+- {{this}}
+{{/each}}
+{{/if}}
 
 {{#if secondary_sections}}
 {{#each secondary_sections}}
@@ -19,19 +37,13 @@
 {{/each}}
 {{/if}}
 
-{{#if (and (eq version_type "major") (not breaking_changes))}}
+{{#if (or breaking_changes commit_analysis.breaking_changes_detected)}}
 ## ⚠️ Breaking Changes
-Major version released but no breaking changes were detected.
-{{/if}}
-
-{{#if breaking_changes}}
-## ⚠️ Breaking Changes
-{{breaking_changes}}
-{{/if}}
-{{#unless breaking_changes}}
+{{#if breaking_changes}}{{breaking_changes}}{{else}}Breaking changes detected in commits - see commit messages for details.{{/if}}
+{{else}}
 ## 🔒 No Breaking Changes
 The SDK code, public APIs, and npm package contents remain exactly the same—upgrade with confidence, your existing integration will continue to work.
-{{/unless}}
+{{/if}}
 
 ---
 **Links**
