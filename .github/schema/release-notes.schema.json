@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Release Notes Schema",
+  "description": "Structured release notes format for setlistfm-ts",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Version number"
+    },
+    "summary": {
+      "type": "string",
+      "description": "One sentence summary of the release"
+    },
+    "primary_section": {
+      "type": "object",
+      "properties": {
+        "title": {"type": "string"},
+        "emoji": {"type": "string"},
+        "features": {
+          "type": "array",
+          "items": {"type": "string"},
+          "minItems": 1
+        }
+      },
+      "required": ["title", "emoji", "features"],
+      "additionalProperties": false
+    },
+    "secondary_sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {"type": "string"},
+          "emoji": {"type": "string"},
+          "features": {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 1
+          }
+        },
+        "required": ["title", "emoji", "features"],
+        "additionalProperties": false
+      },
+      "default": []
+    },
+    "breaking_changes": {
+      "type": "string",
+      "description": "Breaking changes details or empty string if none"
+    },
+    "footer_links": {
+      "type": "object",
+      "properties": {
+        "npm": {"type": "string"},
+        "changelog": {"type": "string"},
+        "issues": {"type": "string"}
+      },
+      "required": ["npm", "changelog", "issues"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["version", "summary", "primary_section", "breaking_changes", "footer_links"],
+  "additionalProperties": false
+}
