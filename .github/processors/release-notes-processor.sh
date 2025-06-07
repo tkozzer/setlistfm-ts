@@ -18,6 +18,8 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ACTION_PATH="$SCRIPT_DIR/../actions/openai-chat"
+REPO_ROOT="$(git -C "$SCRIPT_DIR/../.." rev-parse --show-toplevel 2>/dev/null || echo "$SCRIPT_DIR/../..")"
+cd "$REPO_ROOT"
 
 encode() { printf '%s' "$1" | tr '\n' '\020' | sed 's/"/\\"/g'; }
 
@@ -78,6 +80,12 @@ fi
 # Analyze commit categories and detect breaking changes
 categorize_commits "$COMMITS"
 
+if [[ "$COMMITS" == "No commits found" ]]; then
+  TOTAL_COMMITS=0
+else
+  TOTAL_COMMITS=$(echo "$COMMITS" | wc -l)
+fi
+
 # Fetch previous release notes if token available
 if [[ -n ${GH_TOKEN:-} ]]; then
   PREVIOUS_RELEASE=$(gh release view "$PREV_TAG" --json body -q .body 2>/dev/null || echo "")
@@ -105,6 +113,7 @@ VERSION=$VERSION
 VERSION_TYPE=$VERSION_TYPE
 COMMIT_STATS=$(encode "$COMMIT_STATS")
 HAS_BREAKING_CHANGES=$([[ $BREAKING_FOUND -eq 1 ]] && echo true || echo false)
+TOTAL_COMMITS=$TOTAL_COMMITS
 EOVARS
 )
 
@@ -120,7 +129,7 @@ if GITHUB_OUTPUT="$TMP_OUT" bash "$ACTION_PATH/entrypoint.sh" \
   --tokens   1200; then
   RELEASE_NOTES=$(awk '/^formatted_content<<EOF/{flag=1;next}/^EOF/{flag=0}flag' "$TMP_OUT")
 else
-  RELEASE_NOTES="# 🎉 setlistfm-ts $VERSION\n\nAutomated release notes generation failed. Please refer to CHANGELOG.md for details."
+  RELEASE_NOTES="# 🎉 setlistfm-ts v$VERSION\n\nAutomated release notes generation failed. Please refer to CHANGELOG.md for details."
 fi
 rm -f "$TMP_OUT"
 
