@@ -570,6 +570,23 @@ describe("Rate Limiter", () => {
         limiterUndefinedSecond.recordRequest(); // Test undefined requestsPerSecond path
         expect(onApproached).toHaveBeenCalled();
       });
+
+      it("should treat undefined limits as infinite after construction", () => {
+        const limiter = new RateLimiter({
+          profile: RateLimitProfile.STANDARD,
+          onRateLimitApproached: vi.fn(),
+        });
+
+        // Force limits to be undefined to exercise Infinity branches
+        const internal: any = limiter;
+        internal.config.requestsPerSecond = undefined;
+        internal.config.requestsPerDay = undefined;
+
+        // Calls should not throw and callback should not run since remaining is Infinity
+        limiter.recordRequest();
+        expect(limiter.canMakeRequest()).toBe(true);
+        expect(internal.config.onRateLimitApproached).not.toHaveBeenCalled();
+      });
     });
   });
 });

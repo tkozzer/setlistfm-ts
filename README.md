@@ -594,6 +594,31 @@ Please read our [CONTRIBUTING.md](./CONTRIBUTING.md) guide for the complete work
 
 ---
 
+## 🤖 Automated Workflows
+
+This project leverages GitHub Actions for seamless development and release management:
+
+### 🔄 Development Workflows
+
+- **`ci.yml`** - Core CI pipeline with linting, type-checking, and testing across multiple platforms
+- **`ci-local.yml`** - Act-optimized workflow for local CI testing with cross-platform simulation
+
+### 🚀 Release Automation
+
+- **`pr-enhance.yml`** - AI-powered PR description enhancement when targeting `preview` branch
+- **`release-prepare.yml`** - Automated version bumping and changelog generation using OpenAI
+- **`release-pr.yml`** - Automatic creation of professionally described release PRs from `preview` to `main`
+
+### 🎯 Workflow Benefits
+
+- ✅ **Zero-effort releases** - Automated semantic versioning and changelog generation
+- ✅ **AI-enhanced documentation** - Professional PR descriptions and release notes
+- ✅ **Quality assurance** - Comprehensive testing before any release
+- ✅ **Human oversight** - Manual approval steps maintain quality control
+- ✅ **Local testing** - Full CI pipeline available locally with Act
+
+---
+
 ## 🛡️ License
 
 [MIT](./LICENSE)
