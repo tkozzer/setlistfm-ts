@@ -110,7 +110,7 @@ test_openai_fallback(){
 
 test_template_render(){
   echo "{\"version\":\"0.1.0\",\"summary\":\"ok\",\"primary_section\":{\"title\":\"test\",\"emoji\":\"✨\",\"features\":[\"a\"]},\"breaking_changes\":\"\",\"footer_links\":{\"npm\":\"x\",\"changelog\":\"y\",\"issues\":\"z\"}}" > /tmp/out.json
-  handlebars .github/templates/release-notes.tmpl.md < /tmp/out.json > /tmp/out.md
+  node_modules/.bin/handlebars .github/templates/release-notes.tmpl.md < /tmp/out.json > /tmp/out.md
   grep -q "setlistfm-ts" /tmp/out.md
 }
 
@@ -196,7 +196,7 @@ test_mock_openai_failure(){
 test_multiple_versions(){
   local v
   pushd "$TMP_DIR/repo" >/dev/null
-  git tag v0.1.0 >/dev/null
+  git tag v0.1.0 >/dev/null 2>&1 || true
   for v in 0.1.{1..5}; do
     echo "feat: $v" > f.txt
     git add f.txt
@@ -243,6 +243,7 @@ cleanup_test_environment
 echo "Total tests: $TOTAL_TESTS"
 echo "Passed: $PASSED_TESTS"
 echo "Failed: $FAILED_TESTS"
+echo "Results: $PASSED_TESTS/$TOTAL_TESTS tests passed"
 
 [[ $FAILED_TESTS -eq 0 ]]
 

@@ -1,2 +1,7 @@
-feat!: big change
-fix: patch
+feat(auth)!: require authentication for all API calls
+refactor(api)!: change response format to camelCase
+chore(node)!: drop support for Node.js < 18
+fix(types): remove deprecated setlist.get() method
+
+BREAKING CHANGE: Authentication is now required for all API endpoints
+BREAKING CHANGE: Response format changed from snake_case to camelCase
