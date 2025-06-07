@@ -124,12 +124,14 @@ export class HttpClient {
       config.params = params;
     }
 
-    const response = await this.client.get<T>(endpoint, config);
-
-    // Record the request for rate limiting
-    this.rateLimiter.recordRequest();
-
-    return response.data;
+    try {
+      const response = await this.client.get<T>(endpoint, config);
+      return response.data;
+    }
+    finally {
+      // Record the request for rate limiting regardless of success
+      this.rateLimiter.recordRequest();
+    }
   }
 
   /**

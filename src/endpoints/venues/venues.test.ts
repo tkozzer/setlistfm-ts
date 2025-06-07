@@ -5,7 +5,7 @@
  * @module Venues
  */
 
-import type { Setlists } from "@endpoints/artists/types";
+import type { Setlists } from "@endpoints/setlists/types";
 
 import type { HttpClient } from "@utils/http";
 import type { Venue, Venues } from "./types";
@@ -438,6 +438,7 @@ describe("getVenueSetlists", () => {
             versionId: "version1",
             eventDate: "15-06-2023",
             lastUpdated: "2023-06-16T10:00:00.000+0000",
+            url: "https://example.com/setlist1",
             artist: {
               mbid: "test-mbid",
               name: "Test Artist",
@@ -446,9 +447,12 @@ describe("getVenueSetlists", () => {
             venue: {
               id: "6bd6ca6e",
               name: "Test Venue",
+              url: "https://example.com/venue",
               city: {
                 id: "test-city",
                 name: "Test City",
+                stateCode: "TS",
+                state: "Test State",
                 coords: { long: 0, lat: 0 },
                 country: { code: "US", name: "United States" },
               },
@@ -463,7 +467,7 @@ describe("getVenueSetlists", () => {
                 },
                 {
                   name: "Encore",
-                  encore: true,
+                  encore: 1,
                   song: [
                     { name: "Encore Song" },
                   ],
@@ -483,7 +487,7 @@ describe("getVenueSetlists", () => {
 
       expect(result).toEqual(setlistsWithMultipleSets);
       expect(result.setlist[0].sets.set).toHaveLength(2);
-      expect(result.setlist[0].sets.set[1].encore).toBe(true);
+      expect(result.setlist[0].sets.set[1].encore).toBe(1);
     });
 
     it("should handle setlists with cover songs", async () => {
@@ -494,6 +498,7 @@ describe("getVenueSetlists", () => {
             versionId: "version2",
             eventDate: "20-07-2023",
             lastUpdated: "2023-07-21T10:00:00.000+0000",
+            url: "https://example.com/setlist2",
             artist: {
               mbid: "cover-artist-mbid",
               name: "Cover Artist",
@@ -502,9 +507,12 @@ describe("getVenueSetlists", () => {
             venue: {
               id: "6bd6ca6e",
               name: "Cover Venue",
+              url: "https://example.com/cover",
               city: {
                 id: "cover-city",
                 name: "Cover City",
+                stateCode: "CC",
+                state: "Cover State",
                 coords: { long: 10, lat: 20 },
                 country: { code: "GB", name: "United Kingdom" },
               },

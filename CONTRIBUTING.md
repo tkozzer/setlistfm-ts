@@ -92,10 +92,11 @@ main ← preview ← your-feature-branch
 
 Our GitHub Actions handle:
 
-- **PR Enhancement** - AI-powered description improvements for PRs to `preview`
-- **Release Preparation** - Automatic version bumping and changelog generation using OpenAI
-- **PR Creation** - Automated PRs from `preview` to `main` with professional descriptions
-- **CI Validation** - Linting, type-checking, and testing on all PRs
+- **PR Enhancement** - AI-powered description improvements for PRs to `preview` (`.github/workflows/pr-enhance.yml`)
+- **Release Preparation** - Automatic version bumping and changelog generation using OpenAI (`.github/workflows/release-prepare.yml`)
+- **PR Creation** - Automated PRs from `preview` to `main` with professional descriptions (`.github/workflows/release-pr.yml`)
+- **CI Validation** - Linting, type-checking, and testing on all PRs (`.github/workflows/ci.yml`)
+- **Local CI Testing** - Act-optimized workflow for local testing (`.github/workflows/ci-local.yml`)
 
 ---
 
