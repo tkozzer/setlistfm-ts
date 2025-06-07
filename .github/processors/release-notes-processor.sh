@@ -21,6 +21,36 @@ ACTION_PATH="$SCRIPT_DIR/../actions/openai-chat"
 
 encode() { printf '%s' "$1" | tr '\n' '\020' | sed 's/"/\\"/g'; }
 
+# Categorize conventional commits for metadata and breaking-change detection
+categorize_commits() {
+  local line msg
+  declare -A counts=([feat]=0 [fix]=0 [chore]=0 [ci]=0 [docs]=0 \
+    [style]=0 [refactor]=0 [perf]=0 [test]=0 [other]=0)
+  BREAKING_FOUND=0
+  while IFS= read -r line; do
+    msg="${line#* }"
+    case "$msg" in
+      feat*:*) counts[feat]=$((counts[feat]+1)) ;;
+      fix*:*) counts[fix]=$((counts[fix]+1)) ;;
+      chore*:*) counts[chore]=$((counts[chore]+1)) ;;
+      ci*:*) counts[ci]=$((counts[ci]+1)) ;;
+      docs*:*) counts[docs]=$((counts[docs]+1)) ;;
+      style*:*) counts[style]=$((counts[style]+1)) ;;
+      refactor*:*) counts[refactor]=$((counts[refactor]+1)) ;;
+      perf*:*) counts[perf]=$((counts[perf]+1)) ;;
+      test*:*) counts[test]=$((counts[test]+1)) ;;
+      *) counts[other]=$((counts[other]+1)) ;;
+    esac
+    [[ "$msg" == *"!"* || "$msg" == *"BREAKING CHANGE"* ]] && BREAKING_FOUND=1
+  done <<< "$1"
+
+  COMMIT_STATS=""
+  for k in "${!counts[@]}"; do
+    COMMIT_STATS+="$k=${counts[$k]} "
+  done
+  COMMIT_STATS="${COMMIT_STATS% }"
+}
+
 # Determine previous tag (most recent semver tag excluding current)
 PREV_TAG=$(git tag --sort=-v:refname | grep -E '^v' | grep -v "^v$VERSION$" | head -n1 || true)
 [[ -z $PREV_TAG ]] && PREV_TAG="v0.0.0"
@@ -44,6 +74,9 @@ else
   COMMITS=$(git log --pretty=format:'%h %s' HEAD || true)
 fi
 [[ -z $COMMITS ]] && COMMITS="No commits found"
+
+# Analyze commit categories and detect breaking changes
+categorize_commits "$COMMITS"
 
 # Fetch previous release notes if token available
 if [[ -n ${GH_TOKEN:-} ]]; then
@@ -70,6 +103,8 @@ GIT_COMMITS=$(encode "$COMMITS")
 PREVIOUS_RELEASE=$(encode "$PREVIOUS_RELEASE")
 VERSION=$VERSION
 VERSION_TYPE=$VERSION_TYPE
+COMMIT_STATS=$(encode "$COMMIT_STATS")
+HAS_BREAKING_CHANGES=$([[ $BREAKING_FOUND -eq 1 ]] && echo true || echo false)
 EOVARS
 )
 
