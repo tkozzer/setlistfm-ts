@@ -150,21 +150,18 @@ jobs:
       - name: 🛠️ Update PR description
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RAW_CONTENT: ${{ steps.ai.outputs.content }}
+          FORMATTED_CONTENT: ${{ steps.ai.outputs.formatted_content }}
         run: |
           # Debug output to understand what we received
           echo "=== AI Output Debug ==="
-          echo "Raw content length: $(echo '${{ steps.ai.outputs.content }}' | wc -c)"
-          echo "Formatted content length: $(echo '${{ steps.ai.outputs.formatted_content }}' | wc -c)"
+          echo "Raw content length: $(printf '%s' "$RAW_CONTENT" | wc -c)"
+          echo "Formatted content length: $(printf '%s' "$FORMATTED_CONTENT" | wc -c)"
           echo "======================="
 
           # Write AI outputs to temporary files first
-          cat > formatted_temp.md <<'FORMATTED_EOF'
-          ${{ steps.ai.outputs.formatted_content }}
-          FORMATTED_EOF
-
-          cat > raw_temp.md <<'RAW_EOF'
-          ${{ steps.ai.outputs.content }}
-          RAW_EOF
+          printf '%s' "$FORMATTED_CONTENT" > formatted_temp.md
+          printf '%s' "$RAW_CONTENT" > raw_temp.md
 
           # Determine which content to use based on file size and content
           if [ -s formatted_temp.md ] && [ "$(head -c 4 formatted_temp.md)" != "null" ]; then

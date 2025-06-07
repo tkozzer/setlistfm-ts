@@ -113,9 +113,9 @@ export type SetlistFMClientPublic = {
    * Gets setlists for a specific venue.
    *
    * @param {string} id - The venue ID.
-   * @returns {Promise<ArtistSetlists>} A promise that resolves to a paginated list of setlists.
+   * @returns {Promise<Setlists>} A promise that resolves to a paginated list of setlists.
    */
-  getVenueSetlists: (id: string) => Promise<ArtistSetlists>;
+  getVenueSetlists: (id: string) => Promise<Setlists>;
 
   // City methods
 

@@ -5,7 +5,7 @@
  * @module venues
  */
 
-import type { Setlists } from "@endpoints/artists/types";
+import type { Setlists } from "@endpoints/setlists/types";
 
 import type { HttpClient } from "@utils/http";
 import type { GetVenueSetlistsParams } from "./types";
