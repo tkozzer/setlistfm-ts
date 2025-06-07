@@ -19,8 +19,9 @@
         "title": {"type": "string"},
         "emoji": {
           "type": "string",
-          "pattern": "^\\p{Emoji}$",
-          "description": "Section emoji"
+          "minLength": 1,
+          "maxLength": 4,
+          "description": "Section emoji (single emoji character)"
         },
         "features": {
           "type": "array",
@@ -37,7 +38,11 @@
         "type": "object",
         "properties": {
           "title": {"type": "string"},
-          "emoji": {"type": "string"},
+          "emoji": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4
+          },
           "features": {
             "type": "array",
             "items": {"type": "string"},
@@ -51,15 +56,42 @@
     },
     "commit_analysis": {
       "type": "object",
-      "description": "Analysis of commit types and patterns",
+      "description": "Detailed analysis of commit types and patterns from git history",
       "properties": {
-        "total_commits": {"type": "integer", "minimum": 0},
-        "feat_count": {"type": "integer", "minimum": 0},
-        "fix_count": {"type": "integer", "minimum": 0},
-        "chore_count": {"type": "integer", "minimum": 0},
-        "ci_count": {"type": "integer", "minimum": 0},
-        "docs_count": {"type": "integer", "minimum": 0},
-        "breaking_changes_detected": {"type": "boolean"}
+        "total_commits": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of commits analyzed in this release"
+        },
+        "feat_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of feature commits (feat:)"
+        },
+        "fix_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of bug fix commits (fix:)"
+        },
+        "chore_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of maintenance commits (chore:)"
+        },
+        "ci_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of CI/CD commits (ci:)"
+        },
+        "docs_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of documentation commits (docs:)"
+        },
+        "breaking_changes_detected": {
+          "type": "boolean",
+          "description": "Whether breaking changes were found in commit messages or markers"
+        }
       },
       "required": ["total_commits", "breaking_changes_detected"],
       "additionalProperties": false

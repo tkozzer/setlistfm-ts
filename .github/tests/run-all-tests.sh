@@ -83,9 +83,13 @@ run_test_suite() {
     local suite_failed=0
     
     if echo "$output" | grep -q "Total tests:"; then
-        suite_total=$(echo "$output" | grep "Total tests:" | sed 's/.*Total tests: \([0-9]*\).*/\1/')
-        suite_passed=$(echo "$output" | grep "Passed:" | sed 's/.*Passed: \([0-9]*\).*/\1/')
-        suite_failed=$(echo "$output" | grep "Failed:" | sed 's/.*Failed: \([0-9]*\).*/\1/')
+        suite_total=$(echo "$output" | grep -m1 "Total tests:" | sed 's/.*Total tests: \([0-9]*\).*/\1/')
+        suite_passed=$(echo "$output" | grep -m1 "Passed:" | sed 's/.*Passed: \([0-9]*\).*/\1/')
+        suite_failed=$(echo "$output" | grep -m1 "Failed:" | sed 's/.*Failed: \([0-9]*\).*/\1/')
+    elif echo "$output" | grep -q "Total Tests Run:"; then
+        suite_total=$(echo "$output" | grep -m1 "Total Tests Run:" | sed 's/.*Total Tests Run: \([0-9]*\).*/\1/')
+        suite_passed=$(echo "$output" | grep -m1 "Tests Passed:" | sed 's/.*Tests Passed: \([0-9]*\).*/\1/')
+        suite_failed=$(echo "$output" | grep -m1 "Tests Failed:" | sed 's/.*Tests Failed: \([0-9]*\).*/\1/')
     fi
     
     # Update global counters
@@ -219,7 +223,7 @@ generate_comprehensive_report() {
     # Execution summary
     echo -e "${BOLD}⏱️  Execution Summary:${NC}"
     echo -e "   Duration: ${minutes}m ${seconds}s"
-    echo -e "   Start Time: $(date -r $START_TIME '+%Y-%m-%d %H:%M:%S')"
+    echo -e "   Start Time: $(date -d "@$START_TIME" '+%Y-%m-%d %H:%M:%S')"
     echo -e "   End Time: $(date '+%Y-%m-%d %H:%M:%S')"
     echo ""
     

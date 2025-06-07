@@ -110,7 +110,8 @@ test_openai_fallback(){
 
 test_template_render(){
   echo "{\"version\":\"0.1.0\",\"summary\":\"ok\",\"primary_section\":{\"title\":\"test\",\"emoji\":\"✨\",\"features\":[\"a\"]},\"breaking_changes\":\"\",\"footer_links\":{\"npm\":\"x\",\"changelog\":\"y\",\"issues\":\"z\"}}" > /tmp/out.json
-  node_modules/.bin/handlebars .github/templates/release-notes.tmpl.md < /tmp/out.json > /tmp/out.md
+  ROOT_DIR="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
+  "$ROOT_DIR/node_modules/.bin/handlebars" "$ROOT_DIR/.github/templates/release-notes.tmpl.md" < /tmp/out.json > /tmp/out.md
   grep -q "setlistfm-ts" /tmp/out.md
 }
 
