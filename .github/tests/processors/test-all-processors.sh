@@ -20,6 +20,7 @@ CHANGELOG_TEST="$SCRIPT_DIR/test-changelog-processor.sh"
 PR_ENHANCE_TEST="$SCRIPT_DIR/test-pr-enhance-processor.sh"
 PR_DESCRIPTION_TEST="$SCRIPT_DIR/test-pr-description-processor.sh"
 GENERIC_TEST="$SCRIPT_DIR/test-generic-processor.sh"
+RELEASE_NOTES_TEST="$SCRIPT_DIR/test-release-notes-processor.sh"
 
 # Results tracking
 declare -A test_results
@@ -109,7 +110,7 @@ display_summary() {
   # Component-wise results
   echo "📊 Component Test Results:"
   echo "-------------------------"
-  for component in "Shared Utilities" "Changelog Processor" "PR Enhance Processor" "PR Description Processor" "Generic Processor"; do
+  for component in "Shared Utilities" "Changelog Processor" "PR Enhance Processor" "PR Description Processor" "Release Notes Processor" "Generic Processor"; do
     local status="${test_results[$component]:-SKIPPED}"
     local count="${test_counts[$component]:-0/0}"
     
@@ -212,6 +213,14 @@ display_coverage_summary() {
   echo "  • What's new and changes categorization"
   echo "  • Professional PR description formatting"
   echo ""
+
+  echo "Release Notes Processor (release-notes-processor.sh):"
+  echo "  • Changelog and commit extraction"
+  echo "  • Previous release fallback logic"
+  echo "  • OpenAI API invocation and error handling"
+  echo "  • Template rendering of markdown"
+  echo "  • GitHub release creation"
+  echo ""
   
   echo "Generic Processor (generic.sh):"
   echo "  • Plain text and JSON content handling"
@@ -233,6 +242,7 @@ main() {
   run_test_script "Changelog Processor" "$CHANGELOG_TEST"
   run_test_script "PR Enhance Processor" "$PR_ENHANCE_TEST"
   run_test_script "PR Description Processor" "$PR_DESCRIPTION_TEST"
+  run_test_script "Release Notes Processor" "$RELEASE_NOTES_TEST"
   run_test_script "Generic Processor" "$GENERIC_TEST"
   
   # Display comprehensive results
