@@ -6,7 +6,8 @@
   "properties": {
     "version": {
       "type": "string",
-      "description": "Version number"
+      "description": "Version number",
+      "pattern": "^v?\\d+\\.\\d+\\.\\d+(?:[-a-z0-9.]+)?$"
     },
     "summary": {
       "type": "string",
@@ -16,7 +17,11 @@
       "type": "object",
       "properties": {
         "title": {"type": "string"},
-        "emoji": {"type": "string"},
+        "emoji": {
+          "type": "string",
+          "pattern": "^\\p{Emoji}$",
+          "description": "Section emoji"
+        },
         "features": {
           "type": "array",
           "items": {"type": "string"},
@@ -46,7 +51,8 @@
     },
     "breaking_changes": {
       "type": "string",
-      "description": "Breaking changes details or empty string if none"
+      "description": "Breaking changes details or empty string if none",
+      "maxLength": 1000
     },
     "footer_links": {
       "type": "object",

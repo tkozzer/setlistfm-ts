@@ -19,6 +19,11 @@
 {{/each}}
 {{/if}}
 
+{{#if (and (eq version_type "major") (not breaking_changes))}}
+## ⚠️ Breaking Changes
+Major version released but no breaking changes were detected.
+{{/if}}
+
 {{#if breaking_changes}}
 ## ⚠️ Breaking Changes
 {{breaking_changes}}
