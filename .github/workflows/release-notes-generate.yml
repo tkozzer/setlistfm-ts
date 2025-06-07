@@ -49,6 +49,10 @@ jobs:
         run: |
           .github/processors/release-notes-processor.sh "${{ steps.version.outputs.ver }}" > release-notes.md
 
+      - name: ✅ Validate notes
+        run: |
+          grep -q "setlistfm-ts" release-notes.md
+
       - name: 📤 Upload release notes
         uses: actions/upload-artifact@v4
         with:
