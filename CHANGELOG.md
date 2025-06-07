@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.7.0] - 2025-06-07
+
+### Added
+
+- Introduced a comprehensive 'Automated Workflows' section in the README.md to enhance visibility into CI/CD processes and development workflows.
+- Created AGENTS.md for AI agent guidance, detailing project structure, API patterns, and development workflow standards.
+- Implemented a structured output system for OpenAI workflows, supporting JSON schema validation and template processing for changelog and PR enhancements.
+- Enhanced CI commit detection to recognize scope-based patterns in commit messages, providing educational feedback for improving commit message quality.
+
+### Changed
+
+- Refactored CI workflows to modernize and streamline processes, removing legacy workflows and improving organization with new directories for actions and prompts.
+- Updated the CI commit analysis system to provide a detailed summary of PR metrics, including commit types and file changes, enhancing user experience.
+- Improved error handling and logging throughout the CI/CD pipeline, ensuring better visibility and maintainability.
+
+### Fixed
+
+- Resolved multiple issues related to handling nested changes in PR enhancement workflows, ensuring proper formatting and readability of AI-generated content.
+- Fixed regex patterns for conventional commit detection to ensure accurate analysis and labeling of commits across all types.
+- Addressed various bugs in the CI workflows, including handling multi-line content and special characters in commit messages to prevent errors during processing.
+
+---
+
 ## [0.6.0] - 2025-06-05
 
 ### Added
