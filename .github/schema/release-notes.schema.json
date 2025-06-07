@@ -49,6 +49,21 @@
       },
       "default": []
     },
+    "commit_analysis": {
+      "type": "object",
+      "description": "Analysis of commit types and patterns",
+      "properties": {
+        "total_commits": {"type": "integer", "minimum": 0},
+        "feat_count": {"type": "integer", "minimum": 0},
+        "fix_count": {"type": "integer", "minimum": 0},
+        "chore_count": {"type": "integer", "minimum": 0},
+        "ci_count": {"type": "integer", "minimum": 0},
+        "docs_count": {"type": "integer", "minimum": 0},
+        "breaking_changes_detected": {"type": "boolean"}
+      },
+      "required": ["total_commits", "breaking_changes_detected"],
+      "additionalProperties": false
+    },
     "breaking_changes": {
       "type": "string",
       "description": "Breaking changes details or empty string if none",
@@ -65,6 +80,6 @@
       "additionalProperties": false
     }
   },
-  "required": ["version", "summary", "primary_section", "breaking_changes", "footer_links"],
+  "required": ["version", "summary", "primary_section", "commit_analysis", "breaking_changes", "footer_links"],
   "additionalProperties": false
 }
