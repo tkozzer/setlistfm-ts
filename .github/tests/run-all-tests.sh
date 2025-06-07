@@ -42,6 +42,7 @@ print_banner() {
     echo -e "${BOLD}${BLUE}🔍 Test Discovery:${NC}"
     echo -e "   📁 Processors: $(find processors/ -name "test-*.sh" | wc -l | tr -d ' ') test scripts"
     echo -e "   🔗 Integration: $(find integration/ -name "test-*.sh" | wc -l | tr -d ' ') test scripts"
+    echo -e "   🏗  Workflows: $(find workflows/ -name "test-*.sh" | wc -l | tr -d ' ' ) test scripts"
     echo -e "   📊 Mock Files: $(find fixtures/ -name "*.json" -o -name "*.txt" | wc -l | tr -d ' ') mock data files"
     echo ""
 }
@@ -120,7 +121,7 @@ verify_test_environment() {
     echo -e "${BLUE}🔍 Verifying test environment...${NC}"
     
     # Check directory structure
-    local required_dirs=("processors" "integration" "fixtures")
+    local required_dirs=("processors" "integration" "workflows" "fixtures")
     for dir in "${required_dirs[@]}"; do
         if [[ ! -d "$SCRIPT_DIR/$dir" ]]; then
             echo -e "${RED}❌ Required directory not found: $dir${NC}"
@@ -133,6 +134,7 @@ verify_test_environment() {
         "processors/test-all-processors.sh"
         "integration/test-entrypoint-all.sh"
         "integration/test-entrypoint-integration.sh"
+        "workflows/test-pr-enhance-update-step.sh"
     )
     
     for script in "${key_scripts[@]}"; do
@@ -184,6 +186,17 @@ run_all_tests() {
         "$SCRIPT_DIR/integration/test-entrypoint-integration.sh" \
         "Testing complete entrypoint workflow with mock data and API simulation" \
         "Integration Testing"
+
+    if [[ $RUN_WORKFLOWS == "true" ]]; then
+        echo -e "${BOLD}${MAGENTA}═══ WORKFLOW TESTS ═══${NC}"
+        echo ""
+
+        run_test_suite \
+            "PR Enhance Workflow Step" \
+            "$SCRIPT_DIR/workflows/test-pr-enhance-update-step.sh" \
+            "Testing quoting logic in pr-enhance workflow update step" \
+            "Workflow Testing"
+    fi
     
     # Generate final comprehensive report
     generate_comprehensive_report
@@ -304,6 +317,7 @@ show_help() {
     echo "  -h, --help           Show this help message"
     echo "  --processors-only    Run only processor tests"
     echo "  --integration-only   Run only integration tests"
+    echo "  --workflows-only     Run only workflow tests"
     echo "  --quick             Skip detailed reporting (faster execution)"
     echo "  --verbose           Show verbose output from all test scripts"
     echo ""
@@ -311,11 +325,13 @@ show_help() {
     echo "  $0                        # Run all tests with full reporting"
     echo "  $0 --processors-only      # Run only processor unit tests"
     echo "  $0 --integration-only     # Run only integration tests"
+    echo "  $0 --workflows-only       # Run only workflow tests"
     echo "  $0 --quick               # Fast execution with minimal reporting"
     echo ""
     echo -e "${BOLD}TEST STRUCTURE:${NC}"
     echo "  📁 processors/           - Individual processor unit tests"
     echo "  📁 integration/          - End-to-end integration tests"
+    echo "  📁 workflows/            - Workflow logic tests"
     echo "  📁 fixtures/               - Mock data for testing"
     echo ""
     echo -e "${BOLD}COVERAGE:${NC}"
@@ -323,6 +339,7 @@ show_help() {
     echo "  • PR enhancement processor"
     echo "  • Generic content processor"
     echo "  • Shared utility functions"
+    echo "  • Workflow update steps"
     echo "  • Complete entrypoint workflow"
     echo "  • Mock API data pipeline"
     echo "  • Error handling scenarios"
@@ -334,6 +351,7 @@ QUICK_MODE=false
 VERBOSE_MODE=false
 RUN_PROCESSORS=true
 RUN_INTEGRATION=true
+RUN_WORKFLOWS=true
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -343,10 +361,18 @@ while [[ $# -gt 0 ]]; do
             ;;
         --processors-only)
             RUN_INTEGRATION=false
+            RUN_WORKFLOWS=false
             shift
             ;;
         --integration-only)
             RUN_PROCESSORS=false
+            RUN_WORKFLOWS=false
+            shift
+            ;;
+        --workflows-only)
+            RUN_PROCESSORS=false
+            RUN_INTEGRATION=false
+            RUN_WORKFLOWS=true
             shift
             ;;
         --quick)
@@ -389,6 +415,16 @@ main() {
         if [[ $RUN_INTEGRATION == "true" ]]; then
             echo -n "Integration: "
             if ./integration/test-entrypoint-integration.sh >/dev/null 2>&1; then
+                echo -e "${GREEN}PASS${NC}"
+            else
+                echo -e "${RED}FAIL${NC}"
+                total_exit=1
+            fi
+        fi
+
+        if [[ $RUN_WORKFLOWS == "true" ]]; then
+            echo -n "Workflows: "
+            if ./workflows/test-pr-enhance-update-step.sh >/dev/null 2>&1; then
                 echo -e "${GREEN}PASS${NC}"
             else
                 echo -e "${RED}FAIL${NC}"
