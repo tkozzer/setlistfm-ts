@@ -7,7 +7,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENTRYPOINT="$SCRIPT_DIR/../../actions/openai-chat/entrypoint.sh"
 TEMPLATES_DIR="$SCRIPT_DIR/../../templates"
-FIXTURES_DIR="$SCRIPT_DIR/../fixtures"
+FIXTURES_DIR="$SCRIPT_DIR/../fixtures/integration"
 TEST_OUTPUT_DIR="$SCRIPT_DIR/test-outputs"
 
 # Colors for output

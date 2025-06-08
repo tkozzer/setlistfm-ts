@@ -1,0 +1,15 @@
+{
+  "name": "setlistfm-ts",
+  "version": "2.0.0-beta.1",
+  "description": "TypeScript SDK for the Setlist.fm API",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "rollup -c",
+    "test": "vitest",
+    "lint": "eslint src/"
+  },
+  "keywords": ["setlist", "music", "api", "typescript"],
+  "author": "tkozzer",
+  "license": "MIT"
+}

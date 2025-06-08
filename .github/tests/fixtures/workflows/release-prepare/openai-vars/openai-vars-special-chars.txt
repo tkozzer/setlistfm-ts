@@ -1,0 +1,22 @@
+a1b2c3d feat: add "advanced" search functionality
+
+This commit implements search with the following:
+- Support for "quoted searches"
+- Regex patterns like \d+ and \w*
+- Special chars: @#$%^&*()
+- Paths like C:\Users\Name and /home/user
+
+b2c3d4e fix: handle edge cases in "string parsing"
+
+Fixed issues with:
+- Double quotes: "hello world"
+- Single quotes: 'hello world'
+- Backslashes: C:\Program Files\App
+- Mixed: "It's a \"great\" day!"
+
+c3d4e5f docs: update "Getting Started" guide
+
+Added section about:
+- Installation on Windows (C:\)
+- Configuration with "special values"
+- Environment variables like $PATH and %USERPROFILE% 

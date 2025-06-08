@@ -37,66 +37,35 @@ jobs:
           fetch-depth: 0
 
       # -------------------------------------------------------------------
-      # 2) Gather PR + commit information
+      # 2) Gather PR + commit information (using extracted script)
       # -------------------------------------------------------------------
       - name: 📑 Collect PR meta & commits
         id: meta
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body || '' }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          VERBOSE: true
         shell: bash
         run: |
           set -euo pipefail
 
-          # ---------- Basic PR fields ----------
-          echo "number=${{ github.event.pull_request.number }}"   >> "$GITHUB_OUTPUT"
-          echo "title=${{ github.event.pull_request.title }}"     >> "$GITHUB_OUTPUT"
+          # Use the extracted and tested script for PR metadata collection
+          # This replaces ~50 lines of inline bash with a robust, tested script
+          # Script outputs GitHub Actions variables and provides verbose logging
+          ./.github/scripts/pr-enhance/collect-pr-metadata.sh >> "$GITHUB_OUTPUT"
 
-          # ---------- Save the original body ----------
-          printf "%s" "${{ github.event.pull_request.body || '' }}" > pr_body.txt
+          # Create legacy files for backward compatibility with next workflow step
+          # These files are needed by the "Prepare prompt variables" step
+          printf "%s" "$PR_BODY" > pr_body.txt
 
-          # ---------- Commit list (hash  subject) ----------
           git log --pretty=format:"%h %s" \
-            ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} \
-            > commits.txt || touch commits.txt
+            "$BASE_SHA..$HEAD_SHA" > commits.txt || touch commits.txt
 
-          # ---------- Changed files ----------
           git diff --name-only \
-            ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} \
-            > files.txt || true
-
-          # ---------- Conventional-commit stats ----------
-          total=$(wc -l < commits.txt | xargs)
-          files_count=$(wc -l < files.txt | xargs)
-
-          # Count specific commit types with consistent regex patterns
-          feat=$(grep -cE '^[a-f0-9]+ feat(\(.*\))?:' commits.txt || true)
-          fix=$(grep -cE '^[a-f0-9]+ fix(\(.*\))?:' commits.txt || true)
-          docs=$(grep -cE '^[a-f0-9]+ docs(\(.*\))?:' commits.txt || true)
-          style=$(grep -cE '^[a-f0-9]+ style(\(.*\))?:' commits.txt || true)
-          refactor=$(grep -cE '^[a-f0-9]+ refactor(\(.*\))?:' commits.txt || true)
-          perf=$(grep -cE '^[a-f0-9]+ perf(\(.*\))?:' commits.txt || true)
-          test=$(grep -cE '^[a-f0-9]+ test(\(.*\))?:' commits.txt || true)
-          chore=$(grep -cE '^[a-f0-9]+ chore(\(.*\))?:' commits.txt || true)
-          # CI detection: matches both direct ci/build commits AND scoped ci/build commits
-          ci=$(grep -cE '^[a-f0-9]+ ((ci|build)(\(.*\))?:|.*\((ci|build)\):)' commits.txt || true)
-          break=$(grep -cE '^[a-f0-9]+.*BREAKING CHANGE|!:' commits.txt || true)
-
-          # Calculate total conventional commits by summing individual types
-          conv=$((feat + fix + docs + style + refactor + perf + test + chore + ci))
-
-          {
-            echo "total=$total"
-            echo "conv=$conv"
-            echo "files_count=$files_count"
-            echo "feat=$feat"
-            echo "fix=$fix"
-            echo "docs=$docs"
-            echo "style=$style"
-            echo "refactor=$refactor"
-            echo "perf=$perf"
-            echo "test=$test"
-            echo "chore=$chore"
-            echo "ci=$ci"
-            echo "break=$break"
-          } >> "$GITHUB_OUTPUT"
+            "$BASE_SHA..$HEAD_SHA" > files.txt || touch files.txt
 
       # -------------------------------------------------------------------
       # 3) Prepare variables for prompt template
@@ -152,101 +121,44 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RAW_CONTENT: ${{ steps.ai.outputs.content }}
           FORMATTED_CONTENT: ${{ steps.ai.outputs.formatted_content }}
-        run: |
-          # Debug output to understand what we received
-          echo "=== AI Output Debug ==="
-          echo "Raw content length: $(printf '%s' "$RAW_CONTENT" | wc -c)"
-          echo "Formatted content length: $(printf '%s' "$FORMATTED_CONTENT" | wc -c)"
-          echo "======================="
-
-          # Write AI outputs to temporary files first
-          printf '%s' "$FORMATTED_CONTENT" > formatted_temp.md
-          printf '%s' "$RAW_CONTENT" > raw_temp.md
-
-          # Determine which content to use based on file size and content
-          if [ -s formatted_temp.md ] && [ "$(head -c 4 formatted_temp.md)" != "null" ]; then
-            echo "Using formatted content"
-            cp formatted_temp.md final.md
-          elif [ -s raw_temp.md ] && [ "$(head -c 4 raw_temp.md)" != "null" ]; then
-            echo "Using raw content"
-            cp raw_temp.md final.md
-          else
-            echo "No AI content available, using original PR body"
-            cp pr_body.txt final.md
-          fi
-
-          # Clean up temporary files
-          rm -f formatted_temp.md raw_temp.md
-
-          # Verify we have content before updating
-          if [ -s final.md ]; then
-            echo "Updating PR description with $(wc -l < final.md) lines"
-            gh pr edit "${{ steps.meta.outputs.number }}" --body-file final.md
-          else
-            echo "ERROR: No content to write, keeping original description"
-          fi
+          PR_NUMBER: ${{ steps.meta.outputs.number }}
+        run: ./.github/scripts/pr-enhance/update-pr-description.sh
 
       # -------------------------------------------------------------------
-      # 6) Determine & apply labels
+      # 6) Determine labels using extracted script
       # -------------------------------------------------------------------
       - name: 🏷️ Determine labels
         id: labels
         shell: bash
         run: |
-          labels=()
-          [ ${{ steps.meta.outputs.feat }}     -gt 0 ] && labels+=('feature')
-          [ ${{ steps.meta.outputs.fix }}      -gt 0 ] && labels+=('bugfix')
-          [ ${{ steps.meta.outputs.docs }}     -gt 0 ] && labels+=('documentation')
-          [ ${{ steps.meta.outputs.chore }}    -gt 0 ] && labels+=('maintenance')
-          [ ${{ steps.meta.outputs.refactor }} -gt 0 ] && labels+=('refactor')
-          [ ${{ steps.meta.outputs.perf }}     -gt 0 ] && labels+=('performance')
-          [ ${{ steps.meta.outputs.test }}     -gt 0 ] && labels+=('testing')
-          [ ${{ steps.meta.outputs.style }}    -gt 0 ] && labels+=('style')
-          [ ${{ steps.meta.outputs.ci }}       -gt 0 ] && labels+=('ci-cd')
-          [ ${{ steps.meta.outputs.break }}    -gt 0 ] && labels+=('breaking-change')
+          # Use extracted script for better testability and maintainability
+          labels=$(./.github/scripts/pr-enhance/determine-pr-labels.sh \
+            --feat ${{ steps.meta.outputs.feat }} \
+            --fix ${{ steps.meta.outputs.fix }} \
+            --docs ${{ steps.meta.outputs.docs }} \
+            --chore ${{ steps.meta.outputs.chore }} \
+            --refactor ${{ steps.meta.outputs.refactor }} \
+            --perf ${{ steps.meta.outputs.perf }} \
+            --test ${{ steps.meta.outputs.test }} \
+            --style ${{ steps.meta.outputs.style }} \
+            --ci ${{ steps.meta.outputs.ci }} \
+            --break ${{ steps.meta.outputs.break }} \
+            --conv ${{ steps.meta.outputs.conv }} \
+            --total ${{ steps.meta.outputs.total }})
 
-          conv=${{ steps.meta.outputs.conv }}
-          total=${{ steps.meta.outputs.total }}
-          if [ "$total" -gt 0 ]; then
-            pct=$(awk "BEGIN{print int(($conv/$total)*100)}")
-            [ "$pct" -lt 80 ] && labels+=('needs-review')
-          fi
+          echo "labels=$labels" >> $GITHUB_OUTPUT
 
-          echo "labels=${labels[*]}" >> $GITHUB_OUTPUT
-
-      - name: ➕ Apply labels & auto-assign
+      - name: ➕ Apply labels & auto-assign using extracted script
         if: steps.labels.outputs.labels != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          # ensure each label exists (idempotent)
-          for l in ${{ steps.labels.outputs.labels }}; do
-            case "$l" in
-              feature)          color="0e8a16" desc="New feature or enhancement" ;;
-              bugfix)           color="d73a4a" desc="Bug fix" ;;
-              documentation)    color="0075ca" desc="Docs improvement" ;;
-              maintenance)      color="fbca04" desc="Maintenance / chores" ;;
-              refactor)         color="1d76db" desc="Code refactoring" ;;
-              performance)      color="ff6b6b" desc="Performance improvement" ;;
-              testing)          color="ff9500" desc="Testing related changes" ;;
-              style)            color="f9c74f" desc="Code style changes" ;;
-              ci-cd)            color="6f42c1" desc="CI/CD pipeline changes" ;;
-              breaking-change)  color="b60205" desc="Breaking change" ;;
-              needs-review)     color="fbca04" desc="Needs commit-message review" ;;
-            esac
-            gh label create "$l" --color "$color" --description "$desc" --force >/dev/null 2>&1 || true
-          done
-
-          # add labels & assign to repo owner
-          LABEL_ARGS=""
-          for l in ${{ steps.labels.outputs.labels }}; do
-            LABEL_ARGS="$LABEL_ARGS --add-label $l"
-          done
-
-          gh pr edit "${{ steps.meta.outputs.number }}" \
-            $LABEL_ARGS \
-            --add-assignee "${{ github.repository_owner }}"
+          # Use extracted script for better testability and maintainability
+          ./.github/scripts/pr-enhance/apply-pr-labels.sh \
+            --labels "${{ steps.labels.outputs.labels }}" \
+            --pr-number "${{ steps.meta.outputs.number }}" \
+            --assignee "${{ github.repository_owner }}"
 
       # -------------------------------------------------------------------
       # 7) Post comprehensive analysis summary
@@ -283,62 +195,18 @@ jobs:
           gh pr comment "${{ steps.meta.outputs.number }}" --body-file summary_comment.md
 
       # -------------------------------------------------------------------
-      # 8) Post commit quality feedback
+      # 8) Post commit quality feedback using extracted script
       # -------------------------------------------------------------------
       - name: 📊 Post commit quality feedback
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          CONVENTIONAL_COUNT="${{ steps.meta.outputs.conv }}"
-          TOTAL_COUNT="${{ steps.meta.outputs.total }}"
-
-          echo "Debug: CONVENTIONAL_COUNT=$CONVENTIONAL_COUNT, TOTAL_COUNT=$TOTAL_COUNT"
-
-          # Only proceed if we have commits to analyze
-          if [ "$TOTAL_COUNT" -gt 0 ]; then
-            # Calculate percentage using awk (more reliable than bc)
-            PERCENTAGE=$(awk "BEGIN {printf \"%.0f\", ($CONVENTIONAL_COUNT / $TOTAL_COUNT) * 100}")
-            echo "Debug: PERCENTAGE=$PERCENTAGE"
-
-            # Determine feedback message based on percentage
-            if [ "$PERCENTAGE" -ge 80 ]; then
-              FEEDBACK_MESSAGE="🎉 **Great work!** Your commit messages follow our conventional format consistently."
-              EMOJI="🎸"
-            else
-              FEEDBACK_MESSAGE="💡 **Needs improvement** - Consider following our [Conventional Commits](https://www.conventionalcommits.org/) format more consistently."
-              EMOJI="📝"
-            fi
-
-            # Always post a comment with commit statistics
-            cat > commit_feedback.md <<EOF
-          ## $EMOJI Commit Message Quality Report
-
-          **Conventional Commit Adherence:** **$CONVENTIONAL_COUNT** out of **$TOTAL_COUNT** commits (**$PERCENTAGE%**)
-
-          $FEEDBACK_MESSAGE
-
-          ### Conventional Commit Examples:
-          - \`feat(api): add new endpoint for user profiles\`
-          - \`fix(ui): resolve button alignment issue\`
-          - \`docs(readme): update installation instructions\`
-          - \`refactor(utils): simplify error handling logic\`
-          - \`chore(deps): update dependencies to latest versions\`
-
-          **Why this helps:**
-          - 🤖 Automated changelog generation
-          - 📋 Clear understanding of changes at a glance
-          - 🔄 Better semantic versioning decisions
-          - 🚀 Improved project maintainability
-
-          **Reference:** Check out our [Contributing Guide](CONTRIBUTING.md#commit-messages) for more details.
-          EOF
-
-            gh pr comment "${{ steps.meta.outputs.number }}" --body-file commit_feedback.md
-            echo "Posted commit quality feedback (${PERCENTAGE}% conventional)"
-          else
-            echo "Debug: No commits to analyze"
-          fi
+          # Use extracted script for better testability and maintainability
+          ./.github/scripts/pr-enhance/post-commit-feedback.sh \
+            --conventional ${{ steps.meta.outputs.conv }} \
+            --total ${{ steps.meta.outputs.total }} \
+            --pr-number ${{ steps.meta.outputs.number }}
 
       # -------------------------------------------------------------------
       # 9) Summary for the workflow run

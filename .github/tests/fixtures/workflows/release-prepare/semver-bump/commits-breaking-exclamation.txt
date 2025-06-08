@@ -1,0 +1,6 @@
+a1b2c3d refactor!: restructure API response format
+
+This completely changes how API responses are structured.
+
+b2c3d4e fix: handle edge case in validation
+c3d4e5f feat: add new search functionality 

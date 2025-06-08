@@ -1,0 +1,8 @@
+a1b2c3d feat!: add new API endpoint with breaking changes
+
+This commit introduces a new API structure that is incompatible with previous versions.
+
+BREAKING CHANGE: The old API format is no longer supported. Users must migrate to the new structure.
+
+e4f5g6h fix: resolve authentication bug
+i7j8k9l docs: update README with new examples 

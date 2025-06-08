@@ -28,7 +28,7 @@ export OPENAI_TEST_MODE=true
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROCESSOR="$SCRIPT_DIR/../../actions/openai-chat/processors/release-notes.sh"
-FIXTURE_DIR="$SCRIPT_DIR/../fixtures/release-notes-examples"
+FIXTURE_DIR="$SCRIPT_DIR/../fixtures/workflows/release-prepare/release-notes-examples"
 TMP_DIR=""
 
 TOTAL_TESTS=0
@@ -217,7 +217,7 @@ test_mock_openai_success(){
 
 test_mock_openai_failure(){
   # Test failure scenario by temporarily removing the mock file
-  local fixtures_dir="$SCRIPT_DIR/../fixtures"
+      local fixtures_dir="$SCRIPT_DIR/../fixtures/processors"
   local mock_file="$fixtures_dir/release-notes.json"
   local backup_file="$fixtures_dir/release-notes.json.backup"
   

@@ -1,0 +1,319 @@
+{
+  "label_mapping": {
+    "feat": "feature",
+    "fix": "bugfix",
+    "docs": "documentation",
+    "chore": "maintenance",
+    "refactor": "refactor",
+    "perf": "performance",
+    "test": "testing",
+    "style": "style",
+    "ci": "ci-cd",
+    "break": "breaking-change"
+  },
+  "valid_labels": [
+    "feature",
+    "bugfix",
+    "documentation",
+    "maintenance",
+    "refactor",
+    "performance",
+    "testing",
+    "style",
+    "ci-cd",
+    "breaking-change",
+    "needs-review"
+  ],
+  "scenarios": {
+    "single_feature": {
+      "description": "Single feature commit",
+      "commit_counts": {
+        "feat": 1,
+        "fix": 0,
+        "docs": 0,
+        "chore": 0,
+        "refactor": 0,
+        "perf": 0,
+        "test": 0,
+        "style": 0,
+        "ci": 0,
+        "break": 0,
+        "conv": 1,
+        "total": 1
+      },
+      "expected_labels": ["feature"]
+    },
+    "single_fix": {
+      "description": "Single fix commit",
+      "commit_counts": {
+        "feat": 0,
+        "fix": 1,
+        "docs": 0,
+        "chore": 0,
+        "refactor": 0,
+        "perf": 0,
+        "test": 0,
+        "style": 0,
+        "ci": 0,
+        "break": 0,
+        "conv": 1,
+        "total": 1
+      },
+      "expected_labels": ["bugfix"]
+    },
+    "feature_and_fix": {
+      "description": "Feature and fix commits",
+      "commit_counts": {
+        "feat": 2,
+        "fix": 1,
+        "docs": 0,
+        "chore": 0,
+        "refactor": 0,
+        "perf": 0,
+        "test": 0,
+        "style": 0,
+        "ci": 0,
+        "break": 0,
+        "conv": 3,
+        "total": 3
+      },
+      "expected_labels": ["feature", "bugfix"]
+    },
+    "all_conventional_types": {
+      "description": "All conventional commit types",
+      "commit_counts": {
+        "feat": 1,
+        "fix": 1,
+        "docs": 1,
+        "chore": 1,
+        "refactor": 1,
+        "perf": 1,
+        "test": 1,
+        "style": 1,
+        "ci": 1,
+        "break": 1,
+        "conv": 10,
+        "total": 10
+      },
+      "expected_labels": [
+        "feature",
+        "bugfix",
+        "documentation",
+        "maintenance",
+        "refactor",
+        "performance",
+        "testing",
+        "style",
+        "ci-cd",
+        "breaking-change"
+      ]
+    },
+    "needs_review_80_percent": {
+      "description": "79% conventional - needs review",
+      "commit_counts": {
+        "feat": 1,
+        "fix": 0,
+        "docs": 0,
+        "chore": 0,
+        "refactor": 0,
+        "perf": 0,
+        "test": 0,
+        "style": 0,
+        "ci": 0,
+        "break": 0,
+        "conv": 3,
+        "total": 4
+      },
+      "expected_labels": ["feature", "needs-review"]
+    },
+    "no_needs_review_80_percent": {
+      "description": "80% conventional - no needs review",
+      "commit_counts": {
+        "feat": 1,
+        "fix": 0,
+        "docs": 0,
+        "chore": 0,
+        "refactor": 0,
+        "perf": 0,
+        "test": 0,
+        "style": 0,
+        "ci": 0,
+        "break": 0,
+        "conv": 4,
+        "total": 5
+      },
+      "expected_labels": ["feature"]
+    },
+    "zero_commits": {
+      "description": "Zero commits",
+      "commit_counts": {
+        "feat": 0,
+        "fix": 0,
+        "docs": 0,
+        "chore": 0,
+        "refactor": 0,
+        "perf": 0,
+        "test": 0,
+        "style": 0,
+        "ci": 0,
+        "break": 0,
+        "conv": 0,
+        "total": 0
+      },
+      "expected_labels": []
+    },
+    "typical_feature_pr": {
+      "description": "Typical feature PR with testing and docs",
+      "commit_counts": {
+        "feat": 3,
+        "fix": 0,
+        "docs": 1,
+        "chore": 0,
+        "refactor": 0,
+        "perf": 0,
+        "test": 2,
+        "style": 0,
+        "ci": 0,
+        "break": 0,
+        "conv": 6,
+        "total": 6
+      },
+      "expected_labels": ["feature", "testing", "documentation"]
+    },
+    "bugfix_poor_commits": {
+      "description": "Bugfix with poor commit messages",
+      "commit_counts": {
+        "feat": 0,
+        "fix": 2,
+        "docs": 0,
+        "chore": 0,
+        "refactor": 0,
+        "perf": 0,
+        "test": 0,
+        "style": 0,
+        "ci": 0,
+        "break": 0,
+        "conv": 1,
+        "total": 3
+      },
+      "expected_labels": ["bugfix", "needs-review"]
+    }
+  },
+  "threshold_tests": {
+    "custom_threshold_90": {
+      "description": "90% threshold - 89% conventional needs review",
+      "threshold": 90,
+      "commit_counts": {
+        "feat": 1,
+        "fix": 0,
+        "docs": 0,
+        "chore": 0,
+        "refactor": 0,
+        "perf": 0,
+        "test": 0,
+        "style": 0,
+        "ci": 0,
+        "break": 0,
+        "conv": 8,
+        "total": 9
+      },
+      "expected_labels": ["feature", "needs-review"]
+    },
+    "custom_threshold_50": {
+      "description": "50% threshold - 60% conventional no review",
+      "threshold": 50,
+      "commit_counts": {
+        "feat": 1,
+        "fix": 0,
+        "docs": 0,
+        "chore": 0,
+        "refactor": 0,
+        "perf": 0,
+        "test": 0,
+        "style": 0,
+        "ci": 0,
+        "break": 0,
+        "conv": 3,
+        "total": 5
+      },
+      "expected_labels": ["feature"]
+    }
+  },
+  "validation_errors": {
+    "negative_feat": {
+      "args": ["--feat", "-1", "--conv", "1", "--total", "1"],
+      "expected_error": "must be a non-negative integer"
+    },
+    "non_numeric_feat": {
+      "args": ["--feat", "abc", "--conv", "1", "--total", "1"],
+      "expected_error": "must be a non-negative integer"
+    },
+    "threshold_over_100": {
+      "args": ["--feat", "1", "--conv", "1", "--total", "1", "--threshold", "101"],
+      "expected_error": "Threshold must be between 0 and 100"
+    },
+    "conv_exceeds_total": {
+      "args": ["--feat", "1", "--conv", "2", "--total", "1"],
+      "expected_error": "Conventional commit count cannot exceed total"
+    },
+    "unknown_argument": {
+      "args": ["--feat", "1", "--unknown", "2", "--conv", "1", "--total", "1"],
+      "expected_error": "Unknown argument"
+    }
+  },
+  "apply_label_tests": {
+    "single_label": {
+      "description": "Apply single feature label",
+      "labels": "feature",
+      "pr_number": 123,
+      "expected_github_calls": [
+        "label create feature",
+        "pr edit 123"
+      ]
+    },
+    "multiple_labels": {
+      "description": "Apply multiple labels",
+      "labels": "feature bugfix documentation",
+      "pr_number": 456,
+      "expected_github_calls": [
+        "label create feature",
+        "label create bugfix",
+        "label create documentation",
+        "pr edit 456"
+      ]
+    },
+    "all_supported_labels": {
+      "description": "Apply all supported labels",
+      "labels": "feature bugfix documentation maintenance refactor performance testing style ci-cd breaking-change needs-review",
+      "pr_number": 789,
+      "expected_github_calls": [
+        "label create",
+        "pr edit 789"
+      ]
+    },
+    "custom_assignee": {
+      "description": "Custom assignee",
+      "labels": "feature",
+      "pr_number": 123,
+      "assignee": "customuser",
+      "expected_github_calls": [
+        "label create feature",
+        "pr edit 123.*--add-assignee customuser"
+      ]
+    },
+    "custom_repository": {
+      "description": "Custom repository",
+      "labels": "feature",
+      "pr_number": 123,
+      "repo": "custom/repo",
+      "expected_github_calls": [
+        "custom/repo"
+      ]
+    }
+  },
+  "invalid_labels": [
+    "unknown-label",
+    "invalid",
+    "not-supported"
+  ]
+}

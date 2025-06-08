@@ -59,15 +59,8 @@ jobs:
         env:
           RAW: ${{ steps.commits.outputs.commits }}
         run: |
-          echo "$RAW" > _c.txt
-          if grep -Eq '(^|[\n])BREAKING CHANGE:|!:' _c.txt; then
-            echo 'type=major' >> "$GITHUB_OUTPUT"
-          elif grep -Eq '^[a-f0-9]+ feat(\(|:)' _c.txt; then
-            echo 'type=minor' >> "$GITHUB_OUTPUT"
-          else
-            echo 'type=patch' >> "$GITHUB_OUTPUT"
-          fi
-          rm _c.txt
+          BUMP_TYPE=$(./.github/scripts/release-prepare/determine-semver-bump.sh)
+          echo "$BUMP_TYPE" >> "$GITHUB_OUTPUT"
 
       # --------------------------------------------------------------------- #
       # 3️⃣  Bump package.json (no git tag yet)                               #
@@ -83,28 +76,12 @@ jobs:
       # --------------------------------------------------------------------- #
       - name: 📝 Prepare changelog variables
         id: vars
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          COMMITS_INPUT: ${{ steps.commits.outputs.commits }}
         run: |
-          # Save commits to temporary file to handle multi-line content safely
-          cat > commits_temp.txt <<'EOF'
-          ${{ steps.commits.outputs.commits }}
-          EOF
-
-          # Read commits and escape for simple KEY=VALUE format
-          COMMITS_ESCAPED=$(cat commits_temp.txt | tr '\n' '\020' | sed 's/"/\\"/g')
-
-          # Create variables in a single line format for safe GitHub Actions passing
-          TEMPLATE_VARS="VERSION=${{ steps.version.outputs.version }}
-          COMMITS=${COMMITS_ESCAPED}
-          DATE=$(date +%Y-%m-%d)"
-
-          # Encode the entire vars block as base64 to avoid shell parsing issues
-          VARS_ENCODED=$(echo "$TEMPLATE_VARS" | base64 -w 0)
-
-          # Output for GitHub Actions as a single line
-          echo "template_vars=${VARS_ENCODED}" >> "$GITHUB_OUTPUT"
-
-          # Clean up
-          rm -f commits_temp.txt
+          VARS_OUTPUT=$(./.github/scripts/release-prepare/prepare-openai-vars.sh)
+          echo "$VARS_OUTPUT" >> "$GITHUB_OUTPUT"
 
       # --------------------------------------------------------------------- #
       # 5️⃣  Generate CHANGELOG entry with structured OpenAI output            #
@@ -130,33 +107,10 @@ jobs:
         env:
           FORMATTED_CONTENT: ${{ steps.changelog.outputs.formatted_content }}
           RAW_CONTENT: ${{ steps.changelog.outputs.content }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          VER=${{ steps.version.outputs.version }}
-          TODAY=$(date +%Y-%m-%d)
-
-          # Use environment variables to safely handle multi-line content
-          if [ -n "${FORMATTED_CONTENT}" ]; then
-            echo "${FORMATTED_CONTENT}" > changelog_entry.txt
-          elif [ -n "${RAW_CONTENT}" ]; then
-            echo "${RAW_CONTENT}" > changelog_entry.txt
-          else
-            # Fallback if OpenAI fails completely
-            echo "## [${VER}] - ${TODAY}" > changelog_entry.txt
-            echo "" >> changelog_entry.txt
-            echo "### Changed" >> changelog_entry.txt
-            echo "" >> changelog_entry.txt
-            echo "- Release notes generation failed. Please refer to commit history for details." >> changelog_entry.txt
-          fi
-
-          # Add separator after the entry
-          echo "" >> changelog_entry.txt
-          echo "---" >> changelog_entry.txt
-          echo "" >> changelog_entry.txt
-
-          # Insert the new entry after the --- separator (line 5) and before the first version entry
-          { head -n 5 CHANGELOG.md; echo ""; cat changelog_entry.txt; tail -n +6 CHANGELOG.md; } > CHANGELOG.tmp
-          mv CHANGELOG.tmp CHANGELOG.md
-          rm changelog_entry.txt
+          export DATE=$(date +%Y-%m-%d)
+          ./.github/scripts/release-prepare/update-changelog.sh
 
       # --------------------------------------------------------------------- #
       # 7️⃣  Commit & push                                                    #

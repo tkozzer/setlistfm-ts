@@ -38,11 +38,11 @@ jobs:
       - name: 📦 Determine version
         id: version
         run: |
-          if [[ "${{ github.event_name }}" == 'workflow_dispatch' ]]; then
-            echo "ver=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "ver=$(node -p \"require('./package.json').version\")" >> "$GITHUB_OUTPUT"
-          fi
+          VERSION=$(.github/scripts/release-notes/determine-version.sh \
+            --trigger-type "${{ github.event_name }}" \
+            --manual-version "${{ github.event.inputs.version || '' }}" \
+            --verbose)
+          echo "ver=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: 📝 Prepare basic variables
         id: vars
@@ -90,11 +90,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          RELEASE_NOTES="${{ steps.ai.outputs.formatted_content }}"
-          gh release create "v${{ steps.version.outputs.ver }}" \
-            --notes "$RELEASE_NOTES" \
-            --title "v${{ steps.version.outputs.ver }}" \
-            --verify-tag=false || \
-          gh release edit "v${{ steps.version.outputs.ver }}" \
-            --notes "$RELEASE_NOTES" \
-            --title "v${{ steps.version.outputs.ver }}"
+          .github/scripts/release-notes/manage-github-release.sh \
+            --version "${{ steps.version.outputs.ver }}" \
+            --notes-file "release-notes.md" \
+            --verbose
