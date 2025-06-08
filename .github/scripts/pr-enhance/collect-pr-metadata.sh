@@ -170,8 +170,9 @@ ci=$(count_commit_type '^[a-zA-Z0-9]+ ((ci|build)(\(.*\))?!?:|.*\((ci|build)\):)
 # Breaking change detection
 break=$(count_commit_type '^[a-zA-Z0-9]+.*BREAKING CHANGE|!:' "$COMMITS_FILE")
 
-# Calculate total conventional commits by summing individual types
-conv=$((feat + fix + docs + style + refactor + perf + test + chore + ci))
+# Calculate total conventional commits by counting unique commits that match any conventional pattern
+# This prevents double-counting when a commit matches multiple patterns (e.g., "fix(ci): ...")
+conv=$(count_commit_type '^[a-zA-Z0-9]+ [a-zA-Z]+(\(.*\))?!?:' "$COMMITS_FILE")
 
 log_verbose "Conventional commit breakdown:"
 log_verbose "  feat: $feat, fix: $fix, docs: $docs, style: $style"
