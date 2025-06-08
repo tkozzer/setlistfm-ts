@@ -2,7 +2,7 @@
   "version": "0.1.0",
   "summary": "This release focuses on infrastructure improvements and bug fixes—there are no user-facing or API changes.",
   "primary_section": {
-    "title": "Infrastructure Improvements", 
+    "title": "Infrastructure Improvements",
     "emoji": "🛠️",
     "features": [
       "**Enhanced CI pipeline** reduces build times by 25%",
@@ -13,7 +13,7 @@
   "secondary_sections": [
     {
       "title": "Bug Fixes",
-      "emoji": "🐛", 
+      "emoji": "🐛",
       "features": [
         "**Memory leak resolved** in long-running processes",
         "**Race condition fixed** in concurrent requests"

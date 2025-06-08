@@ -231,6 +231,8 @@ if [[ -n $OUTPUT ]]; then
     PROCESSOR="pr-enhancement" 
   elif [[ $OUTPUT =~ pr-description ]]; then
     PROCESSOR="pr-description"
+  elif [[ $OUTPUT =~ release-notes ]]; then
+    PROCESSOR="release-notes"
   fi
   
   # Find the processor script path
@@ -241,6 +243,8 @@ if [[ -n $OUTPUT ]]; then
     PROCESSOR_SCRIPT="pr-enhance.sh"
   elif [[ $PROCESSOR == "pr-description" ]]; then
     PROCESSOR_SCRIPT="pr-description.sh"
+  elif [[ $PROCESSOR == "release-notes" ]]; then
+    PROCESSOR_SCRIPT="release-notes.sh"
   fi
   
   # Try different possible processor directory paths

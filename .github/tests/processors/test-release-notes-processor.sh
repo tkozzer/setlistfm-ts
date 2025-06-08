@@ -27,7 +27,7 @@ export OPENAI_TEST_MODE=true
 # sake of brevity, only the basic patterns are demonstrated here.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROCESSOR="$SCRIPT_DIR/../../processors/release-notes-processor.sh"
+PROCESSOR="$SCRIPT_DIR/../../actions/openai-chat/processors/release-notes.sh"
 FIXTURE_DIR="$SCRIPT_DIR/../fixtures/release-notes-examples"
 TMP_DIR=""
 
@@ -68,6 +68,26 @@ cleanup_test_environment(){
   rm -rf "$TMP_DIR"
 }
 
+run_processor(){
+  local version="$1"
+  local tmp_out
+  tmp_out=$(mktemp)
+  cd "$SCRIPT_DIR/../../.."
+  if echo "VERSION=$version" | \
+    OPENAI_TEST_MODE=true GITHUB_OUTPUT="$tmp_out" \
+    ./.github/actions/openai-chat/entrypoint.sh \
+      --template .github/prompts/release-notes.user.md \
+      --output .github/templates/release-notes.tmpl.md \
+      --vars "VERSION=$version" >/dev/null; then
+    :
+  else
+    printf '# 🎉 setlistfm-ts v%s\n\nAutomated release notes generation failed. Please refer to CHANGELOG.md for details.\n' "$version" > "$tmp_out"
+  fi
+  cd - >/dev/null
+  cat "$tmp_out"
+  rm -f "$tmp_out"
+}
+
 create_mock_changelog(){
   cat > "$TMP_DIR/repo/CHANGELOG.md" <<EOT
 ## [0.1.0] - 2024-01-01
@@ -96,7 +116,7 @@ setup_mock_github_releases(){
 ## DATA COLLECTION TESTS ######################################################
 
 test_changelog_parsing(){
-  "$PROCESSOR" "0.1.0" >/tmp/out.txt
+  run_processor "0.1.0" >/tmp/out.txt
   grep -q "v0.1.0" /tmp/out.txt
 }
 
@@ -109,7 +129,7 @@ test_openai_fallback(){
   
   # Override the test mode to point to missing directory
   local original_test_mode="$OPENAI_TEST_MODE"
-  OPENAI_TEST_MODE=true MOCK_DIR="$temp_mock_dir" "$PROCESSOR" "0.1.0" >/tmp/out.txt || true
+  OPENAI_TEST_MODE=true MOCK_DIR="$temp_mock_dir" run_processor "0.1.0" >/tmp/out.txt || true
   OPENAI_TEST_MODE="$original_test_mode"
   
   # Should fall back to generic processor when release-notes mock is missing
@@ -131,7 +151,7 @@ test_end_to_end(){
   pushd "$TMP_DIR/repo" >/dev/null
   git tag v0.0.0
   git tag v0.1.0
-  "$PROCESSOR" "0.1.0" >/tmp/out.txt
+  run_processor "0.1.0" >/tmp/out.txt
   grep -q "setlistfm-ts v0.1.0" /tmp/out.txt
   popd >/dev/null
 }
@@ -143,7 +163,7 @@ test_changelog_samples(){
     cp "$file" "$TMP_DIR/repo/CHANGELOG.md"
     git -C "$TMP_DIR/repo" add CHANGELOG.md
     git -C "$TMP_DIR/repo" commit -q -m "docs: sample changelog"
-    "$PROCESSOR" "0.1.0" >/tmp/out.txt
+    run_processor "0.1.0" >/tmp/out.txt
     grep -q "setlistfm-ts" /tmp/out.txt || return 1
   done
 }
@@ -159,7 +179,7 @@ test_commit_samples(){
       git commit -q -m "$line"
     done < "$file"
     popd >/dev/null
-    "$PROCESSOR" "0.1.0" >/tmp/out.txt
+    run_processor "0.1.0" >/tmp/out.txt
     grep -q "setlistfm-ts" /tmp/out.txt || return 1
   done
 }
@@ -173,7 +193,7 @@ test_large_commit_set(){
     git commit -q -m "feat: feature $i"
   done
   popd >/dev/null
-  "$PROCESSOR" "0.1.0" >/tmp/out.txt
+  run_processor "0.1.0" >/tmp/out.txt
   grep -q "setlistfm-ts" /tmp/out.txt
 }
 
@@ -183,7 +203,7 @@ test_version_detection(){
   echo "feat: new" > a.txt
   git add a.txt
   git commit -q -m "feat: new"
-  "$PROCESSOR" "0.2.0" >/tmp/out.txt
+  run_processor "0.2.0" >/tmp/out.txt
   grep -q "v0.2.0" /tmp/out.txt
   popd >/dev/null
 }
@@ -191,7 +211,7 @@ test_version_detection(){
 test_mock_openai_success(){
   # Test with valid mock data (should use existing release-notes.json)
   # Since OPENAI_TEST_MODE is already set globally, this should work correctly
-  "$PROCESSOR" "0.1.0" >/tmp/out.txt
+  run_processor "0.1.0" >/tmp/out.txt
   grep -q "setlistfm-ts" /tmp/out.txt
 }
 
@@ -207,7 +227,7 @@ test_mock_openai_failure(){
   fi
   
   # This should trigger the fallback mechanism
-  "$PROCESSOR" "0.1.0" >/tmp/out.txt || true
+  run_processor "0.1.0" >/tmp/out.txt || true
   
   # Restore the mock file
   if [[ -f "$backup_file" ]]; then
@@ -227,7 +247,7 @@ test_multiple_versions(){
     echo "feat: $v" > f.txt
     git add f.txt
     git commit -q -m "feat: $v"
-    "$PROCESSOR" "$v" >/tmp/out.txt
+    run_processor "$v" >/tmp/out.txt
     grep -q "setlistfm-ts" /tmp/out.txt || { popd >/dev/null; return 1; }
   done
   popd >/dev/null
@@ -236,7 +256,7 @@ test_multiple_versions(){
 # Run processor many times to check idempotency
 test_repeated_execution(){
   for i in {1..20}; do
-    "$PROCESSOR" "0.1.0" >/tmp/out.txt
+    run_processor "0.1.0" >/tmp/out.txt
     grep -q "setlistfm-ts" /tmp/out.txt || return 1
   done
 }
