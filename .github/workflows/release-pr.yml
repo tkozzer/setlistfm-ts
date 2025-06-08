@@ -33,8 +33,13 @@ jobs:
       # --------------------------------------------------------------------- #
       - uses: actions/checkout@v4
         with:
+          ref: preview # Explicitly checkout latest preview branch
           fetch-depth: 0
           token: ${{ env.GH_TOKEN }}
+
+      # Force refresh to ensure we have the latest changes from release-prepare
+      - name: 🔄 Ensure latest preview state
+        run: ./.github/scripts/release-pr/sync-preview-branch.sh
 
       - name: 🛠️ Setup Node & pnpm
         uses: ./.github/actions/setup-node-pnpm
@@ -42,7 +47,13 @@ jobs:
           node-version: 22.x
 
       # --------------------------------------------------------------------- #
-      # 2️⃣  Gather release metadata                                          #
+      # 2️⃣  Verify release-prepare completed successfully                    #
+      # --------------------------------------------------------------------- #
+      - name: ✅ Verify release preparation commit
+        run: ./.github/scripts/release-pr/verify-release-commit.sh
+
+      # --------------------------------------------------------------------- #
+      # 3️⃣  Gather release metadata                                          #
       # --------------------------------------------------------------------- #
       - name: 📦 Version
         id: version
@@ -52,29 +63,10 @@ jobs:
       - name: 📝 Latest changelog entry
         id: changelog
         run: |
-          if [[ -f CHANGELOG.md ]]; then
-            awk '
-              /^## \[/ { if (++count==2) exit; next }
-              count==1 { print }
-            ' CHANGELOG.md | sed '/^$/d' > _entry.txt
-          fi
-          [[ ! -s _entry.txt ]] && echo "No changelog entries found for the latest version" > _entry.txt
-          {
-            echo 'entry<<EOF'
-            cat _entry.txt
-            echo 'EOF'
-          } >> "$GITHUB_OUTPUT"
-          rm _entry.txt
-
-      # --------------------------------------------------------------------- #
-      # 3️⃣  Does a preview→main PR already exist ?                            #
-      # --------------------------------------------------------------------- #
-      - name: 🔍 Check for existing PR
-        id: check
-        run: |
-          PR=$(gh pr list --base main --head preview --json number --jq '.[0].number // empty')
-          echo "exists=${PR:+true}"   >> "$GITHUB_OUTPUT"
-          echo "pr_number=${PR:-0}"   >> "$GITHUB_OUTPUT"
+          ./.github/scripts/release-pr/extract-changelog-entry.sh \
+            --file CHANGELOG.md \
+            --output-format github-actions \
+            --debug >> "$GITHUB_OUTPUT"
 
       # --------------------------------------------------------------------- #
       # 4️⃣  Generate (or regenerate) PR body with OpenAI                     #
@@ -105,39 +97,24 @@ jobs:
       # --------------------------------------------------------------------- #
       # 6️⃣  Create or update the PR                                          #
       # --------------------------------------------------------------------- #
-      - name: 🛠️ Create PR
-        id: create
-        if: steps.check.outputs.exists != 'true'
+      - name: 🚀 Manage Release PR
+        id: pr
         run: |
-          PR_URL=$(gh pr create \
-            --base main \
-            --head preview \
-            --title "🚀 Release v${{ steps.version.outputs.ver }}" \
+          ./.github/scripts/release-pr/manage-release-pr.sh \
+            --version "${{ steps.version.outputs.ver }}" \
             --body "${{ steps.body.outputs.content }}" \
-            --label "release,automated" \
-            --assignee "${{ github.repository_owner }}")
-          echo "url=$PR_URL" >> "$GITHUB_OUTPUT"
-          echo "number=$(echo "$PR_URL" | grep -o '[0-9]\+$')" >> "$GITHUB_OUTPUT"
-
-      - name: 🔄 Update existing PR
-        if: steps.check.outputs.exists == 'true'
-        run: |
-          gh pr edit ${{ steps.check.outputs.pr_number }} \
-            --title "🚀 Release v${{ steps.version.outputs.ver }}" \
-            --body "${{ steps.body.outputs.content }}" \
-            --add-label release,automated \
-            --add-assignee "${{ github.repository_owner }}"
+            --assignee "${{ github.repository_owner }}" >> "$GITHUB_OUTPUT"
 
       # --------------------------------------------------------------------- #
       # 7️⃣  Summary                                                          #
       # --------------------------------------------------------------------- #
       - name: 📋 Summary
         run: |
-          PR_NUM=${{ steps.check.outputs.exists == 'true' && steps.check.outputs.pr_number || steps.create.outputs.number }}
           echo "## 🚀 Release PR Ready" >> "$GITHUB_STEP_SUMMARY"
           echo ""                        >> "$GITHUB_STEP_SUMMARY"
-          echo "- **PR #${PR_NUM}** : preview → main" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **PR #${{ steps.pr.outputs.pr_number }}** : preview → main" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Version:** v${{ steps.version.outputs.ver }}"       >> "$GITHUB_STEP_SUMMARY"
           echo "- **Labels:** release, automated"                       >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Action:** ${{ steps.pr.outputs.action_taken }}"     >> "$GITHUB_STEP_SUMMARY"
           echo ""                                                      >> "$GITHUB_STEP_SUMMARY"
           echo "Please review & merge to publish the release! 🎸"       >> "$GITHUB_STEP_SUMMARY"

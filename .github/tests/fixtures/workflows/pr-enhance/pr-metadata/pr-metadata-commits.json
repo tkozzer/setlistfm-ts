@@ -1,0 +1,212 @@
+{
+  "scenarios": {
+    "basic_conventional": {
+      "description": "Basic conventional commits covering main types",
+      "commits": [
+        "a1b2c3d feat: add user authentication",
+        "e4f5g6h fix(ui): resolve button alignment issue",
+        "i7j8k9l docs: update installation guide"
+      ],
+      "expected": {
+        "total": 3,
+        "conv": 3,
+        "feat": 1,
+        "fix": 1,
+        "docs": 1,
+        "style": 0,
+        "refactor": 0,
+        "perf": 0,
+        "test": 0,
+        "chore": 0,
+        "ci": 0,
+        "break": 0
+      }
+    },
+    "mixed_conventional": {
+      "description": "Mix of conventional and non-conventional commits",
+      "commits": [
+        "m1n2o3p feat(api): add user endpoints",
+        "q4r5s6t made some random changes",
+        "u7v8w9x style: fix css formatting",
+        "y1z2a3b update stuff"
+      ],
+      "expected": {
+        "total": 4,
+        "conv": 2,
+        "feat": 1,
+        "fix": 0,
+        "docs": 0,
+        "style": 1,
+        "refactor": 0,
+        "perf": 0,
+        "test": 0,
+        "chore": 0,
+        "ci": 0,
+        "break": 0
+      }
+    },
+    "all_types": {
+      "description": "All conventional commit types",
+      "commits": [
+        "c1d2e3f feat: new feature",
+        "g4h5i6j fix: bug fix",
+        "k7l8m9n docs: documentation",
+        "o1p2q3r style: formatting",
+        "s4t5u6v refactor: code cleanup",
+        "w7x8y9z perf: optimization",
+        "a1b2c3d test: add tests",
+        "e4f5g6h chore: maintenance",
+        "i7j8k9l ci: update pipeline",
+        "m1n2o3p build: update deps"
+      ],
+      "expected": {
+        "total": 10,
+        "conv": 10,
+        "feat": 1,
+        "fix": 1,
+        "docs": 1,
+        "style": 1,
+        "refactor": 1,
+        "perf": 1,
+        "test": 1,
+        "chore": 1,
+        "ci": 2,
+        "break": 0
+      }
+    },
+    "scoped_commits": {
+      "description": "Scoped conventional commits",
+      "commits": [
+        "q1w2e3r feat(api): add endpoint",
+        "t4y5u6i fix(ui): button color",
+        "o7p8a9s refactor(core): simplify logic",
+        "d1f2g3h feat(ci): add workflow",
+        "j4k5l6z chore(build): update deps"
+      ],
+      "expected": {
+        "total": 5,
+        "conv": 5,
+        "feat": 2,
+        "fix": 1,
+        "docs": 0,
+        "style": 0,
+        "refactor": 1,
+        "perf": 0,
+        "test": 0,
+        "chore": 1,
+        "ci": 2,
+        "break": 0
+      }
+    },
+    "breaking_changes": {
+      "description": "Breaking change commits",
+      "commits": [
+        "x1c2v3b feat!: breaking API change",
+        "n4m5a6s fix: something BREAKING CHANGE: removed method",
+        "q7w8e9r feat: regular feature"
+      ],
+      "expected": {
+        "total": 3,
+        "conv": 3,
+        "feat": 2,
+        "fix": 1,
+        "docs": 0,
+        "style": 0,
+        "refactor": 0,
+        "perf": 0,
+        "test": 0,
+        "chore": 0,
+        "ci": 0,
+        "break": 2
+      }
+    },
+    "complex_scopes": {
+      "description": "Complex scoped commits including CI patterns",
+      "commits": [
+        "z1x2c3v feat(api/users): add user management",
+        "b4n5m6a fix(ui/components): button styling",
+        "s7d8f9g ci(github): update workflow",
+        "h1j2k3l build(deps): bump package versions",
+        "q4w5e6r feat(build): add new build script",
+        "t7y8u9i chore(ci): cleanup old files"
+      ],
+      "expected": {
+        "total": 6,
+        "conv": 6,
+        "feat": 2,
+        "fix": 1,
+        "docs": 0,
+        "style": 0,
+        "refactor": 0,
+        "perf": 0,
+        "test": 0,
+        "chore": 1,
+        "ci": 4,
+        "break": 0
+      }
+    },
+    "edge_cases": {
+      "description": "Edge cases and unusual patterns",
+      "commits": [
+        "a1b2c3d feat: feature with BREAKING CHANGE: api modified",
+        "e4f5g6h Fix: uppercase fix (should not match)",
+        "i7j8k9l feat(): empty scope",
+        "m1n2o3p style(  ): spaces in scope",
+        "q4r5s6t feat(scope): normal scoped commit",
+        "u7v8w9x random commit message",
+        "y1z2a3b perf!: breaking performance change"
+      ],
+      "expected": {
+        "total": 7,
+        "conv": 4,
+        "feat": 2,
+        "fix": 0,
+        "docs": 0,
+        "style": 1,
+        "refactor": 0,
+        "perf": 1,
+        "test": 0,
+        "chore": 0,
+        "ci": 0,
+        "break": 2
+      }
+    }
+  },
+  "regex_patterns": {
+    "feat": "^[a-f0-9]+ feat(\\(.*\\))?:",
+    "fix": "^[a-f0-9]+ fix(\\(.*\\))?:",
+    "docs": "^[a-f0-9]+ docs(\\(.*\\))?:",
+    "style": "^[a-f0-9]+ style(\\(.*\\))?:",
+    "refactor": "^[a-f0-9]+ refactor(\\(.*\\))?:",
+    "perf": "^[a-f0-9]+ perf(\\(.*\\))?:",
+    "test": "^[a-f0-9]+ test(\\(.*\\))?:",
+    "chore": "^[a-f0-9]+ chore(\\(.*\\))?:",
+    "ci": "^[a-f0-9]+ ((ci|build)(\\(.*\\))?:|.*\\((ci|build)\\):)",
+    "breaking": "^[a-f0-9]+.*BREAKING CHANGE|!:"
+  },
+  "test_files": {
+    "basic": [
+      "src/api/users.ts",
+      "src/components/Button.tsx",
+      "README.md"
+    ],
+    "large": [
+      "src/api/auth.ts",
+      "src/api/users.ts",
+      "src/api/admin.ts",
+      "src/components/Button.tsx",
+      "src/components/Modal.tsx",
+      "src/components/Form.tsx",
+      "src/utils/helpers.ts",
+      "src/utils/validation.ts",
+      "tests/api.test.ts",
+      "tests/components.test.ts",
+      "docs/api.md",
+      "docs/examples.md",
+      "package.json",
+      "README.md",
+      "CHANGELOG.md"
+    ],
+    "empty": []
+  }
+}

@@ -84,10 +84,10 @@ if [[ ${OPENAI_TEST_MODE:-false} == "true" ]]; then
   MOCK_FILE=""
   # Try different possible mock directory paths
   POSSIBLE_MOCK_DIRS=(
-    ".github/tests/fixtures"
-    "../../tests/fixtures"
-    "../tests/fixtures"
-    "tests/fixtures"
+    ".github/tests/fixtures/integration"
+    "../../tests/fixtures/integration"
+    "../tests/fixtures/integration"
+    "tests/fixtures/integration"
   )
   
   MOCK_DIR=""
@@ -116,6 +116,10 @@ if [[ ${OPENAI_TEST_MODE:-false} == "true" ]]; then
       MOCK_FILE="$MOCK_DIR/pr-enhancement.json"
     elif [[ $OUTPUT =~ pr-description ]]; then
       MOCK_FILE="$MOCK_DIR/pr-description.json"
+    elif [[ $OUTPUT =~ release-notes ]]; then
+      # Release notes fixtures are in the processors directory
+      PROCESSORS_MOCK_DIR="${MOCK_DIR%/integration}/processors"
+      MOCK_FILE="$PROCESSORS_MOCK_DIR/release-notes.json"
     else
       MOCK_FILE="$MOCK_DIR/generic.json"
     fi
@@ -127,6 +131,10 @@ if [[ ${OPENAI_TEST_MODE:-false} == "true" ]]; then
       MOCK_FILE="$MOCK_DIR/pr-enhancement.json"
     elif [[ $TEMPLATE =~ pr-description ]]; then
       MOCK_FILE="$MOCK_DIR/pr-description.json"
+    elif [[ $TEMPLATE =~ release-notes ]]; then
+      # Release notes fixtures are in the processors directory
+      PROCESSORS_MOCK_DIR="${MOCK_DIR%/integration}/processors"
+      MOCK_FILE="$PROCESSORS_MOCK_DIR/release-notes.json"
     else
       MOCK_FILE="$MOCK_DIR/generic.json"
     fi
@@ -227,6 +235,8 @@ if [[ -n $OUTPUT ]]; then
     PROCESSOR="pr-enhancement" 
   elif [[ $OUTPUT =~ pr-description ]]; then
     PROCESSOR="pr-description"
+  elif [[ $OUTPUT =~ release-notes ]]; then
+    PROCESSOR="release-notes"
   fi
   
   # Find the processor script path
@@ -237,6 +247,8 @@ if [[ -n $OUTPUT ]]; then
     PROCESSOR_SCRIPT="pr-enhance.sh"
   elif [[ $PROCESSOR == "pr-description" ]]; then
     PROCESSOR_SCRIPT="pr-description.sh"
+  elif [[ $PROCESSOR == "release-notes" ]]; then
+    PROCESSOR_SCRIPT="release-notes.sh"
   fi
   
   # Try different possible processor directory paths

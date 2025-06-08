@@ -3,7 +3,7 @@
 
 import antfu from "@antfu/eslint-config";
 
-const config = antfu(
+const config: any = antfu(
   {
     type: "lib", // Use 'library' for SDK/client packages
     typescript: true,
@@ -24,6 +24,7 @@ const config = antfu(
       ".env*",
       "docs/**",
       "README.md",
+      ".github/tests/fixtures/release-notes/invalid-package.json",
     ],
   },
   {
@@ -54,6 +55,12 @@ const config = antfu(
           checkDestructured: false,
         },
       ],
+    },
+  },
+  {
+    files: [".github/**/*"],
+    rules: {
+      "unicorn/filename-case": "off",
     },
   },
   {

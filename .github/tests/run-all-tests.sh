@@ -42,8 +42,8 @@ print_banner() {
     echo -e "${BOLD}${BLUE}🔍 Test Discovery:${NC}"
     echo -e "   📁 Processors: $(find processors/ -name "test-*.sh" | wc -l | tr -d ' ') test scripts"
     echo -e "   🔗 Integration: $(find integration/ -name "test-*.sh" | wc -l | tr -d ' ') test scripts"
-    echo -e "   🏗  Workflows: $(find workflows/ -name "test-*.sh" | wc -l | tr -d ' ' ) test scripts"
-    echo -e "   📊 Mock Files: $(find fixtures/ -name "*.json" -o -name "*.txt" | wc -l | tr -d ' ') mock data files"
+    echo -e "   🏗  Workflows: $(find workflows/ -name "test-*.sh" | wc -l | tr -d ' ') test scripts"
+    echo -e "   📊 Fixture Files: $(find fixtures/ -name "*.json" -o -name "*.txt" | wc -l | tr -d ' ') fixture data files"
     echo ""
 }
 
@@ -83,9 +83,13 @@ run_test_suite() {
     local suite_failed=0
     
     if echo "$output" | grep -q "Total tests:"; then
-        suite_total=$(echo "$output" | grep "Total tests:" | sed 's/.*Total tests: \([0-9]*\).*/\1/')
-        suite_passed=$(echo "$output" | grep "Passed:" | sed 's/.*Passed: \([0-9]*\).*/\1/')
-        suite_failed=$(echo "$output" | grep "Failed:" | sed 's/.*Failed: \([0-9]*\).*/\1/')
+        suite_total=$(echo "$output" | grep -m1 "Total tests:" | sed 's/.*Total tests: \([0-9]*\).*/\1/')
+        suite_passed=$(echo "$output" | grep -m1 "Passed:" | sed 's/.*Passed: \([0-9]*\).*/\1/')
+        suite_failed=$(echo "$output" | grep -m1 "Failed:" | sed 's/.*Failed: \([0-9]*\).*/\1/')
+    elif echo "$output" | grep -q "Total Tests Run:"; then
+        suite_total=$(echo "$output" | grep -m1 "Total Tests Run:" | sed 's/.*Total Tests Run: \([0-9]*\).*/\1/')
+        suite_passed=$(echo "$output" | grep -m1 "Tests Passed:" | sed 's/.*Tests Passed: \([0-9]*\).*/\1/')
+        suite_failed=$(echo "$output" | grep -m1 "Tests Failed:" | sed 's/.*Tests Failed: \([0-9]*\).*/\1/')
     fi
     
     # Update global counters
@@ -134,7 +138,11 @@ verify_test_environment() {
         "processors/test-all-processors.sh"
         "integration/test-entrypoint-all.sh"
         "integration/test-entrypoint-integration.sh"
-        "workflows/test-pr-enhance-update-step.sh"
+        "workflows/pr-enhance/test-pr-enhance-update-step.sh"
+        "workflows/release-prepare/test-release-prepare-changelog-update.sh"
+        "workflows/release-prepare/test-release-prepare-semver-bump.sh"
+        "workflows/release-prepare/test-release-prepare-openai-vars.sh"
+        "workflows/pr-enhance/test-collect-pr-metadata.sh"
     )
     
     for script in "${key_scripts[@]}"; do
@@ -151,56 +159,16 @@ verify_test_environment() {
     done
     
     # Check mock files
-    local mock_count=$(find "$SCRIPT_DIR/fixtures" -name "*.json" -o -name "*.txt" | wc -l)
-    if [[ $mock_count -lt 5 ]]; then
-        echo -e "${YELLOW}⚠ Warning: Only $mock_count mock files found (expected 5+)${NC}"
+    local fixture_count=$(find "$SCRIPT_DIR/fixtures" -name "*.json" -o -name "*.txt" | wc -l)
+    if [[ $fixture_count -lt 5 ]]; then
+        echo -e "${YELLOW}⚠ Warning: Only $fixture_count fixture files found (expected 5+)${NC}"
     fi
     
     echo -e "${GREEN}✅ Test environment verified${NC}"
     echo ""
 }
 
-run_all_tests() {
-    print_banner
-    verify_test_environment
-    
-    echo -e "${BOLD}${CYAN}🚀 Starting comprehensive test execution...${NC}"
-    echo ""
-    
-    # Run individual processor tests
-    echo -e "${BOLD}${MAGENTA}═══ PROCESSOR TESTS ═══${NC}"
-    echo ""
-    
-    run_test_suite \
-        "Individual Processor Tests" \
-        "$SCRIPT_DIR/processors/test-all-processors.sh" \
-        "Testing all individual processors (changelog, pr-enhance, generic, shared utilities)" \
-        "Unit Testing"
-    
-    # Run integration tests only (not the comprehensive suite to avoid double counting)
-    echo -e "${BOLD}${MAGENTA}═══ INTEGRATION TESTS ═══${NC}"
-    echo ""
-    
-    run_test_suite \
-        "Entrypoint Integration Tests" \
-        "$SCRIPT_DIR/integration/test-entrypoint-integration.sh" \
-        "Testing complete entrypoint workflow with mock data and API simulation" \
-        "Integration Testing"
 
-    if [[ $RUN_WORKFLOWS == "true" ]]; then
-        echo -e "${BOLD}${MAGENTA}═══ WORKFLOW TESTS ═══${NC}"
-        echo ""
-
-        run_test_suite \
-            "PR Enhance Workflow Step" \
-            "$SCRIPT_DIR/workflows/test-pr-enhance-update-step.sh" \
-            "Testing quoting logic in pr-enhance workflow update step" \
-            "Workflow Testing"
-    fi
-    
-    # Generate final comprehensive report
-    generate_comprehensive_report
-}
 
 generate_comprehensive_report() {
     local end_time=$(date +%s)
@@ -219,7 +187,7 @@ generate_comprehensive_report() {
     # Execution summary
     echo -e "${BOLD}⏱️  Execution Summary:${NC}"
     echo -e "   Duration: ${minutes}m ${seconds}s"
-    echo -e "   Start Time: $(date -r $START_TIME '+%Y-%m-%d %H:%M:%S')"
+    echo -e "   Start Time: $(date -d "@$START_TIME" '+%Y-%m-%d %H:%M:%S')"
     echo -e "   End Time: $(date '+%Y-%m-%d %H:%M:%S')"
     echo ""
     
@@ -332,7 +300,7 @@ show_help() {
     echo "  📁 processors/           - Individual processor unit tests"
     echo "  📁 integration/          - End-to-end integration tests"
     echo "  📁 workflows/            - Workflow logic tests"
-    echo "  📁 fixtures/               - Mock data for testing"
+    echo "  📁 fixtures/               - Test fixture data (JSON/TXT)"
     echo ""
     echo -e "${BOLD}COVERAGE:${NC}"
     echo "  • Changelog generation processor"
@@ -340,6 +308,11 @@ show_help() {
     echo "  • Generic content processor"
     echo "  • Shared utility functions"
     echo "  • Workflow update steps"
+    echo "  • PR metadata collection with conventional commit analysis"
+    echo "  • PR label determination based on commit type counts"
+    echo "  • PR label application and auto-assignment operations"
+    echo "  • Release PR verification logic"
+    echo "  • Release PR state synchronization"
     echo "  • Complete entrypoint workflow"
     echo "  • Mock API data pipeline"
     echo "  • Error handling scenarios"
@@ -424,7 +397,51 @@ main() {
 
         if [[ $RUN_WORKFLOWS == "true" ]]; then
             echo -n "Workflows: "
-            if ./workflows/test-pr-enhance-update-step.sh >/dev/null 2>&1; then
+            local workflow_exit=0
+            if ! ./workflows/pr-enhance/test-pr-enhance-update-step.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
+            if ! ./workflows/release-prepare/test-release-prepare-changelog-update.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
+            if ! ./workflows/release-prepare/test-release-prepare-semver-bump.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
+            if ! ./workflows/release-prepare/test-release-prepare-openai-vars.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
+            if ! ./workflows/pr-enhance/test-collect-pr-metadata.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
+            if ! ./workflows/pr-enhance/test-determine-pr-labels.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
+            if ! ./workflows/pr-enhance/test-apply-pr-labels.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
+            if ! ./workflows/pr-enhance/test-post-commit-feedback.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
+            if ! ./workflows/release-pr/test-release-pr-verification.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
+            if ! ./workflows/release-pr/test-release-pr-sync.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
+            if ! ./workflows/release-pr/test-extract-changelog-entry.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
+            if ! ./workflows/release-pr/test-manage-release-pr.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
+            if ! ./workflows/release-notes/test-manage-github-release.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
+            if ! ./workflows/release-notes/test-determine-version.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
+            
+            if [[ $workflow_exit -eq 0 ]]; then
                 echo -e "${GREEN}PASS${NC}"
             else
                 echo -e "${RED}FAIL${NC}"
@@ -467,6 +484,95 @@ main() {
                 "$SCRIPT_DIR/integration/test-entrypoint-integration.sh" \
                 "Testing complete entrypoint workflow with mock data and API simulation" \
                 "Integration Testing"
+        fi
+
+        if [[ $RUN_WORKFLOWS == "true" ]]; then
+            echo -e "${BOLD}${MAGENTA}═══ WORKFLOW TESTS ═══${NC}"
+            echo ""
+
+            run_test_suite \
+                "PR Enhance Workflow Step" \
+                "$SCRIPT_DIR/workflows/pr-enhance/test-pr-enhance-update-step.sh" \
+                "Testing quoting logic in pr-enhance workflow update step" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "Release Prepare Changelog Update" \
+                "$SCRIPT_DIR/workflows/release-prepare/test-release-prepare-changelog-update.sh" \
+                "Testing changelog update logic in release-prepare workflow" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "Release Prepare Semver Bump" \
+                "$SCRIPT_DIR/workflows/release-prepare/test-release-prepare-semver-bump.sh" \
+                "Testing semver bump type determination based on commit message analysis" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "Release Prepare OpenAI Variables" \
+                "$SCRIPT_DIR/workflows/release-prepare/test-release-prepare-openai-vars.sh" \
+                "Testing OpenAI variables preparation with multi-line content handling and base64 encoding" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "PR Metadata Collection" \
+                "$SCRIPT_DIR/workflows/pr-enhance/test-collect-pr-metadata.sh" \
+                "Testing PR metadata collection with conventional commit analysis" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "PR Label Determination" \
+                "$SCRIPT_DIR/workflows/pr-enhance/test-determine-pr-labels.sh" \
+                "Testing PR label determination logic based on commit type counts and percentages" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "PR Label Application" \
+                "$SCRIPT_DIR/workflows/pr-enhance/test-apply-pr-labels.sh" \
+                "Testing PR label application and auto-assignment with GitHub CLI operations" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "PR Commit Quality Feedback" \
+                "$SCRIPT_DIR/workflows/pr-enhance/test-post-commit-feedback.sh" \
+                "Testing commit quality feedback posting with percentage calculations and GitHub CLI operations" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "Release PR Verification" \
+                "$SCRIPT_DIR/workflows/release-pr/test-release-pr-verification.sh" \
+                "Testing commit verification and version validation logic in release-pr workflow" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "Release PR State Synchronization" \
+                "$SCRIPT_DIR/workflows/release-pr/test-release-pr-sync.sh" \
+                "Testing state synchronization and debug output in release-pr workflow" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "Changelog Entry Extraction" \
+                "$SCRIPT_DIR/workflows/release-pr/test-extract-changelog-entry.sh" \
+                "Testing changelog entry extraction logic with various formats and edge cases" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "Release PR Management" \
+                "$SCRIPT_DIR/workflows/release-pr/test-manage-release-pr.sh" \
+                "Testing release PR creation and update logic with comprehensive mocking and error handling" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "GitHub Release Management" \
+                "$SCRIPT_DIR/workflows/release-notes/test-manage-github-release.sh" \
+                "Testing GitHub release creation and update logic with comprehensive validation and mocking" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "Version Determination" \
+                "$SCRIPT_DIR/workflows/release-notes/test-determine-version.sh" \
+                "Testing version determination logic with trigger-based conditional handling and validation" \
+                "Workflow Testing"
         fi
         
         generate_comprehensive_report

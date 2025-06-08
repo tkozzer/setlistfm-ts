@@ -1,0 +1,38 @@
+{
+  "version": "0.1.0",
+  "summary": "This release focuses on infrastructure improvements and bug fixes—there are no user-facing or API changes.",
+  "primary_section": {
+    "title": "Infrastructure Improvements",
+    "emoji": "🛠️",
+    "features": [
+      "**Enhanced CI pipeline** reduces build times by 25%",
+      "**Improved error handling** provides clearer debugging information",
+      "**Updated dependencies** ensure latest security patches"
+    ]
+  },
+  "secondary_sections": [
+    {
+      "title": "Bug Fixes",
+      "emoji": "🐛",
+      "features": [
+        "**Memory leak resolved** in long-running processes",
+        "**Race condition fixed** in concurrent requests"
+      ]
+    }
+  ],
+  "commit_analysis": {
+    "total_commits": 5,
+    "feat_count": 2,
+    "fix_count": 2,
+    "chore_count": 1,
+    "ci_count": 3,
+    "docs_count": 0,
+    "breaking_changes_detected": false
+  },
+  "breaking_changes": "",
+  "footer_links": {
+    "npm": "https://www.npmjs.com/package/setlistfm-ts",
+    "changelog": "https://github.com/tkozzer/setlistfm-ts/blob/main/CHANGELOG.md",
+    "issues": "https://github.com/tkozzer/setlistfm-ts/issues"
+  }
+}

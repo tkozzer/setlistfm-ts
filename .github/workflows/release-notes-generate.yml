@@ -1,0 +1,96 @@
+# 📝 Generate Release Notes using OpenAI
+
+name: 📝 Release Notes Generate
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Target version
+        required: true
+  workflow_run:
+    workflows: [🔄 Release Preparation]
+    types: [completed]
+    branches: [preview]
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-4o-mini' }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🛠️ Setup Node & pnpm
+        uses: ./.github/actions/setup-node-pnpm
+        with:
+          node-version: 22.x
+
+      - name: 📦 Determine version
+        id: version
+        run: |
+          VERSION=$(.github/scripts/release-notes/determine-version.sh \
+            --trigger-type "${{ github.event_name }}" \
+            --manual-version "${{ github.event.inputs.version || '' }}" \
+            --verbose)
+          echo "ver=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: 📝 Prepare basic variables
+        id: vars
+        run: |
+          TEMPLATE_VARS="VERSION=${{ steps.version.outputs.ver }}"
+          echo "template_vars=$TEMPLATE_VARS" >> "$GITHUB_OUTPUT"
+
+      - name: 🤖 Generate release notes
+        id: ai
+        uses: ./.github/actions/openai-chat
+        with:
+          openai_api_key: ${{ env.OPENAI_API_KEY }}
+          system-path: .github/prompts/release-notes.sys.md
+          template-path: .github/prompts/release-notes.user.md
+          schema-path: .github/schema/release-notes.schema.json
+          output-path: .github/templates/release-notes.tmpl.md
+          vars: ${{ steps.vars.outputs.template_vars }}
+          model: ${{ env.OPENAI_MODEL }}
+          temperature: 0.2
+          max-tokens: 1200
+
+      - name: 📤 Save release notes
+        run: |
+          printf '%s' "${{ steps.ai.outputs.formatted_content }}" > release-notes.md
+
+      - name: 📝 Fallback if AI fails
+        if: steps.ai.outputs.formatted_content == '' && steps.ai.outputs.content == ''
+        run: |
+          echo "# 🎉 setlistfm-ts v${{ steps.version.outputs.ver }}" > release-notes.md
+          echo "" >> release-notes.md
+          echo "Automated release notes generation failed. Please refer to CHANGELOG.md for details." >> release-notes.md
+
+      - name: ✅ Validate notes
+        run: |
+          grep -q "setlistfm-ts" release-notes.md
+
+      - name: 📤 Upload release notes
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: release-notes.md
+
+      - name: 🚀 Create/Update GitHub Release
+        if: env.GH_TOKEN != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          .github/scripts/release-notes/manage-github-release.sh \
+            --version "${{ steps.version.outputs.ver }}" \
+            --notes-file "release-notes.md" \
+            --verbose

@@ -1,0 +1,214 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+---
+description: Comprehensive guide for creating release notes for setlistfm-ts
+alwaysApply: false
+---
+
+# Release Notes Creation Guide for setlistfm-ts
+
+This rule defines the complete process for creating professional, consistent release notes that match the established patterns and tone of the setlistfm-ts project.
+
+---
+
+## 📋 Information Requirements
+
+### Required Data Sources
+
+1. **Changelog entry** from `CHANGELOG.md` for the target version
+2. **Git commit messages** between the previous version and current version
+3. **Existing GitHub release notes** for format consistency
+4. **Version type** (major, minor, patch) for appropriate messaging
+
+### Data Collection Commands
+
+```bash
+# Get changelog entry for specific version
+grep -A 50 "## \[X.X.X\]" CHANGELOG.md
+
+# Get commit messages between versions
+git log --pretty=format:"%h %s" vX.X.X..vY.Y.Y
+git log --oneline vX.X.X..vY.Y.Y
+
+# Get existing GitHub release notes for reference
+curl -s "https://api.github.com/repos/tkozzer/setlistfm-ts/releases" | jq -r '.[] | "\(.tag_name) - \(.name)\n\(.body)\n---"'
+
+# Get latest release notes specifically
+curl -s "https://api.github.com/repos/tkozzer/setlistfm-ts/releases/tags/vX.X.X" | jq -r '.body'
+```
+
+---
+
+## 🎯 Format Structure
+
+### Header Pattern
+
+```markdown
+# 🎉 setlistfm-ts vX.X.X
+
+[One-sentence summary describing the focus of this release]—there are no user-facing or API changes.
+```
+
+**Header Rules:**
+
+- Always start with `# 🎉 setlistfm-ts vX.X.X`
+- Include release type context (minor release, major release, patch release)
+- For non-breaking releases, end with "—there are no user-facing or API changes"
+- For breaking releases, highlight what changes
+- Keep summary focused on primary theme (CI/CD, features, infrastructure, etc.)
+
+### Content Sections
+
+#### 1. Primary Feature/Theme Section
+
+```markdown
+## 🔥 [Theme Name] (use appropriate emoji)
+
+- **[Feature Name]**
+  [Detailed description explaining what was added/changed and why it matters]
+
+- **[Feature Name]**
+  [Detailed description with technical details and benefits]
+```
+
+**Section Patterns by Release Type:**
+
+- **CI/CD focused**: 🤖 AI-Powered CI/CD, 🛠️ Release & CI/CD, 🔧 Workflow Modernization
+- **Infrastructure**: 🏗️ Infrastructure, 🛠️ Infrastructure Improvements
+- **Features**: ✨ New Features, 🚀 Feature Enhancements
+- **Bug fixes**: 🐛 Bug Fixes, 🔧 Fixes & Improvements
+
+#### 2. Secondary Sections (2-3 additional sections as needed)
+
+Follow same pattern with appropriate emojis and grouping:
+
+- 🔄 Workflow Clean-up & Standardization
+- 🛠️ Infrastructure Improvements
+- 🐛 Bug Fixes & Stability
+- 📚 Documentation & Examples
+
+#### 3. Breaking Changes Section (when applicable)
+
+```markdown
+## 🔒 No Breaking Changes
+
+The SDK code, public APIs, and npm package contents remain exactly the same—upgrade with confidence, your existing integration will continue to work.
+```
+
+OR for breaking changes:
+
+```markdown
+## ⚠️ Breaking Changes
+
+- **[Change Description]**
+  [Migration guidance]
+```
+
+#### 4. Standard Footer
+
+```markdown
+---
+
+**Links**
+
+- 📦 npm: https://www.npmjs.com/package/setlistfm-ts
+- 📖 Full Changelog: https://github.com/tkozzer/setlistfm-ts/blob/main/CHANGELOG.md
+- 🐛 Issues: https://github.com/tkozzer/setlistfm-ts/issues
+
+Thank you for using **setlistfm-ts**! 🙏
+```
+
+---
+
+## 📝 Content Guidelines
+
+### Writing Style
+
+- **Present tense, third-person**: "Introduces", "Adds", "Fixes"
+- **Professional but approachable**: Technical accuracy with friendly tone
+- **Focus on benefits**: Explain _why_ changes matter, not just _what_ changed
+- **Consistent terminology**: Use the same terms as previous releases
+
+### Bullet Point Format
+
+```markdown
+- **Bold feature name**
+  Descriptive explanation focusing on user benefits and technical improvements.
+```
+
+### Technical Detail Level
+
+- **High-level overview**: Don't get lost in implementation details
+- **User-focused benefits**: Explain how changes improve experience
+- **Grouping by theme**: Related changes grouped under logical sections
+- **Specific improvements**: Mention concrete fixes and enhancements
+
+### Emojis & Visual Elements
+
+- **Section headers**: Use meaningful emojis (🤖, 🛠️, 🔧, ✨, 🐛)
+- **Consistent usage**: Same emojis for similar content types across releases
+- **Visual separation**: `---` dividers between major sections
+- **Links section**: Use emoji bullets for visual appeal
+
+---
+
+## 🔄 Process Workflow
+
+### Step 1: Analyze Sources
+
+1. Read the changelog entry for the target version
+2. Review git commits between versions for context
+3. Identify primary themes and group related changes
+4. Check previous release notes for tone and format consistency
+
+### Step 2: Structure Content
+
+1. Write the header with version and primary theme
+2. Group changes into 2-4 logical sections with appropriate emojis
+3. Write bullet points focusing on user benefits
+4. Add breaking changes section (or no breaking changes statement)
+5. Include standard footer with links
+
+### Step 3: Quality Check
+
+1. **Consistency**: Format matches previous releases
+2. **Completeness**: All major changes are covered
+3. **Clarity**: Technical changes explained in user-friendly terms
+4. **Tone**: Professional but approachable, matching project voice
+5. **Length**: Comprehensive but not overwhelming (aim for readable in 2-3 minutes)
+
+---
+
+## 📚 Reference Examples
+
+### Minor Release (Infrastructure Focus)
+
+- v0.6.0: AI-Powered CI/CD Enhancements
+- v0.5.0: Release & CI/CD Enhancements
+
+### Major Feature Release
+
+- v0.1.8: First Official Release with comprehensive features
+
+### Common Section Patterns
+
+- **CI/CD releases**: 🤖 AI-Powered, 🛠️ Release & CI/CD, 🔧 Workflow Modernization
+- **Feature releases**: ✨ New Features, 🚀 Enhancements, 📚 Documentation
+- **Infrastructure**: 🏗️ Infrastructure, 🛠️ Improvements, 🔒 Security
+
+---
+
+## ⚡ Quick Checklist
+
+- [ ] Header follows `# 🎉 setlistfm-ts vX.X.X` pattern
+- [ ] One-sentence summary explains release focus
+- [ ] Changes grouped into 2-4 logical sections with emojis
+- [ ] Each bullet point has **bold title** and descriptive text
+- [ ] Breaking changes section included (or "No Breaking Changes")
+- [ ] Standard footer with all required links
+- [ ] Tone matches previous releases (professional but friendly)
+- [ ] Technical improvements explained with user benefits
+- [ ] Format consistent with existing GitHub releases

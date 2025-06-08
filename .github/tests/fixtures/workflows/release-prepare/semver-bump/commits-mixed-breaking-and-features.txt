@@ -1,0 +1,8 @@
+a1b2c3d feat: add user notifications system
+b2c3d4e fix: resolve database connection timeout
+c3d4e5f feat(api): implement rate limiting
+
+BREAKING CHANGE: API rate limiting now requires authentication headers that were previously optional.
+
+d4e5f6g feat: add export functionality
+e5f6g7h docs: update changelog format 
