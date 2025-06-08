@@ -1,0 +1,14 @@
+feat(auth): add OAuth2 authentication support
+feat(cache): implement Redis caching layer  
+feat(types): add TypeScript strict mode compliance
+fix(memory): resolve memory leaks in long-running processes
+fix(unicode): handle special characters in venue names
+chore(deps): update all dependencies to latest versions
+ci(testing): migrate from Jest to Vitest
+ci(workflow): add automated security scanning
+docs(readme): update installation instructions
+docs(api): add comprehensive API documentation
+refactor(api): redesign core API for better DX
+perf(cache): optimize query performance by 40%
+test(integration): add end-to-end API tests
+style(lint): fix ESLint formatting issues

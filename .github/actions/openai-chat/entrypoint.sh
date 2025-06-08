@@ -116,6 +116,8 @@ if [[ ${OPENAI_TEST_MODE:-false} == "true" ]]; then
       MOCK_FILE="$MOCK_DIR/pr-enhancement.json"
     elif [[ $OUTPUT =~ pr-description ]]; then
       MOCK_FILE="$MOCK_DIR/pr-description.json"
+    elif [[ $OUTPUT =~ release-notes ]]; then
+      MOCK_FILE="$MOCK_DIR/release-notes.json"
     else
       MOCK_FILE="$MOCK_DIR/generic.json"
     fi
@@ -127,6 +129,8 @@ if [[ ${OPENAI_TEST_MODE:-false} == "true" ]]; then
       MOCK_FILE="$MOCK_DIR/pr-enhancement.json"
     elif [[ $TEMPLATE =~ pr-description ]]; then
       MOCK_FILE="$MOCK_DIR/pr-description.json"
+    elif [[ $TEMPLATE =~ release-notes ]]; then
+      MOCK_FILE="$MOCK_DIR/release-notes.json"
     else
       MOCK_FILE="$MOCK_DIR/generic.json"
     fi
