@@ -7,25 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.7.1] - 2025-06-08
-
-### Added
-
-- Introduced a comprehensive 'Automated Workflows' section in the README.md to enhance understanding of development and release automation processes.
-- Created AGENTS.md to provide detailed guidance for AI agents, covering project structure, API patterns, TypeScript standards, testing requirements, and rate limiting guidelines.
-
-### Changed
-
-- Enhanced documentation in CONTRIBUTING.md with specific references to workflow files for better navigation and clarity on automated development processes.
-- Improved rate limiter coverage in the codebase to ensure better handling of API requests.
-
-### Fixed
-
-- Resolved a quoting error in the pr-enhance workflow to prevent unexpected end-of-file issues.
-- Fixed formatting issues in AGENTS.md by changing interface to type and reordering imports for consistency.
-
----
-
 ## [0.7.0] - 2025-06-07
 
 ### Added
