@@ -127,23 +127,36 @@ jobs:
       # 6️⃣  Write / prepend the new entry to CHANGELOG.md                    #
       # --------------------------------------------------------------------- #
       - name: 📝 Update CHANGELOG.md
+        env:
+          FORMATTED_CONTENT: ${{ steps.changelog.outputs.formatted_content }}
+          RAW_CONTENT: ${{ steps.changelog.outputs.content }}
         run: |
           VER=${{ steps.version.outputs.version }}
           TODAY=$(date +%Y-%m-%d)
 
-          # Use formatted content if available, otherwise fall back to raw content
-          if [ -n "${{ steps.changelog.outputs.formatted_content }}" ]; then
-            CHANGELOG_CONTENT="${{ steps.changelog.outputs.formatted_content }}"
+          # Use environment variables to safely handle multi-line content
+          if [ -n "${FORMATTED_CONTENT}" ]; then
+            echo "${FORMATTED_CONTENT}" > changelog_entry.txt
+          elif [ -n "${RAW_CONTENT}" ]; then
+            echo "${RAW_CONTENT}" > changelog_entry.txt
           else
-            CHANGELOG_CONTENT="${{ steps.changelog.outputs.content }}"
+            # Fallback if OpenAI fails completely
+            echo "## [${VER}] - ${TODAY}" > changelog_entry.txt
+            echo "" >> changelog_entry.txt
+            echo "### Changed" >> changelog_entry.txt
+            echo "" >> changelog_entry.txt
+            echo "- Release notes generation failed. Please refer to commit history for details." >> changelog_entry.txt
           fi
 
-          # The formatted output already includes the ## [version] - date header
-          # So we can use it directly, just add a separator
-          ENTRY="$CHANGELOG_CONTENT\n\n---\n"
+          # Add separator after the entry
+          echo "" >> changelog_entry.txt
+          echo "---" >> changelog_entry.txt
+          echo "" >> changelog_entry.txt
 
-          { head -n 9 CHANGELOG.md; echo -e "$ENTRY"; tail -n +10 CHANGELOG.md; } > CHANGELOG.tmp
+          # Insert the new entry after the --- separator (line 5) and before the first version entry
+          { head -n 5 CHANGELOG.md; echo ""; cat changelog_entry.txt; tail -n +6 CHANGELOG.md; } > CHANGELOG.tmp
           mv CHANGELOG.tmp CHANGELOG.md
+          rm changelog_entry.txt
 
       # --------------------------------------------------------------------- #
       # 7️⃣  Commit & push                                                    #

@@ -42,7 +42,7 @@ print_banner() {
     echo -e "${BOLD}${BLUE}🔍 Test Discovery:${NC}"
     echo -e "   📁 Processors: $(find processors/ -name "test-*.sh" | wc -l | tr -d ' ') test scripts"
     echo -e "   🔗 Integration: $(find integration/ -name "test-*.sh" | wc -l | tr -d ' ') test scripts"
-    echo -e "   🏗  Workflows: $(find workflows/ -name "test-*.sh" | wc -l | tr -d ' ' ) test scripts"
+    echo -e "   🏗  Workflows: $(find workflows/ -name "test-*.sh" | wc -l | tr -d ' ') test scripts"
     echo -e "   📊 Mock Files: $(find fixtures/ -name "*.json" -o -name "*.txt" | wc -l | tr -d ' ') mock data files"
     echo ""
 }
@@ -139,6 +139,7 @@ verify_test_environment() {
         "integration/test-entrypoint-all.sh"
         "integration/test-entrypoint-integration.sh"
         "workflows/test-pr-enhance-update-step.sh"
+        "workflows/test-release-prepare-changelog-update.sh"
     )
     
     for script in "${key_scripts[@]}"; do
@@ -164,47 +165,7 @@ verify_test_environment() {
     echo ""
 }
 
-run_all_tests() {
-    print_banner
-    verify_test_environment
-    
-    echo -e "${BOLD}${CYAN}🚀 Starting comprehensive test execution...${NC}"
-    echo ""
-    
-    # Run individual processor tests
-    echo -e "${BOLD}${MAGENTA}═══ PROCESSOR TESTS ═══${NC}"
-    echo ""
-    
-    run_test_suite \
-        "Individual Processor Tests" \
-        "$SCRIPT_DIR/processors/test-all-processors.sh" \
-        "Testing all individual processors (changelog, pr-enhance, generic, shared utilities)" \
-        "Unit Testing"
-    
-    # Run integration tests only (not the comprehensive suite to avoid double counting)
-    echo -e "${BOLD}${MAGENTA}═══ INTEGRATION TESTS ═══${NC}"
-    echo ""
-    
-    run_test_suite \
-        "Entrypoint Integration Tests" \
-        "$SCRIPT_DIR/integration/test-entrypoint-integration.sh" \
-        "Testing complete entrypoint workflow with mock data and API simulation" \
-        "Integration Testing"
 
-    if [[ $RUN_WORKFLOWS == "true" ]]; then
-        echo -e "${BOLD}${MAGENTA}═══ WORKFLOW TESTS ═══${NC}"
-        echo ""
-
-        run_test_suite \
-            "PR Enhance Workflow Step" \
-            "$SCRIPT_DIR/workflows/test-pr-enhance-update-step.sh" \
-            "Testing quoting logic in pr-enhance workflow update step" \
-            "Workflow Testing"
-    fi
-    
-    # Generate final comprehensive report
-    generate_comprehensive_report
-}
 
 generate_comprehensive_report() {
     local end_time=$(date +%s)
@@ -428,7 +389,15 @@ main() {
 
         if [[ $RUN_WORKFLOWS == "true" ]]; then
             echo -n "Workflows: "
-            if ./workflows/test-pr-enhance-update-step.sh >/dev/null 2>&1; then
+            local workflow_exit=0
+            if ! ./workflows/test-pr-enhance-update-step.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
+            if ! ./workflows/test-release-prepare-changelog-update.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
+            
+            if [[ $workflow_exit -eq 0 ]]; then
                 echo -e "${GREEN}PASS${NC}"
             else
                 echo -e "${RED}FAIL${NC}"
@@ -471,6 +440,23 @@ main() {
                 "$SCRIPT_DIR/integration/test-entrypoint-integration.sh" \
                 "Testing complete entrypoint workflow with mock data and API simulation" \
                 "Integration Testing"
+        fi
+
+        if [[ $RUN_WORKFLOWS == "true" ]]; then
+            echo -e "${BOLD}${MAGENTA}═══ WORKFLOW TESTS ═══${NC}"
+            echo ""
+
+            run_test_suite \
+                "PR Enhance Workflow Step" \
+                "$SCRIPT_DIR/workflows/test-pr-enhance-update-step.sh" \
+                "Testing quoting logic in pr-enhance workflow update step" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "Release Prepare Changelog Update" \
+                "$SCRIPT_DIR/workflows/test-release-prepare-changelog-update.sh" \
+                "Testing changelog update logic in release-prepare workflow" \
+                "Workflow Testing"
         fi
         
         generate_comprehensive_report
