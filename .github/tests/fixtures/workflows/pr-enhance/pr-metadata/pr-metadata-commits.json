@@ -85,7 +85,7 @@
       ],
       "expected": {
         "total": 5,
-        "conv": 7,
+        "conv": 5,
         "feat": 2,
         "fix": 1,
         "docs": 0,
@@ -132,7 +132,7 @@
       ],
       "expected": {
         "total": 6,
-        "conv": 8,
+        "conv": 6,
         "feat": 2,
         "fix": 1,
         "docs": 0,

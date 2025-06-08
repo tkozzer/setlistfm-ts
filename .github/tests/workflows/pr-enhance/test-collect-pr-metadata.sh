@@ -272,6 +272,30 @@ setup_empty_range() {
     export TEST_MODE="true"
 }
 
+setup_double_counting_fix() {
+    # Create initial commit
+    echo "Initial" > README.md
+    git add README.md
+    git commit -m "initial setup" --quiet
+    local base_sha=$(git rev-parse HEAD)
+    
+    # Create commits that would trigger the double-counting bug:
+    # These commits match multiple patterns but should only be counted once in conv total
+    echo "ci-fix" > ci-fix.txt && git add ci-fix.txt && git commit -m "fix(ci): resolve workflow issue" --quiet
+    echo "build-chore" > build-chore.txt && git add build-chore.txt && git commit -m "chore(build): update dependencies" --quiet
+    echo "test-feat" > test-feat.txt && git add test-feat.txt && git commit -m "feat(test): add new test utilities" --quiet
+    
+    local head_sha=$(git rev-parse HEAD)
+    
+    export PR_NUMBER="404"
+    export PR_TITLE="Double counting fix test"
+    export PR_BODY="Testing that commits matching multiple patterns don't cause conv > total"
+    export BASE_SHA="$base_sha"
+    export HEAD_SHA="$head_sha"
+    export OUTPUT_FILE="output.txt"
+    export TEST_MODE="true"
+}
+
 # Test using fixture scenario data
 test_fixture_scenario() {
     local scenario_name="$1"
@@ -532,9 +556,10 @@ check_scoped_commits() {
         return 1
     fi
     
-    # Total conventional: feat(2) + fix(1) + refactor(1) + chore(1) + ci(2) = 7
-    if ! grep -q "^conv=7$" output.txt; then
-        echo "Wrong conventional total for scoped commits (expected 7)"
+    # Total conventional: 5 unique commits (all are conventional format)
+    # Note: We don't sum individual categories anymore to avoid double-counting
+    if ! grep -q "^conv=5$" output.txt; then
+        echo "Wrong conventional total for scoped commits (expected 5)"
         cat output.txt
         return 1
     fi
@@ -583,6 +608,75 @@ check_empty_range() {
         return 1
     fi
     
+    return 0
+}
+
+check_double_counting_fix() {
+    if [[ ! -f output.txt ]]; then
+        echo "Output file not created"
+        return 1
+    fi
+    
+    # Extract values from output
+    local total conv feat fix chore ci
+    total=$(grep "^total=" output.txt | cut -d= -f2)
+    conv=$(grep "^conv=" output.txt | cut -d= -f2)
+    feat=$(grep "^feat=" output.txt | cut -d= -f2)
+    fix=$(grep "^fix=" output.txt | cut -d= -f2)
+    chore=$(grep "^chore=" output.txt | cut -d= -f2)
+    ci=$(grep "^ci=" output.txt | cut -d= -f2)
+    
+    # We created 3 commits total
+    if [[ "$total" != "3" ]]; then
+        echo "Expected total=3, got total=$total"
+        cat output.txt
+        return 1
+    fi
+    
+    # Critical test: conventional count should never exceed total count
+    if [[ "$conv" -gt "$total" ]]; then
+        echo "CRITICAL: Conventional count ($conv) exceeds total count ($total) - this is the bug we're fixing!"
+        cat output.txt
+        return 1
+    fi
+    
+    # All 3 commits are conventional format, so conv should equal total
+    if [[ "$conv" != "3" ]]; then
+        echo "Expected conv=3 (all commits are conventional), got conv=$conv"
+        cat output.txt
+        return 1
+    fi
+    
+    # Check individual type counts
+    # fix(ci) should count as both fix=1 and ci=1
+    if [[ "$fix" != "1" ]]; then
+        echo "Expected fix=1 from 'fix(ci): resolve workflow issue', got fix=$fix"
+        cat output.txt
+        return 1
+    fi
+    
+    # chore(build) should count as both chore=1 and ci=1 (build is ci)
+    if [[ "$chore" != "1" ]]; then
+        echo "Expected chore=1 from 'chore(build): update dependencies', got chore=$chore"
+        cat output.txt
+        return 1
+    fi
+    
+    # feat(test) should count as feat=1
+    if [[ "$feat" != "1" ]]; then
+        echo "Expected feat=1 from 'feat(test): add new test utilities', got feat=$feat"
+        cat output.txt
+        return 1
+    fi
+    
+    # Both fix(ci) and chore(build) should contribute to ci count = 2
+    if [[ "$ci" != "2" ]]; then
+        echo "Expected ci=2 from 'fix(ci)' and 'chore(build)', got ci=$ci"
+        cat output.txt
+        return 1
+    fi
+    
+    echo "✅ Double counting fix verified: conv=$conv <= total=$total"
     return 0
 }
 
@@ -654,6 +748,7 @@ main() {
     run_test "Scoped commits" setup_scoped_commits check_scoped_commits
     run_test "Breaking changes" setup_breaking_changes check_breaking_changes
     run_test "Empty commit range" setup_empty_range check_empty_range
+    run_test "Double counting fix (conv <= total)" setup_double_counting_fix check_double_counting_fix
     
     echo ""
     echo -e "${BLUE}📈 Test Summary${NC}"
