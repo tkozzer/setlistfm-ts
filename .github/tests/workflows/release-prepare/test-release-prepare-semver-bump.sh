@@ -165,6 +165,53 @@ test_error_condition() {
   fi
 }
 
+# Test stdout/stderr separation (critical for GitHub Actions workflow)
+test_stdout_stderr_separation() {
+  local name="$1"
+  local input_commits="$2"
+  local expected_type="$3"
+  
+  total_tests=$((total_tests + 1))
+  
+  # Capture stdout only (like GitHub Actions does with command substitution)
+  local stdout_only
+  if stdout_only=$(RAW="$input_commits" "$SCRIPTS_DIR/determine-semver-bump.sh" 2>/dev/null); then
+    # Check that stdout contains only the type=X line (no debug messages)
+    if [[ "$stdout_only" == "type=$expected_type" ]]; then
+      echo "✅ $name (stdout separation)"
+      passed_tests=$((passed_tests + 1))
+    else
+      echo "❌ $name (stdout separation)"
+      echo "Expected stdout: 'type=$expected_type'"
+      echo "Actual stdout: '$stdout_only'"
+    fi
+  else
+    echo "❌ $name (script failed)"
+  fi
+  
+  # Additional test: verify stderr contains debug messages but stdout doesn't
+  total_tests=$((total_tests + 1))
+  local stderr_content
+  local stdout_content
+  {
+    stdout_content=$(RAW="$input_commits" "$SCRIPTS_DIR/determine-semver-bump.sh" 2>/tmp/stderr_capture)
+    stderr_content=$(cat /tmp/stderr_capture)
+    rm -f /tmp/stderr_capture
+  }
+  
+  # Check that stderr contains debug messages and stdout doesn't
+  if echo "$stderr_content" | grep -q "=== Semver Bump Analysis Debug ===" && 
+     ! echo "$stdout_content" | grep -q "=== Semver Bump Analysis Debug ==="; then
+    echo "✅ $name (stderr debug messages)"
+    passed_tests=$((passed_tests + 1))
+  else
+    echo "❌ $name (stderr debug messages)"
+    echo "Expected debug messages in stderr, clean output in stdout"
+    echo "Stderr contains debug: $(echo "$stderr_content" | grep -q "=== Semver Bump Analysis Debug ===" && echo "YES" || echo "NO")"
+    echo "Stdout contains debug: $(echo "$stdout_content" | grep -q "=== Semver Bump Analysis Debug ===" && echo "YES" || echo "NO")"
+  fi
+}
+
 echo "🧪 Testing determine-semver-bump.sh script"
 echo "============================================="
 
@@ -206,6 +253,11 @@ run_test "Feat in middle of line" "a1b2c3d some feat: not a feature" "patch"
 echo ""
 echo "⚠️  Error condition tests:"
 test_error_condition "No input provided" "true"
+
+# Test stdout/stderr separation
+echo ""
+echo "🔍 Stdout/stderr separation tests:"
+test_stdout_stderr_separation "Stdout/stderr separation" "a1b2c3d feat: add feature" "minor"
 
 # Summary
 echo ""
