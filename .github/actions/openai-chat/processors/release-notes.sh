@@ -13,6 +13,19 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/shared.sh"
 
 # --------------------------------------------------------------------------- #
+#  Helper function for conditional section replacement                        #
+# --------------------------------------------------------------------------- #
+replace_conditional_section() {
+  local template="$1"
+  local section_name="$2"
+  local new_content="$3"
+
+  # Use shared utilities instead of complex manual parsing
+  # This function should follow the same pattern as other processors
+  echo "$template" | sed "s/{{#if $section_name}}.*{{\/if}}/$new_content/g"
+}
+
+# --------------------------------------------------------------------------- #
 #  Input parameters (passed from entrypoint.sh)                               #
 # --------------------------------------------------------------------------- #
 CONTENT="$1"           # Raw JSON response from OpenAI
@@ -100,32 +113,12 @@ fi
 #  Process secondary_sections array                                           #
 # --------------------------------------------------------------------------- #
 if json_field_exists "$CONTENT" "secondary_sections"; then
-  sec_count=$(get_array_length "$CONTENT" "secondary_sections")
-  if [[ $sec_count -gt 0 ]]; then
-    sections=""
-    sec_temp=$(mktemp)
-    echo "$CONTENT" | jq -c '.secondary_sections[]' 2>/dev/null > "$sec_temp" || true
-    while IFS= read -r sec; do
-      [[ -z $sec ]] && continue
-      title=$(echo "$sec" | jq -r '.title // ""')
-      emoji=$(echo "$sec" | jq -r '.emoji // ""')
-      section="## $emoji $title"$'\n\n'
-      items_temp=$(mktemp)
-      echo "$sec" | jq -r '.features[]?' > "$items_temp" || true
-      while IFS= read -r item; do
-        [[ -z $item ]] && continue
-        section="${section}- ${item}"$'\n'
-      done < "$items_temp"
-      rm -f "$items_temp"
-      sections="${sections}${section}\n"
-    done < "$sec_temp"
-    rm -f "$sec_temp"
-    FORMATTED_CONTENT=$(replace_each_block "$FORMATTED_CONTENT" "secondary_sections" "$sections")
-    FORMATTED_CONTENT="${FORMATTED_CONTENT//\{\{#if secondary_sections\}\}/}"
-    FORMATTED_CONTENT=$(printf '%s' "$FORMATTED_CONTENT" | sed "0,/{{\\/if}}/s// /")
-  else
-    FORMATTED_CONTENT=$(remove_conditional_block "$FORMATTED_CONTENT" "secondary_sections")
+  sections_list=$(format_as_bullet_list "$CONTENT" "secondary_sections")
+  if [[ -n $sections_list ]]; then
+    FORMATTED_CONTENT=$(replace_each_block "$FORMATTED_CONTENT" "secondary_sections" "$sections_list")
   fi
+  FORMATTED_CONTENT="${FORMATTED_CONTENT//\{\{#if secondary_sections\}\}/}"
+  FORMATTED_CONTENT="${FORMATTED_CONTENT//\{\{\/if\}\}/}"
 else
   FORMATTED_CONTENT=$(remove_conditional_block "$FORMATTED_CONTENT" "secondary_sections")
 fi
@@ -135,22 +128,14 @@ fi
 # --------------------------------------------------------------------------- #
 breaking_changes=$(echo "$CONTENT" | jq -r '.breaking_changes // ""')
 breaking_detected=$(echo "$CONTENT" | jq -r '.commit_analysis.breaking_changes_detected // false')
-if [[ -n $breaking_changes && $breaking_changes != "null" ]]; then
+if [[ -n $breaking_changes && $breaking_changes != "null" ]] || [[ $breaking_detected == "true" ]]; then
+  # Has breaking changes - keep the breaking changes block
   FORMATTED_CONTENT="${FORMATTED_CONTENT//\{\{breaking_changes\}\}/$breaking_changes}"
-  # Remove outer conditional markers
   FORMATTED_CONTENT="${FORMATTED_CONTENT//\{\{#if (or breaking_changes commit_analysis.breaking_changes_detected)\}\}/}"
-  FORMATTED_CONTENT=$(printf '%s' "$FORMATTED_CONTENT" | sed "0,/{{else}}/s// /")
-  FORMATTED_CONTENT=$(printf '%s' "$FORMATTED_CONTENT" | sed "0,/{{\\/if}}/s// /")
+  FORMATTED_CONTENT="${FORMATTED_CONTENT//\{\{\/if\}\}/}"
 else
-  if [[ $breaking_detected == "true" ]]; then
-    FORMATTED_CONTENT="${FORMATTED_CONTENT//\{\{#if (or breaking_changes commit_analysis.breaking_changes_detected)\}\}/}"
-    FORMATTED_CONTENT="${FORMATTED_CONTENT//\{\{#if breaking_changes\}\}/}"
-    FORMATTED_CONTENT=$(printf '%s' "$FORMATTED_CONTENT" | sed "0,/{{\/if}}/s// /")
-    FORMATTED_CONTENT=$(printf '%s' "$FORMATTED_CONTENT" | sed "0,/{{else}}/s// /")
-    FORMATTED_CONTENT=$(printf '%s' "$FORMATTED_CONTENT" | sed "0,/{{\/if}}/s// /")
-  else
-    FORMATTED_CONTENT=$(replace_conditional_section "${FORMATTED_CONTENT}" "(or breaking_changes commit_analysis.breaking_changes_detected)" "## 🔒 No Breaking Changes\nThe SDK code, public APIs, and npm package contents remain exactly the same—upgrade with confidence, your existing integration will continue to work.")
-  fi
+  # No breaking changes - replace with "No Breaking Changes" section
+  FORMATTED_CONTENT=$(remove_conditional_block "$FORMATTED_CONTENT" "(or breaking_changes commit_analysis.breaking_changes_detected)")
 fi
 
 # --------------------------------------------------------------------------- #
@@ -163,36 +148,4 @@ FORMATTED_CONTENT=$(cleanup_handlebars "$FORMATTED_CONTENT" "$VARS")
 # --------------------------------------------------------------------------- #
 printf '%s' "$FORMATTED_CONTENT"
 
-# Replace a conditional section with new content
-replace_conditional_section() {
-  local template="$1"
-  local section_name="$2"
-  local new_content="$3"
-
-  local temp_file temp_output temp_content
-  temp_file=$(mktemp)
-  temp_output=$(mktemp)
-  temp_content=$(mktemp)
-
-  echo "$template" > "$temp_file"
-  echo "$new_content" > "$temp_content"
-
-  local start_line end_line
-  start_line=$(grep -n "{{#if $section_name}}" "$temp_file" | head -1 | cut -d: -f1)
-  end_line=$(awk -v start="$start_line" 'NR > start && /{{\/if}}/ {print NR; exit}' "$temp_file")
-
-  if [[ -n $start_line && -n $end_line ]]; then
-    {
-      head -n $((start_line - 1)) "$temp_file"
-      cat "$temp_content"
-      tail -n +$((end_line + 1)) "$temp_file"
-    } > "$temp_output"
-    template=$(cat "$temp_output")
-  else
-    template=$(cat "$temp_file")
-  fi
-
-  rm -f "$temp_file" "$temp_output" "$temp_content"
-  echo "$template"
-}
 
