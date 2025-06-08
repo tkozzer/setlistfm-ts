@@ -54,10 +54,10 @@ main() {
   # Check if content is valid JSON
   if echo "$content" | jq . >/dev/null 2>&1; then
     # JSON content - do structured processing
-    process_json_content "$processed_template" "$content"
+    process_json_content "$processed_template" "$content" "$vars"
   else
     # Non-JSON content - do simple replacement
-    process_plain_content "$processed_template" "$content"
+    process_plain_content "$processed_template" "$content" "$vars"
   fi
 }
 
@@ -65,6 +65,7 @@ main() {
 process_json_content() {
   local template="$1"
   local content="$2"
+  local vars="$3"
   local result="$template"
   
   # First, collect all {{field}} patterns from template and replace with values or empty strings
@@ -90,7 +91,10 @@ process_json_content() {
   
   # Replace {{content}} with the raw JSON
   result="${result//\{\{content\}\}/$content}"
-  
+
+  # Re-apply variables so they can override JSON fields
+  result=$(process_template_vars "$result" "$vars")
+
   printf '%s' "$result"
 }
 
@@ -98,10 +102,14 @@ process_json_content() {
 process_plain_content() {
   local template="$1"
   local content="$2"
-  
+  local vars="$3"
+
   # Just replace {{content}} with the raw content
   local result="${template//\{\{content\}\}/$content}"
-  
+
+  # Re-apply variables for consistency with JSON mode
+  result=$(process_template_vars "$result" "$vars")
+
   printf '%s' "$result"
 }
 
