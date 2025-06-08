@@ -1,0 +1,60 @@
+# 📝 Generate Release Notes using OpenAI
+
+name: 📝 Release Notes Generate
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Target version'
+        required: true
+  workflow_run:
+    workflows: [🔄 Release Preparation]
+    types: [completed]
+    branches: [preview]
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-4o-mini' }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🛠️ Setup Node & pnpm
+        uses: ./.github/actions/setup-node-pnpm
+        with:
+          node-version: 22.x
+
+      - name: 📦 Determine version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == 'workflow_dispatch' ]]; then
+            echo "ver=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "ver=$(node -p \"require('./package.json').version\")" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 📝 Generate release notes
+        id: notes
+        run: |
+          .github/processors/release-notes-processor.sh "${{ steps.version.outputs.ver }}" > release-notes.md
+
+      - name: ✅ Validate notes
+        run: |
+          grep -q "setlistfm-ts" release-notes.md
+
+      - name: 📤 Upload release notes
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: release-notes.md

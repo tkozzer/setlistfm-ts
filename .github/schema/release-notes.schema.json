@@ -1,0 +1,117 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Release Notes Schema",
+  "description": "Structured release notes format for setlistfm-ts",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Version number",
+      "pattern": "^v?\\d+\\.\\d+\\.\\d+(?:[-a-z0-9.]+)?$"
+    },
+    "summary": {
+      "type": "string",
+      "description": "One sentence summary of the release"
+    },
+    "primary_section": {
+      "type": "object",
+      "properties": {
+        "title": {"type": "string"},
+        "emoji": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4,
+          "description": "Section emoji (single emoji character)"
+        },
+        "features": {
+          "type": "array",
+          "items": {"type": "string"},
+          "minItems": 1
+        }
+      },
+      "required": ["title", "emoji", "features"],
+      "additionalProperties": false
+    },
+    "secondary_sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {"type": "string"},
+          "emoji": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4
+          },
+          "features": {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 1
+          }
+        },
+        "required": ["title", "emoji", "features"],
+        "additionalProperties": false
+      },
+      "default": []
+    },
+    "commit_analysis": {
+      "type": "object",
+      "description": "Detailed analysis of commit types and patterns from git history",
+      "properties": {
+        "total_commits": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of commits analyzed in this release"
+        },
+        "feat_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of feature commits (feat:)"
+        },
+        "fix_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of bug fix commits (fix:)"
+        },
+        "chore_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of maintenance commits (chore:)"
+        },
+        "ci_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of CI/CD commits (ci:)"
+        },
+        "docs_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of documentation commits (docs:)"
+        },
+        "breaking_changes_detected": {
+          "type": "boolean",
+          "description": "Whether breaking changes were found in commit messages or markers"
+        }
+      },
+      "required": ["total_commits", "breaking_changes_detected"],
+      "additionalProperties": false
+    },
+    "breaking_changes": {
+      "type": "string",
+      "description": "Breaking changes details or empty string if none",
+      "maxLength": 1000
+    },
+    "footer_links": {
+      "type": "object",
+      "properties": {
+        "npm": {"type": "string"},
+        "changelog": {"type": "string"},
+        "issues": {"type": "string"}
+      },
+      "required": ["npm", "changelog", "issues"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["version", "summary", "primary_section", "commit_analysis", "breaking_changes", "footer_links"],
+  "additionalProperties": false
+}
