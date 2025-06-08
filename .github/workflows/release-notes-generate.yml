@@ -44,10 +44,113 @@ jobs:
             echo "ver=$(node -p \"require('./package.json').version\")" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: 📝 Generate release notes
-        id: notes
+      - name: 📝 Prepare variables for OpenAI
+        id: vars
         run: |
-          .github/processors/release-notes-processor.sh "${{ steps.version.outputs.ver }}" > release-notes.md
+          VERSION="${{ steps.version.outputs.ver }}"
+          PREV_TAG=$(git tag --sort=-v:refname | grep -E '^v' | grep -v "^v${VERSION}$" | head -n1 || true)
+          [[ -z $PREV_TAG ]] && PREV_TAG="v0.0.0"
+
+          ESC_VER=$(printf '%s' "$VERSION" | sed 's/\./\\./g')
+          CHANGELOG_ENTRY=$(awk -v ver="$ESC_VER" '
+            $0 ~ "^## \[" ver "\]" {flag=1; next}
+            flag && /^## \[/ {exit}
+            flag {print}
+          ' CHANGELOG.md | sed '/^$/d')
+          [[ -z $CHANGELOG_ENTRY ]] && CHANGELOG_ENTRY="N/A"
+
+          if git rev-parse "$PREV_TAG" >/dev/null 2>&1; then
+            COMMITS=$(git log --pretty=format:'%h %s' "$PREV_TAG"..HEAD || true)
+          else
+            COMMITS=$(git log --pretty=format:'%h %s' HEAD || true)
+          fi
+          [[ -z $COMMITS ]] && COMMITS="No commits found"
+
+          declare -A counts=([feat]=0 [fix]=0 [chore]=0 [ci]=0 [docs]=0 [style]=0 [refactor]=0 [perf]=0 [test]=0 [other]=0)
+          BREAKING_FOUND=0
+          while IFS= read -r line; do
+            msg="${line#* }"
+            case "$msg" in
+              feat*:*) counts[feat]=$((counts[feat]+1)) ;;
+              fix*:*) counts[fix]=$((counts[fix]+1)) ;;
+              chore*:*) counts[chore]=$((counts[chore]+1)) ;;
+              ci*:*) counts[ci]=$((counts[ci]+1)) ;;
+              docs*:*) counts[docs]=$((counts[docs]+1)) ;;
+              style*:*) counts[style]=$((counts[style]+1)) ;;
+              refactor*:*) counts[refactor]=$((counts[refactor]+1)) ;;
+              perf*:*) counts[perf]=$((counts[perf]+1)) ;;
+              test*:*) counts[test]=$((counts[test]+1)) ;;
+              *) counts[other]=$((counts[other]+1)) ;;
+            esac
+            [[ "$msg" == *"!"* || "$msg" == *"BREAKING CHANGE"* ]] && BREAKING_FOUND=1
+          done <<< "$COMMITS"
+
+          COMMIT_STATS=""
+          for k in "${!counts[@]}"; do
+            COMMIT_STATS+="$k=${counts[$k]} "
+          done
+          COMMIT_STATS="${COMMIT_STATS% }"
+
+          if [[ "$COMMITS" == "No commits found" ]]; then
+            TOTAL_COMMITS=0
+          else
+            TOTAL_COMMITS=$(echo "$COMMITS" | wc -l)
+          fi
+
+          if [[ -n "$GH_TOKEN" ]]; then
+            PREVIOUS_RELEASE=$(gh release view "$PREV_TAG" --json body -q .body 2>/dev/null || echo "")
+          else
+            PREVIOUS_RELEASE=""
+          fi
+
+          IFS=. read -r MAJ MIN PATCH <<< "${VERSION#v}"
+          IFS=. read -r PMAJ PMIN PPATCH <<< "${PREV_TAG#v}"
+          if (( MAJ > PMAJ )); then
+            VERSION_TYPE="major"
+          elif (( MIN > PMIN )); then
+            VERSION_TYPE="minor"
+          else
+            VERSION_TYPE="patch"
+          fi
+
+          encode() { printf '%s' "$1" | tr '\n' '\020' | sed 's/"/\\"/g'; }
+          VARS=$(cat <<EOF
+CHANGELOG_ENTRY=$(encode "$CHANGELOG_ENTRY")
+GIT_COMMITS=$(encode "$COMMITS")
+PREVIOUS_RELEASE=$(encode "$PREVIOUS_RELEASE")
+VERSION=$VERSION
+VERSION_TYPE=$VERSION_TYPE
+COMMIT_STATS=$(encode "$COMMIT_STATS")
+HAS_BREAKING_CHANGES=$([[ $BREAKING_FOUND -eq 1 ]] && echo true || echo false)
+TOTAL_COMMITS=$TOTAL_COMMITS
+EOF
+          )
+          echo "template_vars=$(echo "$VARS" | base64 -w0)" >> "$GITHUB_OUTPUT"
+
+      - name: 🤖 Generate release notes
+        id: ai
+        uses: ./.github/actions/openai-chat
+        with:
+          openai_api_key: ${{ env.OPENAI_API_KEY }}
+          system-path: .github/prompts/release-notes.sys.md
+          template-path: .github/prompts/release-notes.user.md
+          schema-path: .github/schema/release-notes.schema.json
+          output-path: .github/templates/release-notes.tmpl.md
+          vars: ${{ steps.vars.outputs.template_vars }}
+          model: ${{ env.OPENAI_MODEL }}
+          temperature: 0.2
+          max-tokens: 1200
+
+      - name: 📤 Save release notes
+        run: |
+          printf '%s' "${{ steps.ai.outputs.formatted_content }}" > release-notes.md
+
+      - name: 📝 Fallback if AI fails
+        if: steps.ai.outputs.formatted_content == '' && steps.ai.outputs.content == ''
+        run: |
+          echo "# 🎉 setlistfm-ts v${{ steps.version.outputs.ver }}" > release-notes.md
+          echo "" >> release-notes.md
+          echo "Automated release notes generation failed. Please refer to CHANGELOG.md for details." >> release-notes.md
 
       - name: ✅ Validate notes
         run: |
@@ -58,3 +161,17 @@ jobs:
         with:
           name: release-notes
           path: release-notes.md
+
+      - name: 🚀 Create/Update GitHub Release
+        if: env.GH_TOKEN != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASE_NOTES="${{ steps.ai.outputs.formatted_content }}"
+          gh release create "v${{ steps.version.outputs.ver }}" \
+            --notes "$RELEASE_NOTES" \
+            --title "v${{ steps.version.outputs.ver }}" \
+            --verify-tag=false || \
+          gh release edit "v${{ steps.version.outputs.ver }}" \
+            --notes "$RELEASE_NOTES" \
+            --title "v${{ steps.version.outputs.ver }}"

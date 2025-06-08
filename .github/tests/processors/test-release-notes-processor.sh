@@ -27,7 +27,7 @@ export OPENAI_TEST_MODE=true
 # sake of brevity, only the basic patterns are demonstrated here.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROCESSOR="$SCRIPT_DIR/../../processors/release-notes-processor.sh"
+PROCESSOR="$SCRIPT_DIR/../helpers/release-notes-processor.sh"
 FIXTURE_DIR="$SCRIPT_DIR/../fixtures/release-notes-examples"
 TMP_DIR=""
 
