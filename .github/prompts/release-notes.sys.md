@@ -48,6 +48,7 @@ Follow the established project style and structure from the release notes creati
 ## Commit Analysis Integration
 
 Use the provided commit statistics to determine section organization:
+
 - **feat_count > 0**: Include a features section (🚀 or ✨)
 - **fix_count > 0**: Include a bug fixes section (🐛)
 - **ci_count > 0**: Include a CI/DevOps section (🤖 or 🔧)

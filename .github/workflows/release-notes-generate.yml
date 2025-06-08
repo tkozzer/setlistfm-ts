@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Target version'
+        description: Target version
         required: true
   workflow_run:
     workflows: [🔄 Release Preparation]
