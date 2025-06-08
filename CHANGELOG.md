@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),  
 
+## [0.7.1] - 2025-06-08
+
+### Added
+
+- Created comprehensive AGENTS.md following OpenAI Codex specification to guide AI agents in the setlistfm-ts codebase.
+
+### Changed
+
+- Enhanced workflow documentation in README.md, detailing development and release automation workflows.
+- Restructured GitHub automation into modular scripts for improved maintainability and testability.
+
+### Fixed
+
+- Fixed GitHub Actions workflow failures by redirecting debug output to stderr in various scripts, preventing unexpected errors during the release process.
+- Improved testing environment for release PR checkout to ensure reliable workflow execution.
+- Added comprehensive tests for release-prepare changelog update logic to validate various scenarios and prevent regressions.
+
+---
+
+
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
