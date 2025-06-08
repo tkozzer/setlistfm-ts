@@ -1,0 +1,271 @@
+{
+  "test_cases": [
+    {
+      "name": "help_command",
+      "description": "Test help command display",
+      "args": ["--help"],
+      "expected_exit_code": 0,
+      "expected_stdout_contains": [
+        "🚀  Manage Release Pull Request",
+        "Usage:",
+        "--version",
+        "--dry-run"
+      ],
+      "mock_gh_responses": {}
+    },
+    {
+      "name": "missing_version_parameter",
+      "description": "Test missing required version parameter",
+      "args": ["--body", "Test body"],
+      "expected_exit_code": 1,
+      "expected_stderr_contains": [
+        "Version is required"
+      ],
+      "mock_gh_responses": {}
+    },
+    {
+      "name": "missing_body_parameter",
+      "description": "Test missing required body parameter",
+      "args": ["--version", "1.2.3"],
+      "expected_exit_code": 1,
+      "expected_stderr_contains": [
+        "PR body is required"
+      ],
+      "mock_gh_responses": {}
+    },
+    {
+      "name": "invalid_output_format",
+      "description": "Test invalid output format parameter",
+      "args": ["--version", "1.2.3", "--body", "Test", "--output-format", "invalid"],
+      "expected_exit_code": 4,
+      "expected_stderr_contains": [
+        "Invalid output format: invalid"
+      ],
+      "mock_gh_responses": {}
+    },
+    {
+      "name": "create_new_pr_dry_run",
+      "description": "Test creating new PR in dry run mode",
+      "args": [
+        "--version",
+        "1.2.3",
+        "--body",
+        "Release body content",
+        "--repository",
+        "test-owner/test-repo",
+        "--dry-run",
+        "--debug"
+      ],
+      "expected_exit_code": 0,
+      "expected_stdout_contains": [
+        "pr_number=999",
+        "pr_url=https://github.com/test-owner/test-repo/pull/999",
+        "action_taken=created",
+        "exists=false"
+      ],
+      "expected_stderr_contains": [
+        "[DRY RUN] Would create PR with:",
+        "Title: 🚀 Release v1.2.3"
+      ],
+      "mock_gh_responses": {
+        "pr_list": ""
+      }
+    },
+    {
+      "name": "update_existing_pr_dry_run",
+      "description": "Test updating existing PR in dry run mode",
+      "args": [
+        "--version",
+        "1.2.3",
+        "--body",
+        "Updated release body",
+        "--repository",
+        "test-owner/test-repo",
+        "--mock-existing-pr",
+        "456",
+        "--dry-run",
+        "--debug"
+      ],
+      "expected_exit_code": 0,
+      "expected_stdout_contains": [
+        "pr_number=456",
+        "pr_url=https://github.com/test-owner/test-repo/pull/456",
+        "action_taken=updated",
+        "exists=true"
+      ],
+      "expected_stderr_contains": [
+        "[DRY RUN] Would update PR #456 with:",
+        "Title: 🚀 Release v1.2.3"
+      ],
+      "mock_gh_responses": {
+        "pr_list": "456"
+      }
+    },
+    {
+      "name": "json_output_format_new_pr",
+      "description": "Test JSON output format for new PR creation",
+      "args": [
+        "--version",
+        "2.0.0",
+        "--body",
+        "JSON test body",
+        "--repository",
+        "test-owner/test-repo",
+        "--output-format",
+        "json",
+        "--dry-run"
+      ],
+      "expected_exit_code": 0,
+      "expected_stdout_json": {
+        "pr_number": 999,
+        "pr_url": "https://github.com/test-owner/test-repo/pull/999",
+        "action_taken": "created",
+        "exists": false
+      },
+      "mock_gh_responses": {
+        "pr_list": ""
+      }
+    },
+    {
+      "name": "json_output_format_existing_pr",
+      "description": "Test JSON output format for existing PR update",
+      "args": [
+        "--version",
+        "2.0.0",
+        "--body",
+        "JSON test body update",
+        "--repository",
+        "test-owner/test-repo",
+        "--mock-existing-pr",
+        "789",
+        "--output-format",
+        "json",
+        "--dry-run"
+      ],
+      "expected_exit_code": 0,
+      "expected_stdout_json": {
+        "pr_number": 789,
+        "pr_url": "https://github.com/test-owner/test-repo/pull/789",
+        "action_taken": "updated",
+        "exists": true
+      },
+      "mock_gh_responses": {
+        "pr_list": "789"
+      }
+    },
+    {
+      "name": "custom_title_and_labels",
+      "description": "Test custom title and labels",
+      "args": [
+        "--version",
+        "1.5.0",
+        "--title",
+        "Custom Release Title",
+        "--body",
+        "Custom body",
+        "--labels",
+        "release,hotfix,urgent",
+        "--assignee",
+        "custom-user",
+        "--repository",
+        "test-owner/test-repo",
+        "--dry-run",
+        "--debug"
+      ],
+      "expected_exit_code": 0,
+      "expected_stderr_contains": [
+        "Title: Custom Release Title",
+        "Labels: release,hotfix,urgent",
+        "Assignee: custom-user"
+      ],
+      "mock_gh_responses": {
+        "pr_list": ""
+      }
+    },
+    {
+      "name": "custom_branches",
+      "description": "Test custom base and head branches",
+      "args": [
+        "--version",
+        "1.0.0",
+        "--body",
+        "Custom branches test",
+        "--base",
+        "develop",
+        "--head",
+        "feature-branch",
+        "--repository",
+        "test-owner/test-repo",
+        "--dry-run",
+        "--debug"
+      ],
+      "expected_exit_code": 0,
+      "expected_stderr_contains": [
+        "Base: develop → Head: feature-branch"
+      ],
+      "mock_gh_responses": {
+        "pr_list": ""
+      }
+    },
+    {
+      "name": "github_cli_not_found",
+      "description": "Test behavior when GitHub CLI is not available",
+      "args": [
+        "--version",
+        "1.0.0",
+        "--body",
+        "Test body",
+        "--repository",
+        "test-owner/test-repo"
+      ],
+      "expected_exit_code": 2,
+      "expected_stderr_contains": [
+        "GitHub CLI (gh) is not installed"
+      ],
+      "mock_gh_responses": {},
+      "mock_gh_unavailable": true
+    },
+    {
+      "name": "pr_create_failure",
+      "description": "Test PR creation failure",
+      "args": [
+        "--version",
+        "1.0.0",
+        "--body",
+        "Test body",
+        "--repository",
+        "test-owner/test-repo"
+      ],
+      "expected_exit_code": 3,
+      "expected_stderr_contains": [
+        "Failed to create PR"
+      ],
+      "mock_gh_responses": {
+        "pr_list": "",
+        "pr_create_fail": true
+      }
+    },
+    {
+      "name": "pr_update_failure",
+      "description": "Test PR update failure",
+      "args": [
+        "--version",
+        "1.0.0",
+        "--body",
+        "Test body",
+        "--repository",
+        "test-owner/test-repo",
+        "--mock-existing-pr",
+        "123"
+      ],
+      "expected_exit_code": 3,
+      "expected_stderr_contains": [
+        "Failed to update PR"
+      ],
+      "mock_gh_responses": {
+        "pr_list": "123",
+        "pr_edit_fail": true
+      }
+    }
+  ]
+}

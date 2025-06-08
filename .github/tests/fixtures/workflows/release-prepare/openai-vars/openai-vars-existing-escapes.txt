@@ -1,0 +1,23 @@
+a1b2c3d feat: add JSON processing with escaped content
+
+This commit handles various escaped content:
+- JSON strings: {"message": "Hello \"world\""}
+- Regex patterns: /\\d+\\.\\d+/
+- File paths: C:\\Program Files\\App\\data.json
+- Unicode escapes: \\u0041\\u0042\\u0043
+
+b2c3d4e fix: handle newline characters in data
+
+Fixed processing of content with:
+- Literal \\n sequences
+- Actual newlines
+- Mixed: "Line 1\\nLine 2\nLine 3"
+- Tab characters: \\t and actual tabs
+
+c3d4e5f docs: escape sequence documentation
+
+Added examples:
+- How to handle \\n, \\r, \\t
+- Working with \\", \\', \\\\
+- Processing \\u sequences
+- Best practices for escaping 

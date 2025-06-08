@@ -1,0 +1,88 @@
+{
+  "testCases": [
+    {
+      "name": "Basic changelog with two versions (GitHub Actions format)",
+      "fixture": "basic-two-versions.md",
+      "outputFormat": "github-actions",
+      "expectedExitCode": 0,
+      "expectedOutput": "entry<<EOF\n### Added\n- New feature X\n- New feature Y\n### Fixed\n- Bug fix A\nEOF"
+    },
+    {
+      "name": "Basic changelog with two versions (Plain format)",
+      "fixture": "basic-two-versions.md",
+      "outputFormat": "plain",
+      "expectedExitCode": 0,
+      "expectedOutput": "### Added\n- New feature X\n- New feature Y\n### Fixed\n- Bug fix A"
+    },
+    {
+      "name": "Changelog with only one version",
+      "fixture": "single-version.md",
+      "outputFormat": "github-actions",
+      "expectedExitCode": 0,
+      "expectedOutput": "entry<<EOF\n### Added\n- Initial release\nEOF"
+    },
+    {
+      "name": "Empty changelog content between versions",
+      "fixture": "empty-content.md",
+      "outputFormat": "github-actions",
+      "expectedExitCode": 0,
+      "expectedOutput": "entry<<EOF\nNo changelog entries found for the latest version\nEOF"
+    },
+    {
+      "name": "Changelog with no version headers",
+      "fixture": "no-version-headers.md",
+      "outputFormat": "github-actions",
+      "expectedExitCode": 0,
+      "expectedOutput": "entry<<EOF\nNo changelog entries found for the latest version\nEOF"
+    },
+    {
+      "name": "Changelog with complex formatting and special characters",
+      "fixture": "complex-formatting.md",
+      "outputFormat": "github-actions",
+      "expectedExitCode": 0,
+      "expectedOutput": "entry<<EOF\n### Added\n- Feature with `code blocks`\n- Feature with **bold** text\n- Feature with [links](https://example.com)\n### Changed\n- Modified behavior for special chars: $, %, &, @\n### Security\n- Fixed XSS vulnerability in `render()` function\nEOF"
+    },
+    {
+      "name": "Changelog with multi-line entries",
+      "fixture": "multiline-entries.md",
+      "outputFormat": "github-actions",
+      "expectedExitCode": 0,
+      "expectedOutput": "entry<<EOF\n### Added\n- New API endpoint `/api/v2/users` that supports:\n  - User creation\n  - User modification\n  - Bulk operations\n- Enhanced error handling with detailed messages\n### Fixed\n- Issue where long commit messages would cause\n  workflow failures due to shell escaping\nEOF"
+    },
+    {
+      "name": "Real-world changelog format",
+      "fixture": "real-world-format.md",
+      "outputFormat": "github-actions",
+      "expectedExitCode": 0,
+      "expectedOutput": "entry<<EOF\n### Added\n- Introduced a comprehensive 'Automated Workflows' section in the README.md to enhance visibility into CI/CD processes and development workflows.\n- Created AGENTS.md for AI agent guidance, detailing project structure, API patterns, and development workflow standards.\n### Changed\n- Refactored CI workflows to modernize and streamline processes, removing legacy workflows and improving organization with new directories for actions and prompts.\n### Fixed\n- Resolved multiple issues related to handling nested changes in PR enhancement workflows, ensuring proper formatting and readability of AI-generated content.\n---\nEOF"
+    },
+    {
+      "name": "Changelog with different version patterns",
+      "fixture": "version-patterns.md",
+      "outputFormat": "github-actions",
+      "expectedExitCode": 0,
+      "expectedOutput": "entry<<EOF\n### Added\n- Version with 'v' prefix\nEOF"
+    }
+  ],
+  "errorTestCases": [
+    {
+      "name": "Non-existent changelog file",
+      "fixture": "/nonexistent/changelog.md",
+      "outputFormat": "github-actions",
+      "expectedExitCode": 1,
+      "expectedOutput": "[ERROR] Changelog file not found: /nonexistent/changelog.md"
+    },
+    {
+      "name": "Invalid output format",
+      "fixture": "basic-two-versions.md",
+      "outputFormat": "invalid",
+      "expectedExitCode": 1,
+      "expectedOutput": "[ERROR] Invalid output format: invalid. Must be 'github-actions' or 'plain'"
+    }
+  ],
+  "helpTestCase": {
+    "name": "Help output",
+    "expectedExitCode": 0,
+    "expectedOutput": "--------------------------------------------------------------------------- #\n 📝  Extract Latest Changelog Entry                                         #\n--------------------------------------------------------------------------- #\n\nExtracts the latest changelog entry from CHANGELOG.md for use in release\nPR descriptions. This script replaces the inline AWK logic from the \nrelease-pr.yml workflow to improve testability and maintainability.\n\nUsage:\n  ./extract-changelog-entry.sh [OPTIONS]\n\nOptions:\n  --file <path>     Path to changelog file (default: CHANGELOG.md)\n  --output-format   Format: 'github-actions' (default) or 'plain'\n  --debug          Enable debug output\n  --help           Show this help message\n\nGitHub Actions Output:\n  When --output-format=github-actions (default), outputs in the format:\n  entry<<EOF\n  <changelog content>\n  EOF\n\nPlain Output:\n  When --output-format=plain, outputs just the changelog content\n\nExit Codes:\n  0 - Success\n  1 - Changelog file not found\n  2 - No changelog entries found\n  3 - Invalid changelog format\n\nAuthor: tkozzer"
+  }
+}

@@ -1,0 +1,169 @@
+{
+  "scenarios": {
+    "perfect_score": {
+      "description": "100% conventional commits - should get positive feedback",
+      "conventional": 5,
+      "total": 5,
+      "expected_percentage": 100,
+      "expected_feedback_type": "GOOD",
+      "expected_content_patterns": [
+        "Great work",
+        "🎉",
+        "100%"
+      ]
+    },
+    "good_score": {
+      "description": "80% conventional commits - should get positive feedback",
+      "conventional": 4,
+      "total": 5,
+      "expected_percentage": 80,
+      "expected_feedback_type": "GOOD",
+      "expected_content_patterns": [
+        "Great work",
+        "80%"
+      ]
+    },
+    "poor_score": {
+      "description": "40% conventional commits - needs improvement",
+      "conventional": 2,
+      "total": 5,
+      "expected_percentage": 40,
+      "expected_feedback_type": "NEEDS_IMPROVEMENT",
+      "expected_content_patterns": [
+        "Needs improvement",
+        "💡",
+        "40%"
+      ]
+    },
+    "zero_conventional": {
+      "description": "No conventional commits - needs improvement",
+      "conventional": 0,
+      "total": 5,
+      "expected_percentage": 0,
+      "expected_feedback_type": "NEEDS_IMPROVEMENT",
+      "expected_content_patterns": [
+        "Needs improvement",
+        "0%"
+      ]
+    },
+    "single_commit_perfect": {
+      "description": "Single commit that is conventional",
+      "conventional": 1,
+      "total": 1,
+      "expected_percentage": 100,
+      "expected_feedback_type": "GOOD",
+      "expected_content_patterns": [
+        "Great work",
+        "100%"
+      ]
+    },
+    "fractional_percentage": {
+      "description": "1 out of 3 commits conventional (33%)",
+      "conventional": 1,
+      "total": 3,
+      "expected_percentage": 33,
+      "expected_feedback_type": "NEEDS_IMPROVEMENT",
+      "expected_content_patterns": [
+        "Needs improvement",
+        "33%"
+      ]
+    },
+    "large_numbers": {
+      "description": "Large commit counts",
+      "conventional": 85,
+      "total": 100,
+      "expected_percentage": 85,
+      "expected_feedback_type": "GOOD",
+      "expected_content_patterns": [
+        "Great work",
+        "85%"
+      ]
+    },
+    "edge_case_zero_total": {
+      "description": "Zero total commits - should not post feedback",
+      "conventional": 0,
+      "total": 0,
+      "expected_percentage": 0,
+      "expected_behavior": "skip_posting"
+    }
+  },
+  "threshold_tests": {
+    "custom_threshold_90": {
+      "description": "90% threshold with 89% conventional",
+      "conventional": 8,
+      "total": 9,
+      "threshold": 90,
+      "expected_percentage": 89,
+      "expected_feedback_type": "NEEDS_IMPROVEMENT"
+    },
+    "custom_threshold_50": {
+      "description": "50% threshold with 60% conventional",
+      "conventional": 3,
+      "total": 5,
+      "threshold": 50,
+      "expected_percentage": 60,
+      "expected_feedback_type": "GOOD"
+    },
+    "zero_threshold": {
+      "description": "0% threshold - always good",
+      "conventional": 0,
+      "total": 5,
+      "threshold": 0,
+      "expected_percentage": 0,
+      "expected_feedback_type": "GOOD"
+    }
+  },
+  "validation_errors": {
+    "negative_conventional": {
+      "args": ["--conventional", "-1", "--total", "5", "--pr-number", "123"],
+      "expected_error": "Conventional count must be a non-negative integer"
+    },
+    "non_numeric_conventional": {
+      "args": ["--conventional", "abc", "--total", "5", "--pr-number", "123"],
+      "expected_error": "Conventional count must be a non-negative integer"
+    },
+    "missing_conventional": {
+      "args": ["--total", "5", "--pr-number", "123"],
+      "expected_error": "Conventional commit count is required"
+    },
+    "missing_total": {
+      "args": ["--conventional", "3", "--pr-number", "123"],
+      "expected_error": "Total commit count is required"
+    },
+    "missing_pr_number": {
+      "args": ["--conventional", "3", "--total", "5"],
+      "expected_error": "PR number is required"
+    },
+    "threshold_over_100": {
+      "args": ["--conventional", "3", "--total", "5", "--pr-number", "123", "--threshold", "101"],
+      "expected_error": "Threshold must be between 0 and 100"
+    },
+    "conventional_exceeds_total": {
+      "args": ["--conventional", "6", "--total", "5", "--pr-number", "123"],
+      "expected_error": "Conventional commit count cannot exceed total commit count"
+    }
+  },
+  "content_patterns": {
+    "common_elements": [
+      "Commit Message Quality Report",
+      "Conventional Commit Examples:",
+      "feat(api):",
+      "fix(ui):",
+      "docs(readme):",
+      "refactor(utils):",
+      "chore(deps):",
+      "Contributing Guide"
+    ],
+    "good_feedback_elements": [
+      "🎉",
+      "Great work",
+      "consistently"
+    ],
+    "improvement_feedback_elements": [
+      "💡",
+      "Needs improvement",
+      "Consider following",
+      "Conventional Commits"
+    ]
+  }
+}

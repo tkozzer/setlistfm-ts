@@ -4,24 +4,6 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),  
 
-## [0.7.1] - 2025-06-08
-
-### Added
-
-- Introduced comprehensive 'Automated Workflows' section in the README.md to enhance visibility into development workflows and release automation processes.
-- Created AGENTS.md documentation to provide guidance for AI agents, detailing project structure, API patterns, and development standards.
-
-### Changed
-
-- Enhanced CONTRIBUTING.md with specific references to workflow files, improving navigation and clarity for contributors.
-
-### Fixed
-
-- Resolved quoting error in the pr-enhance workflow to ensure proper execution.
-- Improved test coverage for rate limiter functionality and fixed multiple bugs in the testing environment.
-
----
-
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---

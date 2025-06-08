@@ -24,6 +24,7 @@ const config: any = antfu(
       ".env*",
       "docs/**",
       "README.md",
+      ".github/tests/fixtures/release-notes/invalid-package.json",
     ],
   },
   {

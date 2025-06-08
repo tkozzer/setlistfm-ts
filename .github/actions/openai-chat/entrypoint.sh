@@ -84,10 +84,10 @@ if [[ ${OPENAI_TEST_MODE:-false} == "true" ]]; then
   MOCK_FILE=""
   # Try different possible mock directory paths
   POSSIBLE_MOCK_DIRS=(
-    ".github/tests/fixtures"
-    "../../tests/fixtures"
-    "../tests/fixtures"
-    "tests/fixtures"
+    ".github/tests/fixtures/integration"
+    "../../tests/fixtures/integration"
+    "../tests/fixtures/integration"
+    "tests/fixtures/integration"
   )
   
   MOCK_DIR=""
@@ -117,7 +117,9 @@ if [[ ${OPENAI_TEST_MODE:-false} == "true" ]]; then
     elif [[ $OUTPUT =~ pr-description ]]; then
       MOCK_FILE="$MOCK_DIR/pr-description.json"
     elif [[ $OUTPUT =~ release-notes ]]; then
-      MOCK_FILE="$MOCK_DIR/release-notes.json"
+      # Release notes fixtures are in the processors directory
+      PROCESSORS_MOCK_DIR="${MOCK_DIR%/integration}/processors"
+      MOCK_FILE="$PROCESSORS_MOCK_DIR/release-notes.json"
     else
       MOCK_FILE="$MOCK_DIR/generic.json"
     fi
@@ -130,7 +132,9 @@ if [[ ${OPENAI_TEST_MODE:-false} == "true" ]]; then
     elif [[ $TEMPLATE =~ pr-description ]]; then
       MOCK_FILE="$MOCK_DIR/pr-description.json"
     elif [[ $TEMPLATE =~ release-notes ]]; then
-      MOCK_FILE="$MOCK_DIR/release-notes.json"
+      # Release notes fixtures are in the processors directory
+      PROCESSORS_MOCK_DIR="${MOCK_DIR%/integration}/processors"
+      MOCK_FILE="$PROCESSORS_MOCK_DIR/release-notes.json"
     else
       MOCK_FILE="$MOCK_DIR/generic.json"
     fi

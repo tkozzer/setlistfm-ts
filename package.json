@@ -1,6 +1,6 @@
 {
   "name": "setlistfm-ts",
-  "version": "0.7.1",
+  "version": "0.7.0",
   "packageManager": "pnpm@10.11.1",
   "description": "A TypeScript client for the setlist.fm API",
   "author": "tkozzer <tkoz.dev@gmail.com>",
@@ -50,6 +50,7 @@
     "test:coverage": "vitest run --coverage",
     "test:build": "vitest run tests/buildVerification.test.ts",
     "test:github": "./.github/tests/run-all-tests.sh",
+    "test:github:quick": "./.github/tests/run-all-tests.sh --quick",
     "test:all": "pnpm test && pnpm test:build && pnpm test:github",
     "lint": "eslint src examples tests *.ts .github --ext .ts,.js,.json,.md",
     "lint:fix": "eslint src examples tests *.ts .github --ext .ts,.js,.json,.md --fix",

@@ -1,0 +1,7 @@
+random commit message without proper format
+another line
+some more content
+xyz feat without proper hash prefix: this should not match
+not-a-hash feat: this should not match either
+fix some stuff
+update things 
