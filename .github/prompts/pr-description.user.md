@@ -16,3 +16,4 @@ Create a comprehensive PR description that helps reviewers understand:
 3. Any important considerations for the release
 
 Focus on clarity and user impact. This PR will merge preview → main to publish the release.
+Make sure the description references each changelog bullet. Quote items directly when details are limited so the summary stays precise.

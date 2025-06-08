@@ -49,8 +49,10 @@
     "test:watch": "vitest watch",
     "test:coverage": "vitest run --coverage",
     "test:build": "vitest run tests/buildVerification.test.ts",
-    "lint": "eslint src examples --ext .ts",
-    "lint:fix": "eslint src examples --ext .ts --fix",
+    "test:github": "./.github/tests/run-all-tests.sh",
+    "test:all": "pnpm test && pnpm test:build && pnpm test:github",
+    "lint": "eslint src examples tests *.ts .github --ext .ts,.js,.json,.md",
+    "lint:fix": "eslint src examples tests *.ts .github --ext .ts,.js,.json,.md --fix",
     "check": "pnpm type-check && pnpm lint && pnpm test",
     "prepack": "pnpm build:verify",
     "prepublishOnly": "pnpm lint:src && pnpm test && pnpm build:verify",
@@ -75,6 +77,7 @@
     "dotenv": "^16.5.0",
     "eslint": "^9.28.0",
     "eslint-plugin-format": "^1.0.1",
+    "handlebars": "^4.7.8",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.0",
     "rollup": "^4.27.4",
@@ -86,16 +89,23 @@
   },
   "lint-staged": {
     "src/**/*.ts": [
-      "pnpm lint",
-      "bash -c 'pnpm type-check'",
-      "bash -c 'pnpm test'"
+      "eslint --fix",
+      "bash -c 'pnpm type-check'"
     ],
     "examples/**/*.ts": [
-      "pnpm lint"
+      "eslint --fix",
+      "bash -c 'pnpm type-check'"
+    ],
+    "tests/**/*.ts": [
+      "eslint --fix",
+      "bash -c 'pnpm type-check'"
     ],
     "*.ts": [
-      "pnpm lint",
+      "eslint --fix",
       "bash -c 'pnpm type-check'"
+    ],
+    ".github/**/*": [
+      "eslint --fix"
     ]
   }
 }
