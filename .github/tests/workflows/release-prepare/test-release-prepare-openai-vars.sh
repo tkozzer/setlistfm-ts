@@ -235,6 +235,75 @@ test_base64_roundtrip() {
   unset VERSION COMMITS_INPUT
 }
 
+# Test stdout/stderr separation
+test_stdout_stderr_separation() {
+  local name="$1"
+  local version="$2"
+  local commits_input="$3"
+  
+  total_tests=$((total_tests + 1))
+  
+  # Set environment variables
+  export VERSION="$version"
+  export COMMITS_INPUT="$commits_input"
+  
+  # Run script and capture stdout and stderr separately
+  local stdout_output
+  local stderr_output
+  local exit_code=0
+  
+  # Create temporary files for capturing output
+  local stdout_temp=$(mktemp)
+  local stderr_temp=$(mktemp)
+  
+  if "$SCRIPTS_DIR/prepare-openai-vars.sh" 1>"$stdout_temp" 2>"$stderr_temp"; then
+    exit_code=0
+  else
+    exit_code=$?
+  fi
+  
+  stdout_output=$(cat "$stdout_temp")
+  stderr_output=$(cat "$stderr_temp")
+  
+  # Cleanup temp files
+  rm -f "$stdout_temp" "$stderr_temp"
+  
+  if [[ $exit_code -eq 0 ]]; then
+    # Verify stdout only contains template_vars
+    local stdout_lines
+    stdout_lines=$(echo "$stdout_output" | wc -l)
+    
+    # Check that stdout contains exactly one line with template_vars
+    if [[ $stdout_lines -eq 1 ]] && [[ "$stdout_output" =~ ^template_vars= ]]; then
+      # Check that stderr contains debug messages
+      if [[ "$stderr_output" == *"=== OpenAI Variables Preparation Debug ==="* ]] && \
+         [[ "$stderr_output" == *"Version: $version"* ]] && \
+         [[ "$stderr_output" == *"✅ OpenAI variables preparation completed successfully"* ]]; then
+        echo "✅ $name"
+        passed_tests=$((passed_tests + 1))
+      else
+        echo "❌ $name (stderr missing expected debug messages)"
+        echo "STDERR output:"
+        echo "$stderr_output"
+      fi
+    else
+      echo "❌ $name (stdout format incorrect)"
+      echo "Expected exactly 1 line starting with 'template_vars='"
+      echo "Got $stdout_lines lines:"
+      echo "$stdout_output"
+    fi
+  else
+    echo "❌ $name (script failed with exit code $exit_code)"
+    echo "STDOUT:"
+    echo "$stdout_output"
+    echo "STDERR:"
+    echo "$stderr_output"
+  fi
+  
+  # Cleanup environment variables
+  unset VERSION COMMITS_INPUT
+}
+
 # Test error conditions
 test_error_condition() {
   local name="$1"
@@ -312,6 +381,13 @@ echo "🔍 Edge case tests:"
 run_test "Very long version" "10.20.30-beta.1+build.123" "a1b2c3d feat: test" "true"
 run_test "Version with pre-release" "1.0.0-alpha.1" "a1b2c3d feat: test" "true"
 run_test "Large commits input" "$(printf 'a%.0s' {1..1000})" "Large commit message content" "true"
+
+# Test stdout/stderr separation
+echo ""
+echo "📤 Stdout/stderr separation tests:"
+test_stdout_stderr_separation "Simple stdout/stderr separation" "1.2.3" "a1b2c3d feat: add feature"
+test_stdout_stderr_separation "Multiline commits stdout/stderr" "2.0.0" $'a1b2c3d feat: feature\n\nWith multiple lines\nAnd more content'
+test_stdout_stderr_separation "Special chars stdout/stderr" "1.1.0" 'a1b2c3d feat: add "quoted" content with \\"escapes\\"'
 
 # Test error conditions
 echo ""
