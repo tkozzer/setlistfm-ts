@@ -37,6 +37,23 @@ jobs:
           fetch-depth: 0
           token: ${{ env.GH_TOKEN }}
 
+      # Force refresh to ensure we have the latest changes from release-prepare
+      - name: 🔄 Ensure latest preview state
+        run: |
+          # Wait a moment for any final pushes to complete
+          sleep 5
+
+          # Force fetch the latest state
+          git fetch origin preview --force
+          git reset --hard origin/preview
+
+          # Debug output
+          echo "=== Current state ==="
+          echo "Current commit: $(git rev-parse HEAD)"
+          echo "Latest origin/preview: $(git rev-parse origin/preview)"
+          echo "Current version: $(node -p "require('./package.json').version")"
+          echo "First changelog header: $(head -15 CHANGELOG.md | grep "^## \\[" | head -1)"
+
       - name: 🛠️ Setup Node & pnpm
         uses: ./.github/actions/setup-node-pnpm
         with:
@@ -53,6 +70,10 @@ jobs:
       - name: 📝 Latest changelog entry
         id: changelog
         run: |
+          # Debug: Show the first few changelog headers
+          echo "=== First 3 changelog headers ==="
+          grep "^## \[" CHANGELOG.md | head -3
+
           if [[ -f CHANGELOG.md ]]; then
             awk '
               /^## \[/ { if (++count==2) exit; next }
@@ -60,6 +81,11 @@ jobs:
             ' CHANGELOG.md | sed '/^$/d' > _entry.txt
           fi
           [[ ! -s _entry.txt ]] && echo "No changelog entries found for the latest version" > _entry.txt
+
+          # Debug: Show what was extracted
+          echo "=== Extracted changelog entry ==="
+          cat _entry.txt | head -5
+
           {
             echo 'entry<<EOF'
             cat _entry.txt
