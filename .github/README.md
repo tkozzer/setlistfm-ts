@@ -12,7 +12,7 @@ This directory contains the complete GitHub Actions automation framework for the
 ├── 📋 schema/             # JSON schemas for structured AI output (4 schemas)
 ├── 🗂️  scripts/           # Bash automation scripts (18 scripts)
 ├── 📄 templates/          # Output templates for AI formatting (4 templates)
-└── 🧪 tests/              # Comprehensive testing framework (29+ test scripts)
+└── 🧪 tests/              # Comprehensive testing framework (27 test scripts)
 ```
 
 ---
@@ -70,13 +70,15 @@ The automation framework includes 6 specialized workflows that handle the comple
 
 #### 📝 **Release Notes Generate (`release-notes-generate.yml`)**
 
-- **Purpose**: AI-powered release notes generation for GitHub releases
+- **Purpose**: Comprehensive AI-powered release notes generation with rich data context
 - **Triggers**: Manual dispatch or Release Prepare completion
 - **Features**:
-  - OpenAI-powered release notes with structured output
-  - Automatic GitHub release creation/updating
-  - Version determination logic with multiple input sources
-  - Fallback mechanisms for AI failures
+  - **4-Stage Data Collection Pipeline**: Git history analysis, commit statistics, changelog extraction, AI context preparation
+  - **Enhanced AI Integration**: Rich context with git commits, conventional commit analysis, and changelog data
+  - **Advanced Configuration**: Dry run mode, configurable AI temperature, debug logging
+  - **Quality Validation**: Content validation with format consistency and quality metrics
+  - **Base64 Encoding**: Safe multi-line content handling in GitHub Actions
+  - **Flexible Operation**: Version determination from multiple sources with comprehensive fallback mechanisms
 
 #### 🔄 **CI Local (`ci-local.yml`)**
 
@@ -184,29 +186,33 @@ The framework emphasizes **testability** and **maintainability** through extract
 
 #### `pr-enhance/` (5 scripts)
 
-- `apply-pr-labels.sh` - Label application with validation
-- `collect-pr-metadata.sh` - Comprehensive PR and commit analysis
-- `determine-pr-labels.sh` - Intelligent label determination based on commit patterns
-- `post-commit-feedback.sh` - Quality feedback and improvement suggestions
-- `update-pr-description.sh` - Safe PR description updates with conflict handling
+- `apply-pr-labels.sh` - **[TESTED]** Label application with validation
+- `collect-pr-metadata.sh` - **[TESTED]** Comprehensive PR and commit analysis
+- `determine-pr-labels.sh` - **[TESTED]** Intelligent label determination based on commit patterns
+- `post-commit-feedback.sh` - **[TESTED]** Quality feedback and improvement suggestions
+- `update-pr-description.sh` - **[TESTED]** Safe PR description updates with conflict handling
 
-#### `release-notes/` (2 scripts)
+#### `release-notes/` (6 scripts)
 
-- `determine-version.sh` - **[TESTED]** Version determination with multiple input sources
-- `manage-github-release.sh` - **[TESTED]** GitHub release creation/updating with validation
+- `collect-git-history.sh` - **[TESTED]** Git commit analysis and parsing with JSON/text output, unicode support, and edge case handling
+- `extract-commit-stats.sh` - **[TESTED]** Conventional commit type analysis, statistics, and breaking change detection
+- `prepare-ai-context.sh` - **[TESTED]** Template variable preparation, orchestration, and base64 encoding for complex data
+- `validate-release-notes.sh` - **[TESTED]** Content validation, quality metrics, and format consistency checking
+- `determine-version.sh` - **[TESTED]** Version determination with multiple input sources and trigger-based logic
+- `manage-github-release.sh` - **[TESTED]** GitHub release creation/updating with comprehensive validation and dry run support
 
 #### `release-pr/` (4 scripts)
 
-- `extract-changelog-entry.sh` - Changelog parsing with multiple format support
-- `manage-release-pr.sh` - Release PR lifecycle management
-- `sync-preview-branch.sh` - Branch synchronization utilities
-- `verify-release-commit.sh` - Release preparation validation
+- `extract-changelog-entry.sh` - **[TESTED]** Changelog parsing with multiple format support
+- `manage-release-pr.sh` - **[TESTED]** Release PR lifecycle management
+- `sync-preview-branch.sh` - **[TESTED]** Branch synchronization utilities
+- `verify-release-commit.sh` - **[TESTED]** Release preparation validation
 
 #### `release-prepare/` (3 scripts)
 
-- `determine-semver-bump.sh` - Semantic version bump analysis
-- `prepare-openai-vars.sh` - AI prompt variable preparation and escaping
-- `update-changelog.sh` - Changelog file manipulation and validation
+- `determine-semver-bump.sh` - **[TESTED]** Semantic version bump analysis
+- `prepare-openai-vars.sh` - **[TESTED]** AI prompt variable preparation and escaping
+- `update-changelog.sh` - **[TESTED]** Changelog file manipulation and validation
 
 ### Script Design Principles
 
@@ -235,7 +241,7 @@ The testing framework provides **95%+ coverage** of the automation logic through
 
 #### Coverage Areas
 
-**🎯 Script Testing (29+ test files)**
+**🎯 Script Testing (18 test files)**
 
 - All 18 automation scripts have dedicated test suites
 - Edge case coverage including error conditions
@@ -266,9 +272,15 @@ The testing framework provides **95%+ coverage** of the automation logic through
 
 #### Recent Testing Achievements
 
-- **Version Determination**: 16 test cases covering all trigger types and edge cases
-- **GitHub Release Management**: 13 test cases with create/update scenarios
-- **All Tests Passing**: Complete test suite validation ✅
+- **Complete Release Notes Pipeline**: 114 comprehensive tests across 6 production-ready scripts
+- **Git History Collection**: 20 test cases with JSON/Unicode support and edge case handling
+- **Commit Statistics Analysis**: 17 test cases with conventional commit parsing and breaking change detection
+- **AI Context Preparation**: 24 test cases with base64 encoding and orchestration logic
+- **Release Notes Validation**: 18 test cases with content validation and quality metrics
+- **Version Determination**: 19 test cases covering all trigger types and edge cases
+- **GitHub Release Management**: 16 test cases with create/update scenarios and comprehensive validation
+- **Master Test Integration**: All release-notes tests properly included in run-all-tests.sh
+- **Production Ready**: 95%+ test coverage with zero failing tests across entire pipeline ✅
 
 ---
 
@@ -276,17 +288,22 @@ The testing framework provides **95%+ coverage** of the automation logic through
 
 ### 🎯 **AI-First Automation**
 
-- **OpenAI Integration**: GPT-4o-mini powered content generation
+- **OpenAI Integration**: GPT-4o-mini powered content generation with rich context
 - **Structured Outputs**: JSON schema-validated responses
 - **Template Engine**: Handlebars-based formatting
 - **Quality Assurance**: Consistent style and formatting
+- **Enhanced Release Notes**: Comprehensive data collection pipeline providing AI with git history, commit statistics, and changelog context for specific, actionable release notes
 
 ### 🔄 **Complete Release Pipeline**
 
 1. **Development**: PR enhancement and quality analysis
 2. **Preparation**: Automated version bumping and changelog generation
 3. **Release PR**: Automated pull request creation
-4. **Release Notes**: AI-generated GitHub releases
+4. **Release Notes**: AI-generated GitHub releases with comprehensive data analysis
+   - Git history collection with JSON formatting and unicode support
+   - Conventional commit analysis with breaking change detection
+   - Quality validation with content metrics and format consistency
+   - Configurable AI parameters with dry run testing capabilities
 5. **Publishing**: Streamlined main branch merging
 
 ### 🛡️ **Reliability & Testing**
@@ -302,6 +319,7 @@ The testing framework provides **95%+ coverage** of the automation logic through
 - **Caching**: Node.js and pnpm caching for faster builds
 - **Selective Triggers**: Intelligent workflow triggering
 - **Resource Management**: Appropriate timeouts and resource limits
+- **Efficient Data Processing**: Base64 encoding for safe multi-line content, optimized git operations, and performance-tested with large repositories
 
 ### 🔧 **Maintenance Friendly**
 

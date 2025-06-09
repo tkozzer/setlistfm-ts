@@ -1,0 +1,10 @@
+{
+  "total_commits": 10,
+  "feat_count": 2,
+  "fix_count": 2,
+  "chore_count": 2,
+  "ci_count": 2,
+  "docs_count": 2,
+  "breaking_changes_detected": true,
+  "commit_patterns": ["feat:", "fix:", "chore:", "ci:", "docs:", "feat!:"]
+}
