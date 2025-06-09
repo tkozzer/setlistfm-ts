@@ -1,0 +1,7 @@
+## 🚀 Release v0.7.3
+
+This release focuses on enhancing usability and reliability in the setlistfm-ts SDK's automation processes, along with important bug fixes and improvements to the CI/CD workflow.
+
+## 📝 What's New
+
+- Introduced support for `--version`, `--changelog`, and `--verbose` parameters in the changelog extraction script to enhance usability. 

@@ -431,7 +431,22 @@ main() {
             if ! ./workflows/release-pr/test-extract-changelog-entry.sh >/dev/null 2>&1; then
                 workflow_exit=1
             fi
+            if ! ./workflows/release-pr/test-extract-changelog-entry-interface.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
+            if ! ./workflows/release-pr/test-extract-changelog-entry-versioning.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
+            if ! ./workflows/release-pr/test-workflow-integration.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
             if ! ./workflows/release-pr/test-manage-release-pr.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
+            if ! ./workflows/release-pr/test-debug-ai-response.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
+            if ! ./workflows/release-pr/test-debug-variables.sh >/dev/null 2>&1; then
                 workflow_exit=1
             fi
             if ! ./workflows/release-notes/test-collect-git-history.sh >/dev/null 2>&1; then
@@ -569,9 +584,39 @@ main() {
                 "Workflow Testing"
 
             run_test_suite \
+                "Changelog Extraction Interface Compatibility" \
+                "$SCRIPT_DIR/workflows/release-pr/test-extract-changelog-entry-interface.sh" \
+                "Testing interface compatibility with release-notes-generate workflow (--version, --changelog, --verbose)" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "Changelog Version-Specific Extraction" \
+                "$SCRIPT_DIR/workflows/release-pr/test-extract-changelog-entry-versioning.sh" \
+                "Testing version-specific changelog extraction functionality and edge cases" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "Workflow Integration Fix Verification" \
+                "$SCRIPT_DIR/workflows/release-pr/test-workflow-integration.sh" \
+                "Testing complete fix for release-notes-generate.yml workflow integration issue" \
+                "Workflow Testing"
+
+            run_test_suite \
                 "Release PR Management" \
                 "$SCRIPT_DIR/workflows/release-pr/test-manage-release-pr.sh" \
                 "Testing release PR creation and update logic with comprehensive mocking and error handling" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "Debug AI Response" \
+                "$SCRIPT_DIR/workflows/release-pr/test-debug-ai-response.sh" \
+                "Testing safe AI response debugging that handles special characters, quotes, and multiline content" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "Debug Variables" \
+                "$SCRIPT_DIR/workflows/release-pr/test-debug-variables.sh" \
+                "Testing safe variable debugging that handles special characters in version and changelog content" \
                 "Workflow Testing"
 
             run_test_suite \

@@ -1,0 +1,12 @@
+## 🚀 Release v0.7.3
+
+This release focuses on enhancing usability and reliability in the setlistfm-ts SDK's automation processes, along with important bug fixes and improvements to the CI/CD workflow.
+
+## 📋 Overview
+
+Version 0.7.3 introduces several enhancements aimed at improving the user experience and the overall performance of the SDK. Notably, the addition of new parameters in the changelog extraction script allows for greater flexibility and control when managing pull requests. Furthermore, significant updates to the release PR workflow and automation scripts ensure that users can expect more reliable and maintainable processes. This release is essential for developers who rely on accurate and efficient release management.
+
+## 📝 What's New
+
+- Introduced support for `--version`, `--changelog`, and `--verbose` parameters in the changelog extraction script to enhance usability.
+- Added `--body-base64` parameter to `manage-release-pr.sh` script for improved handling of multiline content in pull requests. 

@@ -85,15 +85,10 @@ jobs:
 
       - name: 🔍 Debug - Variables
         run: |
-          echo "=== VARIABLES ==="
-          echo "VERSION=${{ steps.version.outputs.ver }}"
-          echo ""
-          echo "CHANGELOG (length: $(echo '${{ steps.changelog.outputs.entry }}' | wc -c) chars):"
-          echo "--- First 800 chars ---"
-          echo "${{ steps.changelog.outputs.entry }}" | head -c 800
-          echo ""
-          echo "--- End of preview ---"
-          echo "=================="
+          ./.github/scripts/release-pr/debug-variables.sh \
+            --version "${{ steps.version.outputs.ver }}" \
+            --changelog "${{ steps.changelog.outputs.entry }}" \
+            --max-chars 800
 
       - name: 🤖 Compose PR description
         id: body
@@ -111,10 +106,10 @@ jobs:
 
       - name: 🔍 Debug - AI response
         run: |
-          echo "=== AI RESPONSE ==="
-          echo "Content length: $(echo '${{ steps.body.outputs.content }}' | wc -c) chars"
-          echo "First 500 chars: $(echo '${{ steps.body.outputs.content }}' | head -c 500)"
-          echo "=================="
+          ./.github/scripts/release-pr/debug-ai-response.sh \
+            --content "${{ steps.body.outputs.content }}" \
+            --title "AI RESPONSE" \
+            --max-chars 500
 
       # --------------------------------------------------------------------- #
       # 5️⃣  Ensure required labels exist                                     #

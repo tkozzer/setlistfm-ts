@@ -1,0 +1,5 @@
+## What's "New" in v1.0
+- Enhanced `functionality` 
+- Fixed C:\path\issues
+- Updated 'single' and "double" quotes
+- Regex patterns: \d+ and \w+ 
