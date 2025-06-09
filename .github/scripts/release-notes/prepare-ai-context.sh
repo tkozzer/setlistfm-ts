@@ -18,6 +18,12 @@ VERBOSE=0
 VERSION=""
 OUTPUT_FORMAT="template_vars"
 
+# Workflow parameters (when provided, use these instead of collecting data)
+PROVIDED_GIT_COMMITS_B64=""
+PROVIDED_COMMIT_STATS_B64=""
+PROVIDED_CHANGELOG_ENTRY_B64=""
+PROVIDED_SINCE_TAG=""
+
 # Colors for output
 readonly RED='\033[0;31m'
 readonly GREEN='\033[0;32m'
@@ -217,11 +223,20 @@ get_previous_release_notes() {
 }
 
 # --------------------------------------------------------------------------- #
-#  Base64 encoding for multi-line content                                     #
+#  Base64 encoding/decoding for multi-line content                            #
 # --------------------------------------------------------------------------- #
 encode_base64() {
   local content="$1"
   printf '%s' "$content" | base64 -w 0
+}
+
+decode_base64() {
+  local base64_content="$1"
+  if [[ -n "$base64_content" ]]; then
+    printf '%s' "$base64_content" | base64 -d 2>/dev/null || echo ""
+  else
+    echo ""
+  fi
 }
 
 # --------------------------------------------------------------------------- #
@@ -234,16 +249,44 @@ prepare_template_variables() {
   
   log_verbose "Preparing template variables"
   
-  # Get previous tag
-  previous_tag=$(get_previous_tag "$version")
+  # Determine previous tag (use provided tag if available)
+  if [[ -n "$PROVIDED_SINCE_TAG" ]]; then
+    previous_tag="$PROVIDED_SINCE_TAG"
+    log_verbose "Using provided since tag: $previous_tag"
+  else
+    previous_tag=$(get_previous_tag "$version")
+    log_verbose "Auto-detected previous tag: $previous_tag"
+  fi
   
   # Determine version type
   version_type=$(determine_version_type "$version" "$previous_tag")
   
-  # Collect data
-  git_commits=$(collect_git_commits "$previous_tag")
-  commit_stats=$(collect_commit_stats "$previous_tag")
-  changelog_entry=$(extract_changelog_entry "$version")
+  # Use provided data or collect it
+  if [[ -n "$PROVIDED_GIT_COMMITS_B64" ]]; then
+    log_verbose "Using provided git commits data"
+    git_commits=$(decode_base64 "$PROVIDED_GIT_COMMITS_B64")
+  else
+    log_verbose "Collecting git commits internally"
+    git_commits=$(collect_git_commits "$previous_tag")
+  fi
+  
+  if [[ -n "$PROVIDED_COMMIT_STATS_B64" ]]; then
+    log_verbose "Using provided commit stats data"
+    commit_stats=$(decode_base64 "$PROVIDED_COMMIT_STATS_B64")
+  else
+    log_verbose "Collecting commit stats internally"
+    commit_stats=$(collect_commit_stats "$previous_tag")
+  fi
+  
+  if [[ -n "$PROVIDED_CHANGELOG_ENTRY_B64" ]]; then
+    log_verbose "Using provided changelog entry data"
+    changelog_entry=$(decode_base64 "$PROVIDED_CHANGELOG_ENTRY_B64")
+  else
+    log_verbose "Extracting changelog entry internally"
+    changelog_entry=$(extract_changelog_entry "$version")
+  fi
+  
+  # Always collect previous release notes (no workflow parameter for this yet)
   previous_release=$(get_previous_release_notes "$version")
   
   # Extract breaking changes flag from commit stats
@@ -285,6 +328,22 @@ while [[ $# -gt 0 ]]; do
       VERSION="$2"
       shift 2
       ;;
+    --git-commits-b64)
+      PROVIDED_GIT_COMMITS_B64="$2"
+      shift 2
+      ;;
+    --commit-stats-b64)
+      PROVIDED_COMMIT_STATS_B64="$2"
+      shift 2
+      ;;
+    --changelog-entry-b64)
+      PROVIDED_CHANGELOG_ENTRY_B64="$2"
+      shift 2
+      ;;
+    --since-tag)
+      PROVIDED_SINCE_TAG="$2"
+      shift 2
+      ;;
     --verbose)
       VERBOSE=1
       shift
@@ -296,21 +355,31 @@ AI Context Preparation Script
 Usage: prepare-ai-context.sh --version <version> [options]
 
 Options:
-  --version <version>     Version to prepare context for (required)
-  --verbose              Enable verbose logging
-  --help                 Show this help message
+  --version <version>              Version to prepare context for (required)
+  --git-commits-b64 <base64>       Pre-collected git commits (base64 encoded)
+  --commit-stats-b64 <base64>      Pre-collected commit statistics (base64 encoded)
+  --changelog-entry-b64 <base64>   Pre-collected changelog entry (base64 encoded)
+  --since-tag <tag>                Tag to use for commit range (overrides auto-detection)
+  --verbose                        Enable verbose logging
+  --help                           Show this help message
 
 Examples:
   prepare-ai-context.sh --version v0.7.1
   prepare-ai-context.sh --version 0.7.1 --verbose
+  prepare-ai-context.sh --version 0.7.3 --git-commits-b64 "$(echo 'data' | base64)"
+
+Workflow Integration:
+  When workflow parameters are provided, the script uses them instead of 
+  collecting data internally. This allows GitHub Actions workflows to 
+  pre-collect data and pass it to avoid redundant processing.
 
 Output:
   Template variables in GitHub Actions format (KEY=value)
   Multi-line content is base64-encoded with _B64 suffix
 
 Dependencies:
-  - collect-git-history.sh
-  - extract-commit-stats.sh
+  - collect-git-history.sh (if not using --git-commits-b64)
+  - extract-commit-stats.sh (if not using --commit-stats-b64)
   - git repository with tags
   - jq (for JSON processing)
 EOF

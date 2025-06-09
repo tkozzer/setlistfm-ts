@@ -636,6 +636,170 @@ test_json_parsing_robustness() {
     return 1
 }
 
+# ==================================================================
+# TDD Tests: Workflow Parameter Support (SHOULD FAIL INITIALLY)
+# ==================================================================
+# These tests expect the script to accept and use workflow parameters.
+# They will FAIL until we implement the feature, then PASS.
+
+test_accepts_git_commits_b64_parameter() {
+    local output
+    local exit_code=0
+    
+    # Load test fixture data
+    local fixtures_file="$FIXTURES_DIR/prepare-ai-context/workflow-parameters.json"
+    local git_commits_b64
+    
+    if [[ -f "$fixtures_file" ]]; then
+        git_commits_b64=$(grep '"git_commits_b64"' "$fixtures_file" | cut -d'"' -f4)
+    else
+        git_commits_b64="W3siaGFzaCI6ICJiNGU5M2M0In1d"  # Sample base64 data
+    fi
+    
+    cd "$TEST_REPO_DIR"
+    # Script should ACCEPT this parameter and succeed
+    output=$("$SCRIPT_UNDER_TEST" --version "0.7.3" --git-commits-b64 "$git_commits_b64" 2>/dev/null) || exit_code=$?
+    cd "$PROJECT_ROOT"
+    
+    # Test passes if script succeeds and produces expected output
+    if [[ $exit_code -eq 0 ]] && echo "$output" | grep -q "VERSION=0.7.3"; then
+        return 0
+    fi
+    return 1
+}
+
+test_accepts_commit_stats_b64_parameter() {
+    local output
+    local exit_code=0
+    
+    # Load test fixture data
+    local fixtures_file="$FIXTURES_DIR/prepare-ai-context/workflow-parameters.json"
+    local commit_stats_b64
+    
+    if [[ -f "$fixtures_file" ]]; then
+        commit_stats_b64=$(grep '"commit_stats_b64"' "$fixtures_file" | cut -d'"' -f4)
+    else
+        commit_stats_b64="ewogICJ0b3RhbF9jb21taXRzIjogMTUKfQ=="  # Sample base64 data
+    fi
+    
+    cd "$TEST_REPO_DIR"
+    # Script should ACCEPT this parameter and succeed
+    output=$("$SCRIPT_UNDER_TEST" --version "0.7.3" --commit-stats-b64 "$commit_stats_b64" 2>/dev/null) || exit_code=$?
+    cd "$PROJECT_ROOT"
+    
+    # Test passes if script succeeds and produces expected output
+    if [[ $exit_code -eq 0 ]] && echo "$output" | grep -q "VERSION=0.7.3"; then
+        return 0
+    fi
+    return 1
+}
+
+test_accepts_changelog_entry_b64_parameter() {
+    local output
+    local exit_code=0
+    
+    # Load test fixture data
+    local fixtures_file="$FIXTURES_DIR/prepare-ai-context/workflow-parameters.json"
+    local changelog_entry_b64
+    
+    if [[ -f "$fixtures_file" ]]; then
+        changelog_entry_b64=$(grep '"changelog_entry_b64"' "$fixtures_file" | cut -d'"' -f4)
+    else
+        changelog_entry_b64="IyMjIEFkZGVkCi0gU29tZSBmZWF0dXJl"  # Sample base64 data
+    fi
+    
+    cd "$TEST_REPO_DIR"
+    # Script should ACCEPT this parameter and succeed
+    output=$("$SCRIPT_UNDER_TEST" --version "0.7.3" --changelog-entry-b64 "$changelog_entry_b64" 2>/dev/null) || exit_code=$?
+    cd "$PROJECT_ROOT"
+    
+    # Test passes if script succeeds and produces expected output
+    if [[ $exit_code -eq 0 ]] && echo "$output" | grep -q "VERSION=0.7.3"; then
+        return 0
+    fi
+    return 1
+}
+
+test_accepts_since_tag_parameter() {
+    local output
+    local exit_code=0
+    
+    cd "$TEST_REPO_DIR"
+    # Script should ACCEPT this parameter and succeed
+    output=$("$SCRIPT_UNDER_TEST" --version "0.7.3" --since-tag "v0.7.1" 2>/dev/null) || exit_code=$?
+    cd "$PROJECT_ROOT"
+    
+    # Test passes if script succeeds and produces expected output
+    if [[ $exit_code -eq 0 ]] && echo "$output" | grep -q "VERSION=0.7.3"; then
+        return 0
+    fi
+    return 1
+}
+
+test_workflow_parameters_override_internal_collection() {
+    local output
+    local exit_code=0
+    
+    # Load test fixture data
+    local fixtures_file="$FIXTURES_DIR/prepare-ai-context/workflow-parameters.json"
+    local git_commits_b64="W3siaGFzaCI6ICJiNGU5M2M0In1d"
+    local commit_stats_b64="ewogICJ0b3RhbF9jb21taXRzIjogMTUKfQ=="
+    local changelog_entry_b64="IyMjIEFkZGVkCi0gU29tZSBmZWF0dXJl"
+    
+    if [[ -f "$fixtures_file" ]]; then
+        git_commits_b64=$(grep '"git_commits_b64"' "$fixtures_file" | cut -d'"' -f4)
+        commit_stats_b64=$(grep '"commit_stats_b64"' "$fixtures_file" | cut -d'"' -f4)
+        changelog_entry_b64=$(grep '"changelog_entry_b64"' "$fixtures_file" | cut -d'"' -f4)
+    fi
+    
+    cd "$TEST_REPO_DIR"
+    # Script should accept ALL workflow parameters and use them instead of collecting internally
+    output=$("$SCRIPT_UNDER_TEST" \
+        --version "0.7.3" \
+        --git-commits-b64 "$git_commits_b64" \
+        --commit-stats-b64 "$commit_stats_b64" \
+        --changelog-entry-b64 "$changelog_entry_b64" \
+        --since-tag "v0.7.1" 2>/dev/null) || exit_code=$?
+    cd "$PROJECT_ROOT"
+    
+    # Test passes if script succeeds and uses the provided data
+    if [[ $exit_code -eq 0 ]] && \
+       echo "$output" | grep -q "VERSION=0.7.3" && \
+       echo "$output" | grep -q "GIT_COMMITS_B64=" && \
+       echo "$output" | grep -q "COMMIT_STATS_B64=" && \
+       echo "$output" | grep -q "CHANGELOG_ENTRY_B64="; then
+        return 0
+    fi
+    return 1
+}
+
+test_workflow_parameters_use_provided_data() {
+    local output
+    local exit_code=0
+    
+    # Use specific test data
+    local test_changelog_b64="IyMjIFRlc3QgQ2hhbmdlbG9nCi0gVGVzdCBmZWF0dXJl"  # "### Test Changelog\n- Test feature"
+    
+    cd "$TEST_REPO_DIR"
+    # When changelog is provided via parameter, it should use that instead of reading CHANGELOG.md
+    output=$("$SCRIPT_UNDER_TEST" \
+        --version "0.7.3" \
+        --changelog-entry-b64 "$test_changelog_b64" 2>/dev/null) || exit_code=$?
+    cd "$PROJECT_ROOT"
+    
+    # Test passes if script uses the provided changelog data
+    if [[ $exit_code -eq 0 ]]; then
+        local output_changelog_b64
+        output_changelog_b64=$(echo "$output" | grep "CHANGELOG_ENTRY_B64=" | cut -d'=' -f2)
+        
+        # Should use the provided changelog data, not the file
+        if [[ "$output_changelog_b64" == "$test_changelog_b64" ]]; then
+            return 0
+        fi
+    fi
+    return 1
+}
+
 # Main execution
 main() {
     echo -e "${BOLD}${BLUE}🚀 AI Context Preparation Script Test Suite${NC}"
@@ -668,6 +832,14 @@ main() {
     run_test "template_variable_completeness" "test_template_variable_completeness" "Verify all template variables are generated"
     run_test "error_propagation" "test_error_propagation" "Verify error handling with invalid inputs"
     run_test "json_parsing_robustness" "test_json_parsing_robustness" "Verify JSON parsing and validation robustness"
+    
+    # TDD tests for workflow parameter support (SHOULD FAIL INITIALLY)
+    run_test "accepts_git_commits_b64_parameter" "test_accepts_git_commits_b64_parameter" "TDD: Script should accept --git-commits-b64 parameter"
+    run_test "accepts_commit_stats_b64_parameter" "test_accepts_commit_stats_b64_parameter" "TDD: Script should accept --commit-stats-b64 parameter"
+    run_test "accepts_changelog_entry_b64_parameter" "test_accepts_changelog_entry_b64_parameter" "TDD: Script should accept --changelog-entry-b64 parameter"
+    run_test "accepts_since_tag_parameter" "test_accepts_since_tag_parameter" "TDD: Script should accept --since-tag parameter"
+    run_test "workflow_parameters_override_internal_collection" "test_workflow_parameters_override_internal_collection" "TDD: Workflow parameters should override internal data collection"
+    run_test "workflow_parameters_use_provided_data" "test_workflow_parameters_use_provided_data" "TDD: Script should use provided data instead of file/git"
     
     # Cleanup
     cleanup_test_environment
