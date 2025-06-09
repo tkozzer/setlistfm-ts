@@ -4,30 +4,6 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),  
 
-## [0.7.2] - 2025-06-09
-
-### Added
-
-- Introduced a comprehensive test suite for multiline variable scenarios in CI workflows
-- Enhanced release-notes generation workflow with a four-stage data collection pipeline, improving changelog integration and AI context preparation
-
-### Changed
-
-- Updated README.md to accurately reflect script counts and testing status for all automation scripts
-- Reorganized GitHub automation into modular scripts for better maintainability and testability
-- Enhanced the release-notes generation workflow with debug logging for AI inputs and outputs
-- Improved documentation accuracy, reflecting 100% test coverage across the framework
-
-### Fixed
-
-- Resolved command parsing errors in the release PR process, ensuring complex content does not break command execution
-- Fixed multiline variable parsing issues in CI workflows, allowing for complete variable substitution in templates
-- Redirected debug output to stderr in multiple scripts to prevent workflow failures due to unexpected output
-- Added comprehensive tests to validate the release-prepare changelog update logic, ensuring proper handling of special characters and multi-line content
-
----
-
-
 ## [0.7.1] - 2025-06-08
 
 ### Added

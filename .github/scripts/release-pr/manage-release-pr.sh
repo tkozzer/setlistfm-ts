@@ -14,6 +14,7 @@
 #   --version <version>       Release version (e.g., 1.2.3)
 #   --title <title>           PR title (default: "🚀 Release v{version}")
 #   --body <body>             PR body/description
+#   --body-base64 <base64>    PR body in base64 format
 #   --labels <labels>         Comma-separated labels (default: "release,automated")
 #   --assignee <assignee>     PR assignee (default: repository owner)
 #   --base <branch>           Base branch (default: main)
@@ -50,6 +51,7 @@ set -euo pipefail
 VERSION=""
 TITLE=""
 BODY=""
+BODY_BASE64=""
 LABELS="release,automated"
 ASSIGNEE=""
 BASE_BRANCH="main"
@@ -107,6 +109,10 @@ parse_args() {
                 ;;
             --body)
                 BODY="$2"
+                shift 2
+                ;;
+            --body-base64)
+                BODY_BASE64="$2"
                 shift 2
                 ;;
             --labels)
@@ -172,9 +178,19 @@ validate_parameters() {
     fi
     
     # Body is required for PR description
-    if [[ -z "$BODY" ]]; then
-        error "PR body is required. Use --body to specify."
+    if [[ -z "$BODY" && -z "$BODY_BASE64" ]]; then
+        error "PR body or body-base64 is required. Use --body or --body-base64 to specify."
         exit 1
+    fi
+    
+    # If both body and body-base64 are provided, body-base64 takes precedence
+    if [[ -n "$BODY_BASE64" ]]; then
+        debug "Decoding base64 body content"
+        if ! BODY=$(echo "$BODY_BASE64" | base64 -d 2>/dev/null); then
+            error "Invalid base64 content in --body-base64 parameter"
+            exit 4
+        fi
+        debug "Base64 body decoded successfully (length: ${#BODY})"
     fi
     
     # Set default title if not provided
