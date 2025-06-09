@@ -235,11 +235,6 @@ check_existing_pr() {
         return 0
     fi
     
-    local pr_number
-    local cmd="gh pr list --repo '$REPOSITORY' --base '$BASE_BRANCH' --head '$HEAD_BRANCH' --json number --jq '.[0].number // empty'"
-    
-    debug "Executing: $cmd"
-    
     if [[ "$DRY_RUN" == "true" ]]; then
         debug "[DRY RUN] Would check for existing PR"
         # For dry run with no mock, assume no existing PR
@@ -247,7 +242,15 @@ check_existing_pr() {
         return 0
     fi
     
-    pr_number=$(eval "$cmd" 2>/dev/null || echo "")
+    debug "Executing: gh pr list --repo \"$REPOSITORY\" --base \"$BASE_BRANCH\" --head \"$HEAD_BRANCH\" --json number --jq '.[0].number // empty'"
+    
+    local pr_number
+    pr_number=$(gh pr list \
+        --repo "$REPOSITORY" \
+        --base "$BASE_BRANCH" \
+        --head "$HEAD_BRANCH" \
+        --json number \
+        --jq '.[0].number // empty' 2>/dev/null || echo "")
     
     debug "PR check result: '$pr_number'"
     echo "$pr_number"
@@ -255,17 +258,6 @@ check_existing_pr() {
 
 create_new_pr() {
     debug "Creating new PR: $HEAD_BRANCH → $BASE_BRANCH"
-    
-    local cmd="gh pr create"
-    cmd+=" --repo '$REPOSITORY'"
-    cmd+=" --base '$BASE_BRANCH'"
-    cmd+=" --head '$HEAD_BRANCH'"
-    cmd+=" --title '$TITLE'"
-    cmd+=" --body '$BODY'"
-    cmd+=" --label '$LABELS'"
-    cmd+=" --assignee '$ASSIGNEE'"
-    
-    debug "Executing: $cmd"
     
     if [[ "$DRY_RUN" == "true" ]]; then
         info "[DRY RUN] Would create PR with:"
@@ -278,8 +270,17 @@ create_new_pr() {
         return 0
     fi
     
+    debug "Executing: gh pr create --repo \"$REPOSITORY\" --base \"$BASE_BRANCH\" --head \"$HEAD_BRANCH\" --title \"$TITLE\" --body \"$BODY\" --label \"$LABELS\" --assignee \"$ASSIGNEE\""
+    
     local pr_url
-    if pr_url=$(eval "$cmd" 2>&1); then
+    if pr_url=$(gh pr create \
+        --repo "$REPOSITORY" \
+        --base "$BASE_BRANCH" \
+        --head "$HEAD_BRANCH" \
+        --title "$TITLE" \
+        --body "$BODY" \
+        --label "$LABELS" \
+        --assignee "$ASSIGNEE" 2>&1); then
         debug "PR created successfully: $pr_url"
         echo "$pr_url"
         return 0
@@ -294,15 +295,6 @@ update_existing_pr() {
     
     debug "Updating existing PR #$pr_number"
     
-    local cmd="gh pr edit '$pr_number'"
-    cmd+=" --repo '$REPOSITORY'"
-    cmd+=" --title '$TITLE'"
-    cmd+=" --body '$BODY'"
-    cmd+=" --add-label '$LABELS'"
-    cmd+=" --add-assignee '$ASSIGNEE'"
-    
-    debug "Executing: $cmd"
-    
     if [[ "$DRY_RUN" == "true" ]]; then
         info "[DRY RUN] Would update PR #$pr_number with:"
         info "  Title: $TITLE"
@@ -312,8 +304,15 @@ update_existing_pr() {
         return 0
     fi
     
+    debug "Executing: gh pr edit \"$pr_number\" --repo \"$REPOSITORY\" --title \"$TITLE\" --body \"$BODY\" --add-label \"$LABELS\" --add-assignee \"$ASSIGNEE\""
+    
     local result
-    if result=$(eval "$cmd" 2>&1); then
+    if result=$(gh pr edit "$pr_number" \
+        --repo "$REPOSITORY" \
+        --title "$TITLE" \
+        --body "$BODY" \
+        --add-label "$LABELS" \
+        --add-assignee "$ASSIGNEE" 2>&1); then
         debug "PR updated successfully"
         return 0
     else
