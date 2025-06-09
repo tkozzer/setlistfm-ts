@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),  
 
+## [0.7.4] - 2025-06-09
+
+### Added
+
+- Introduced support for additional parameters in the prepare-ai-context script, allowing pre-collected workflow data to be accepted via base64 encoding, enhancing flexibility in workflow management.
+
+### Changed
+
+- Updated the release management workflows to improve handling of multiline content and special characters, ensuring smoother operations and reducing errors in GitHub Actions.
+- Refactored the automation system into modular scripts for better maintainability and testability, streamlining the release process.
+
+### Fixed
+
+- Resolved various shell parsing errors in GitHub Actions workflows, including issues with special characters and multiline content, preventing workflow failures and improving reliability.
+- Fixed command parsing errors in the release PR workflow, ensuring that complex content does not disrupt command execution.
+
+---
+
+
 ## [0.7.3] - 2025-06-09
 
 ### Added
