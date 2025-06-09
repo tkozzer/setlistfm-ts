@@ -292,16 +292,25 @@ prepare_template_variables() {
   # Extract breaking changes flag from commit stats
   has_breaking_changes=$(echo "$commit_stats" | jq -r '.breaking_changes_detected // false' 2>/dev/null || echo "false")
   
-  # Prepare template variables in GitHub Actions format
-  cat <<EOF
-VERSION=$version
-VERSION_TYPE=$version_type
-CHANGELOG_ENTRY_B64=$(encode_base64 "$changelog_entry")
-GIT_COMMITS_B64=$(encode_base64 "$git_commits")
-COMMIT_STATS_B64=$(encode_base64 "$commit_stats")
-HAS_BREAKING_CHANGES=$has_breaking_changes
-PREVIOUS_RELEASE_B64=$(encode_base64 "$previous_release")
-EOF
+  # Prepare template variables as single-line JSON for GitHub Actions compatibility
+  # GitHub Actions only captures the first line after key=, so we encode all variables as JSON
+  jq -n \
+    --arg version "$version" \
+    --arg version_type "$version_type" \
+    --arg changelog_b64 "$(encode_base64 "$changelog_entry")" \
+    --arg git_commits_b64 "$(encode_base64 "$git_commits")" \
+    --arg commit_stats_b64 "$(encode_base64 "$commit_stats")" \
+    --arg has_breaking "$has_breaking_changes" \
+    --arg previous_b64 "$(encode_base64 "$previous_release")" \
+    '{
+      VERSION: $version,
+      VERSION_TYPE: $version_type,
+      CHANGELOG_ENTRY_B64: $changelog_b64,
+      GIT_COMMITS_B64: $git_commits_b64,
+      COMMIT_STATS_B64: $commit_stats_b64,
+      HAS_BREAKING_CHANGES: $has_breaking,
+      PREVIOUS_RELEASE_B64: $previous_b64
+    }' | base64 -w 0
 }
 
 # --------------------------------------------------------------------------- #

@@ -1,0 +1,28 @@
+{
+  "version": "v0.7.4",
+  "summary": "This release tests the Fix 3 improvements with version normalization and missing arrays.",
+  "primary_section": {
+    "title": "Infrastructure Improvements",
+    "emoji": "🛠️",
+    "features": [
+      "**Enhanced CI pipeline** reduces build times by 25%",
+      "**Improved error handling** provides clearer debugging information"
+    ]
+  },
+  "secondary_sections": [],
+  "commit_analysis": {
+    "total_commits": 7,
+    "feat_count": 2,
+    "fix_count": 3,
+    "chore_count": 1,
+    "ci_count": 2,
+    "docs_count": 1,
+    "breaking_changes_detected": false
+  },
+  "breaking_changes": "",
+  "footer_links": {
+    "npm": "https://www.npmjs.com/package/setlistfm-ts",
+    "changelog": "https://github.com/tkozzer/setlistfm-ts/blob/main/CHANGELOG.md",
+    "issues": "https://github.com/tkozzer/setlistfm-ts/issues"
+  }
+}
