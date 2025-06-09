@@ -4,31 +4,6 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),  
 
-## [0.7.3] - 2025-06-09
-
-### Added
-
-- Introduced support for --version, --changelog, and --verbose parameters in the changelog extraction script to enhance usability.
-- Added --body-base64 parameter to manage-release-pr.sh script for improved handling of multiline content in pull requests.
-
-### Changed
-
-- Updated the release-pr workflow to utilize base64 encoding for handling multiline content, improving reliability in processing complex pull request descriptions.
-- Refactored the automation system into modular scripts for better maintainability and testability, enhancing the overall CI/CD workflow.
-
-### Fixed
-
-- Resolved command parsing errors in the release PR workflow, ensuring that special characters and multiline content are processed correctly.
-- Fixed GitHub Actions workflow failures by redirecting debug output to stderr, preventing unexpected output from interfering with command parsing.
-- Corrected the conventional commit counting logic to prevent double-counting of commits in PR metadata, ensuring accurate validation.
-
-### Security
-
-- Enhanced error message handling in the release management scripts to provide clearer feedback during failures.
-
----
-
-
 ## [0.7.2] - 2025-06-09
 
 ### Added
