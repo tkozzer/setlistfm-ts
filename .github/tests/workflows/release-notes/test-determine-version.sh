@@ -12,7 +12,7 @@ set -euo pipefail
 # Test configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
-FIXTURES_DIR="$PROJECT_ROOT/.github/tests/fixtures/release-notes"
+FIXTURES_DIR="$PROJECT_ROOT/.github/tests/fixtures/workflows/release-notes"
 SCRIPT_UNDER_TEST="$PROJECT_ROOT/.github/scripts/release-notes/determine-version.sh"
 
 # Colors for output
@@ -203,7 +203,7 @@ test_auto_trigger_invalid_package_json() {
     local test_package="$TEMP_DIR/package.json"
     
     # Copy invalid package.json to temp directory
-    cp "$FIXTURES_DIR/invalid-package.json" "$test_package"
+    cp "$FIXTURES_DIR/determine-version/invalid-package.json" "$test_package"
     cd "$TEMP_DIR"
     
     output=$("$SCRIPT_UNDER_TEST" --trigger-type "workflow_run" 2>&1) || exit_code=$?
@@ -223,7 +223,7 @@ test_auto_trigger_no_version_in_package_json() {
     local test_package="$TEMP_DIR/package.json"
     
     # Copy package.json without version to temp directory
-    cp "$FIXTURES_DIR/no-version-package.json" "$test_package"
+    cp "$FIXTURES_DIR/determine-version/no-version-package.json" "$test_package"
     cd "$TEMP_DIR"
     
     output=$("$SCRIPT_UNDER_TEST" --trigger-type "workflow_run" 2>&1) || exit_code=$?
@@ -243,7 +243,7 @@ test_auto_trigger_valid_package_json() {
     local test_package="$TEMP_DIR/package.json"
     
     # Copy valid package.json to temp directory
-    cp "$FIXTURES_DIR/valid-package.json" "$test_package"
+    cp "$FIXTURES_DIR/determine-version/valid-package.json" "$test_package"
     cd "$TEMP_DIR"
     
     output=$("$SCRIPT_UNDER_TEST" --trigger-type "workflow_run" 2>&1) || exit_code=$?
@@ -263,7 +263,7 @@ test_auto_trigger_prerelease_package_json() {
     local test_package="$TEMP_DIR/package.json"
     
     # Copy prerelease package.json to temp directory
-    cp "$FIXTURES_DIR/prerelease-package.json" "$test_package"
+    cp "$FIXTURES_DIR/determine-version/prerelease-package.json" "$test_package"
     cd "$TEMP_DIR"
     
     output=$("$SCRIPT_UNDER_TEST" --trigger-type "workflow_run" 2>&1) || exit_code=$?

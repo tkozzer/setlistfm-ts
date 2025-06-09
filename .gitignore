@@ -2,6 +2,7 @@
 dist/
 coverage/
 build/
+tmp/
 
 # Node.js
 node_modules/

@@ -434,6 +434,18 @@ main() {
             if ! ./workflows/release-pr/test-manage-release-pr.sh >/dev/null 2>&1; then
                 workflow_exit=1
             fi
+            if ! ./workflows/release-notes/test-collect-git-history.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
+            if ! ./workflows/release-notes/test-extract-commit-stats.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
+            if ! ./workflows/release-notes/test-prepare-ai-context.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
+            if ! ./workflows/release-notes/test-validate-release-notes.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
             if ! ./workflows/release-notes/test-manage-github-release.sh >/dev/null 2>&1; then
                 workflow_exit=1
             fi
@@ -560,6 +572,30 @@ main() {
                 "Release PR Management" \
                 "$SCRIPT_DIR/workflows/release-pr/test-manage-release-pr.sh" \
                 "Testing release PR creation and update logic with comprehensive mocking and error handling" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "Git History Collection" \
+                "$SCRIPT_DIR/workflows/release-notes/test-collect-git-history.sh" \
+                "Testing git history collection with JSON/text output formats, unicode support, and edge case handling" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "Commit Statistics Extraction" \
+                "$SCRIPT_DIR/workflows/release-notes/test-extract-commit-stats.sh" \
+                "Testing conventional commit parsing, type counting, and breaking change detection" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "AI Context Preparation" \
+                "$SCRIPT_DIR/workflows/release-notes/test-prepare-ai-context.sh" \
+                "Testing data orchestration, template variable preparation, and base64 encoding for AI context" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "Release Notes Validation" \
+                "$SCRIPT_DIR/workflows/release-notes/test-validate-release-notes.sh" \
+                "Testing release notes content validation, formatting checks, and quality metrics" \
                 "Workflow Testing"
 
             run_test_suite \

@@ -1,0 +1,1 @@
+This is the release notes for setlistfm-ts version v1.2.3. We fixed some bugs and added new features. The API is now more reliable and faster. Users will enjoy better performance and improved error handling. This version includes enhanced TypeScript definitions for better developer experience. Documentation has been updated with comprehensive examples and usage guides.
