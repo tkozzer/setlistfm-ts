@@ -80,14 +80,83 @@ Prioritize sections based on commit counts - the highest count should be the pri
 - [ ] Use emojis consistently.
 - [ ] Output matches JSON schema and template formatting.
 
+## JSON Output Structure
+
+You must generate a JSON response with the following structure:
+
+```json
+{
+  "version": "0.7.4",
+  "summary": "One sentence describing the primary focus of this release.",
+  "primary_section": {
+    "title": "Section Title",
+    "emoji": "🚀",
+    "features": [
+      "**Feature name** benefit description",
+      "**Another feature** benefit description"
+    ]
+  },
+  "secondary_sections": [
+    {
+      "title": "Bug Fixes",
+      "emoji": "🐛",
+      "features": [
+        "**Fixed issue** description of what was resolved"
+      ]
+    }
+  ],
+  "bug_fixes": [
+    "**Resolved memory leak** in long-running processes",
+    "**Fixed race condition** in concurrent requests"
+  ],
+  "ci_improvements": [
+    "**Enhanced CI pipeline** reduces build times by 25%",
+    "**Improved test coverage** ensures better quality"
+  ],
+  "commit_analysis": {
+    "total_commits": 21,
+    "feat_count": 5,
+    "fix_count": 3,
+    "ci_count": 2,
+    "breaking_changes_detected": false
+  },
+  "breaking_changes": "",
+  "footer_links": {
+    "npm": "https://www.npmjs.com/package/setlistfm-ts",
+    "changelog": "https://github.com/tkozzer/setlistfm-ts/blob/main/CHANGELOG.md",
+    "issues": "https://github.com/tkozzer/setlistfm-ts/issues"
+  }
+}
+```
+
+## Field-by-Field Content Guide
+
+- **version**: Use the provided VERSION (remove "v" prefix if present)
+- **summary**: One sentence describing the release focus, end with API impact statement
+- **primary_section**: The main theme with 2-4 bullet points, choose emoji based on focus area
+- **secondary_sections**: Additional grouped changes (0-3 sections), omit if no relevant content
+- **bug_fixes**: Array of fix descriptions extracted from fix commits (required even if empty)
+- **ci_improvements**: Array of CI/DevOps improvements from ci commits (required even if empty)
+- **commit_analysis**: Use the provided COMMIT_STATS data exactly as given
+- **breaking_changes**: Description of breaking changes or empty string if none
+- **footer_links**: Always use the standard setlistfm-ts URLs shown above
+
+## Content Extraction Rules
+
+- Extract **bug_fixes** from commits with "fix:" prefix
+- Extract **ci_improvements** from commits with "ci:" prefix
+- Use **primary_section** for the highest count commit type (feat/fix/ci/chore)
+- Group remaining significant changes into **secondary_sections**
+- Always populate arrays even if empty - never omit required fields
+
 ## Process Workflow
 
 1. Analyze the changelog entry and commit list for themes.
 2. Compare with previous release notes for tone and emoji usage.
-3. Determine version type and highlight key differences.
-4. Group related changes into meaningful sections.
-5. Validate that each bullet follows the formatting rules.
-6. Produce JSON output that matches the schema before rendering.
+3. Extract specific fixes and improvements from commit messages.
+4. Determine primary section based on commit type counts.
+5. Group remaining changes into logical secondary sections.
+6. Populate all required JSON fields following the structure above.
 
 ## Quality Checklist
 
@@ -95,5 +164,6 @@ Prioritize sections based on commit counts - the highest count should be the pri
 - Confirm all major changes are mentioned.
 - Keep technical details concise and user focused.
 - Verify that emoji and section titles match established patterns.
-- Output must render correctly using the provided Handlebars template.
-- Provide clear, friendly language throughout the notes.
+- Extract meaningful content for bug_fixes and ci_improvements arrays.
+- Always include footer_links with standard URLs.
+- Never omit required fields - use empty arrays/strings if no content.

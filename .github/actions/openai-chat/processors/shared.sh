@@ -66,11 +66,47 @@ process_template_vars() {
   local decoded_vars
   if is_base64 "$vars"; then
     decoded_vars=$(echo "$vars" | base64 -d)
+    
+    # Check if decoded content is JSON (new format from prepare-ai-context.sh)
+    if echo "$decoded_vars" | jq empty >/dev/null 2>&1; then
+      # New JSON format - extract variables from JSON structure
+      local json_vars="$decoded_vars"
+      
+      # Process each JSON field as a template variable
+      local keys
+      keys=$(echo "$json_vars" | jq -r 'keys[]' 2>/dev/null || echo "")
+      
+      while IFS= read -r key; do
+        [[ -z $key ]] && continue
+        
+        local value
+        value=$(echo "$json_vars" | jq -r ".$key // empty" 2>/dev/null || echo "")
+        
+        if [[ -n $value && $value != "null" ]]; then
+          # Handle base64-encoded fields (those ending with _B64)
+          if [[ $key == *_B64 ]]; then
+            # Decode base64 content and remove _B64 suffix from variable name
+            if decoded_b64_value=$(echo "$value" | base64 -d 2>/dev/null); then
+              template_key="${key%_B64}"
+              local pattern="{{${template_key}}}"
+              content="${content//$pattern/$decoded_b64_value}"
+            fi
+          else
+            # Regular variable processing
+            local pattern="{{${key}}}"
+            content="${content//$pattern/$value}"
+          fi
+        fi
+      done <<< "$keys"
+      
+      echo "$content"
+      return
+    fi
   else
     decoded_vars="$vars"
   fi
   
-  # Parse variables using a more robust approach that handles multiline values
+  # Legacy format: Parse variables using a more robust approach that handles multiline values
   local current_key=""
   local current_value=""
   
@@ -236,6 +272,9 @@ cleanup_handlebars() {
   # Remove leftover {{#if}} or {{/if}} markers
   content="${content//\{\{#if *\}\}/}"
   content="${content//\{\{\/if\}\}/}"
+  
+  # Remove leftover {{else}} markers
+  content="${content//\{\{else\}\}/}"
   
   # Remove unprocessed placeholders, but preserve standard template variables
   # if no VARS were provided (keep VERSION, DATE, etc. for debugging)
