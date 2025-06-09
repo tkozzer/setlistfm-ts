@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),  
 
+## [0.7.3] - 2025-06-09
+
+### Added
+
+- Introduced a debug-variables.sh script to safely handle special characters in changelog content, preventing shell parsing errors.
+- Added support for --version, --changelog, and --verbose parameters in extract-changelog-entry.sh for improved interface compatibility.
+
+### Changed
+
+- Updated the release-pr workflow to utilize scripts for handling special characters instead of inline bash commands, enhancing reliability.
+- Refactored automation scripts into modular components for better maintainability and testability, improving the overall CI/CD process.
+- Enhanced the release-notes-generate.yml workflow with a four-stage data collection pipeline, improving the integration of changelog data.
+
+### Fixed
+
+- Resolved shell parsing errors in the release-pr workflow caused by special characters and multiline content, ensuring smoother operation.
+- Fixed command parsing errors in the release PR workflow by replacing eval-based execution with direct GitHub CLI calls, preventing unexpected failures.
+- Corrected the handling of multiline content in the manage-release-pr.sh script, ensuring that complex PR descriptions are processed correctly.
+- Addressed issues with debug output in various scripts, ensuring that only necessary output is sent to stdout, preventing workflow failures.
+
+---
+
+
 ## [0.7.2] - 2025-06-09
 
 ### Added
