@@ -181,6 +181,89 @@ CHANGELOG=### Added
     "New feature one"
 }
 
+# Test 2b: JSON format variable processing (new fix)
+test_json_format_variable_processing() {
+  echo "🔍 Testing JSON format variable processing..."
+  
+  # Test JSON format from prepare-ai-context.sh (the fix for GitHub Actions limitation)
+  local template="Version: {{VERSION}}
+Type: {{VERSION_TYPE}}
+
+Changelog:
+{{CHANGELOG_ENTRY}}
+
+Git Commits:
+{{GIT_COMMITS}}"
+  
+  # Create JSON formatted variables (base64 encoded)
+  local json_vars='{
+    "VERSION": "0.7.4",
+    "VERSION_TYPE": "patch",
+    "CHANGELOG_ENTRY_B64": "IyMjIEFkZGVkCi0gTmV3IGZlYXR1cmVz",
+    "GIT_COMMITS_B64": "W3siaGFzaCI6ICJhYmMxMjMifV0="
+  }'
+  
+  local json_vars_b64
+  json_vars_b64=$(echo "$json_vars" | base64 -w 0)
+  
+  # Test JSON variable substitution works
+  run_pattern_test "JSON vars - VERSION substitution" \
+    "process_template_vars '$template' '$json_vars_b64'" \
+    "Version: 0.7.4"
+  
+  run_pattern_test "JSON vars - VERSION_TYPE substitution" \
+    "process_template_vars '$template' '$json_vars_b64'" \
+    "Type: patch"
+  
+  run_pattern_test "JSON vars - changelog content decoded and substituted" \
+    "process_template_vars '$template' '$json_vars_b64'" \
+    "Added.*New features"
+    
+  run_pattern_test "JSON vars - git commits content decoded and substituted" \
+    "process_template_vars '$template' '$json_vars_b64'" \
+    "hash.*abc123"
+}
+
+# Test 2c: Edge cases for JSON format
+test_json_format_edge_cases() {
+  echo "🔍 Testing JSON format edge cases..."
+  
+  local template="{{FIELD1}} and {{FIELD2}}"
+  
+  # Test empty JSON
+  local empty_json_b64
+  empty_json_b64=$(echo '{}' | base64 -w 0)
+  
+  run_test "Empty JSON - placeholders preserved" \
+    "process_template_vars '$template' '$empty_json_b64'" \
+    "{{FIELD1}} and {{FIELD2}}"
+  
+  # Test malformed JSON (should fall back to line-by-line processing)
+  local malformed_json='{invalid json'
+  local malformed_json_b64
+  malformed_json_b64=$(echo "$malformed_json" | base64 -w 0)
+  
+  run_test "Malformed JSON - fallback works" \
+    "process_template_vars '$template' '$malformed_json_b64'" \
+    "{{FIELD1}} and {{FIELD2}}"
+  
+  # Test JSON with special characters
+  local special_json='{
+    "FIELD1": "Value with \"quotes\" and newlines\nand more",
+    "FIELD2": "Value with $special chars & symbols"
+  }'
+  local special_json_b64
+  special_json_b64=$(echo "$special_json" | base64 -w 0)
+  
+  run_pattern_test "JSON with special chars - FIELD1" \
+    "process_template_vars '$template' '$special_json_b64'" \
+    "Value with.*quotes.*and newlines"
+    
+  run_pattern_test "JSON with special chars - FIELD2" \
+    "process_template_vars '$template' '$special_json_b64'" \
+    "Value with.*special chars.*symbols"
+}
+
 # Test 3: get_array_length function
 test_get_array_length() {
   echo "🔍 Testing get_array_length function..."
@@ -398,6 +481,8 @@ main() {
   test_is_base64
   test_process_template_vars
   test_multiline_variable_content
+  test_json_format_variable_processing
+  test_json_format_edge_cases
   test_get_array_length
   test_replace_each_block
   test_error_scenarios

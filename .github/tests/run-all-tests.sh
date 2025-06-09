@@ -467,6 +467,9 @@ main() {
             if ! ./workflows/release-notes/test-determine-version.sh >/dev/null 2>&1; then
                 workflow_exit=1
             fi
+            if ! ./workflows/release-notes/test-schema-validation.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
             
             if [[ $workflow_exit -eq 0 ]]; then
                 echo -e "${GREEN}PASS${NC}"
@@ -510,6 +513,12 @@ main() {
                 "Entrypoint Integration Tests" \
                 "$SCRIPT_DIR/integration/test-entrypoint-integration.sh" \
                 "Testing complete entrypoint workflow with mock data and API simulation" \
+                "Integration Testing"
+            
+            run_test_suite \
+                "Release Notes Pipeline Integration" \
+                "$SCRIPT_DIR/integration/test-release-notes-pipeline.sh" \
+                "Testing end-to-end release notes pipeline with prepare-ai-context, OpenAI action mocking, and template processing" \
                 "Integration Testing"
         fi
 
@@ -653,6 +662,12 @@ main() {
                 "Version Determination" \
                 "$SCRIPT_DIR/workflows/release-notes/test-determine-version.sh" \
                 "Testing version determination logic with trigger-based conditional handling and validation" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "Schema Validation" \
+                "$SCRIPT_DIR/workflows/release-notes/test-schema-validation.sh" \
+                "Testing JSON schema validation for release notes structure and required field enforcement" \
                 "Workflow Testing"
         fi
         

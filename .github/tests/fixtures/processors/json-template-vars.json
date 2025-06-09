@@ -1,0 +1,25 @@
+{
+  "simple_vars": {
+    "VERSION": "0.7.4",
+    "VERSION_TYPE": "patch",
+    "HAS_BREAKING_CHANGES": "false"
+  },
+  "complex_vars": {
+    "VERSION": "0.7.4",
+    "VERSION_TYPE": "patch",
+    "CHANGELOG_ENTRY_B64": "IyMjIEFkZGVkCi0gTmV3IGZlYXR1cmUgZm9yIEpTT04gcHJvY2Vzc2luZwotIEltcHJvdmVkIHRlbXBsYXRlIHZhcmlhYmxlIHN1YnN0aXR1dGlvbgoKIyMjIEZpeGVkCi0gUmVzb2x2ZWQgR2l0SHViIEFjdGlvbnMgdmFyaWFibGUgbGltaXRhdGlvbgotIEZpeGVkIG11bHRpbGluZSBjb250ZW50IGhhbmRsaW5n",
+    "GIT_COMMITS_B64": "W3siaGFzaCI6ICJhYmMxMjM0IiwgIm1lc3NhZ2UiOiAiZmVhdChqc29uKTogYWRkIEpTT04gdGVtcGxhdGUgcHJvY2Vzc2luZyIsICJhdXRob3IiOiAiVGVzdCBVc2VyIiwgImRhdGUiOiAiNSBtaW51dGVzIGFnbyJ9XQ==",
+    "COMMIT_STATS_B64": "ewogICJ0b3RhbF9jb21taXRzIjogMSwKICAiZmVhdF9jb3VudCI6IDEsCiAgImZpeF9jb3VudCI6IDAsCiAgImNob3JlX2NvdW50IjogMCwKICAiY2lfY291bnQiOiAwLAogICJkb2NzX2NvdW50IjogMCwKICAiYnJlYWtpbmdfY2hhbmdlc19kZXRlY3RlZCI6IGZhbHNlLAogICJjb21taXRfcGF0dGVybnMiOiBbImZlYXQoanNvbik6Il0KfQ==",
+    "HAS_BREAKING_CHANGES": "false"
+  },
+  "special_chars_vars": {
+    "MESSAGE": "Line 1\\nLine 2\\nWith \"quotes\" and 'apostrophes'",
+    "SYMBOLS": "Special chars: $@#%^&*()+={}[]|\\:;\"'<>,.?/~`",
+    "UNICODE": "Unicode: 🚀 世界 Ñoël Café"
+  },
+  "template_examples": {
+    "simple": "Version: {{VERSION}}, Type: {{VERSION_TYPE}}",
+    "multiline": "Release {{VERSION}}\\n\\nChangelog:\\n{{CHANGELOG_ENTRY_B64}}\\n\\nEnd",
+    "complex": "# Release {{VERSION}}\\n\\n## Changes\\n{{CHANGELOG_ENTRY_B64}}\\n\\n## Commits\\n{{GIT_COMMITS_B64}}\\n\\n---\\nGenerated on {{DATE}}"
+  }
+}

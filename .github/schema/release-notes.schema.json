@@ -93,13 +93,33 @@
           "description": "Whether breaking changes were found in commit messages or markers"
         }
       },
-      "required": ["total_commits", "breaking_changes_detected"],
+      "required": ["total_commits", "feat_count", "fix_count", "ci_count", "breaking_changes_detected"],
       "additionalProperties": false
     },
     "breaking_changes": {
       "type": "string",
       "description": "Breaking changes details or empty string if none",
       "maxLength": 1000
+    },
+    "bug_fixes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 10,
+        "description": "Bug fix description starting with **bold name** followed by benefit"
+      },
+      "description": "List of bug fixes extracted from fix: commits. Required field - use empty array if none.",
+      "minItems": 0
+    },
+    "ci_improvements": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 10,
+        "description": "CI improvement description starting with **bold name** followed by benefit"
+      },
+      "description": "List of CI/DevOps improvements extracted from ci: commits. Required field - use empty array if none.",
+      "minItems": 0
     },
     "footer_links": {
       "type": "object",
@@ -112,6 +132,6 @@
       "additionalProperties": false
     }
   },
-  "required": ["version", "summary", "primary_section", "commit_analysis", "breaking_changes", "footer_links"],
+  "required": ["version", "summary", "primary_section", "commit_analysis", "breaking_changes", "footer_links", "bug_fixes", "ci_improvements"],
   "additionalProperties": false
 }
