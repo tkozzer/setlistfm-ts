@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),  
 
+## [0.7.2] - 2025-06-09
+
+### Added
+
+- Introduced comprehensive testing for release management, enhancing reliability and validation of workflows.
+- Created AGENTS.md documentation to guide AI agents in adhering to project standards and patterns.
+
+### Changed
+
+- Refactored GitHub automation into modular scripts for improved maintainability and testability.
+- Updated README.md to accurately reflect script counts and testing status for all automation scripts.
+- Enhanced release-notes generation workflow with a four-stage data collection pipeline for better changelog integration.
+
+### Fixed
+
+- Resolved command parsing errors in release PR management, ensuring complex content no longer breaks command execution.
+- Fixed GitHub Actions workflow failures by redirecting debug output to stderr, preventing unexpected output capture.
+- Corrected conventional commit counting logic to prevent double-counting of commits in PR metadata.
+
+---
+
+
 ## [0.7.1] - 2025-06-08
 
 ### Added
