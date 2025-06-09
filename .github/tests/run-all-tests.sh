@@ -446,6 +446,9 @@ main() {
             if ! ./workflows/release-pr/test-debug-ai-response.sh >/dev/null 2>&1; then
                 workflow_exit=1
             fi
+            if ! ./workflows/release-pr/test-debug-variables.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
             if ! ./workflows/release-notes/test-collect-git-history.sh >/dev/null 2>&1; then
                 workflow_exit=1
             fi
@@ -608,6 +611,12 @@ main() {
                 "Debug AI Response" \
                 "$SCRIPT_DIR/workflows/release-pr/test-debug-ai-response.sh" \
                 "Testing safe AI response debugging that handles special characters, quotes, and multiline content" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "Debug Variables" \
+                "$SCRIPT_DIR/workflows/release-pr/test-debug-variables.sh" \
+                "Testing safe variable debugging that handles special characters in version and changelog content" \
                 "Workflow Testing"
 
             run_test_suite \

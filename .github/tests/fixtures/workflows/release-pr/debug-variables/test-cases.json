@@ -1,0 +1,251 @@
+[
+  {
+    "name": "basic_functionality",
+    "description": "Test basic version and changelog display",
+    "args": ["--version", "1.0.0", "--changelog", "### Fixed\n- Bug fixes"],
+    "expected_exit_code": 0,
+    "expected_patterns": [
+      "=== VARIABLES ===",
+      "VERSION=1.0.0",
+      "CHANGELOG \\(length: [0-9]+ chars\\):",
+      "### Fixed",
+      "- Bug fixes"
+    ]
+  },
+  {
+    "name": "original_error_reproduction",
+    "description": "Reproduce the original apostrophe error from release-pr.yml",
+    "args": ["--version", "0.7.3", "--changelog", "### Fixed\n- Resolved shell parsing errors in GitHub Actions workflows by extracting debug scripts and improving handling of special characters in AI-generated PR descriptions.\n- Fixed command parsing errors in the release PR workflow by replacing eval-based execution with direct GitHub CLI calls, ensuring complex content is handled correctly.\n- Improved the release-prepare workflow's changelog update logic with comprehensive tests covering special character handling, multi-line content, and proper insertion order.\n---"],
+    "expected_exit_code": 0,
+    "expected_patterns": [
+      "VERSION=0.7.3",
+      "shell parsing errors",
+      "GitHub Actions workflows"
+    ]
+  },
+  {
+    "name": "apostrophes_content",
+    "description": "Test content with apostrophes that caused original shell error",
+    "args": ["--version", "1.0.0", "--changelog", "### Fixed\n- Fixed what's broken\n- Here's another fix\n- Don't break anything"],
+    "expected_exit_code": 0,
+    "expected_patterns": [
+      "Fixed what's broken",
+      "Here's another fix",
+      "Don't break anything"
+    ]
+  },
+  {
+    "name": "double_quotes_content",
+    "description": "Test content with double quotes",
+    "args": ["--version", "1.0.0", "--changelog", "### Fixed\n- Fixed \"quoted\" issues\n- Resolved \"another\" problem"],
+    "expected_exit_code": 0,
+    "expected_patterns": [
+      "Fixed \"quoted\" issues",
+      "Resolved \"another\" problem"
+    ]
+  },
+  {
+    "name": "backticks_content",
+    "description": "Test content with backticks",
+    "args": ["--version", "1.0.0", "--changelog", "### Fixed\n- Fixed `code` issues\n- Updated `file.txt` handling"],
+    "expected_exit_code": 0,
+    "expected_patterns": [
+      "Fixed \\`code\\` issues",
+      "Updated \\`file.txt\\` handling"
+    ]
+  },
+  {
+    "name": "mixed_special_characters",
+    "description": "Test content with mixed special characters",
+    "args": ["--version", "1.0.0", "--changelog", "### Fixed\n- Fixed what's \"broken\" with `code`\n- Here's a $variable reference\n- Don't use (parentheses) incorrectly"],
+    "expected_exit_code": 0,
+    "expected_patterns": [
+      "what's \"broken\" with \\`code\\`",
+      "Here's a \\$variable reference",
+      "Don't use \\(parentheses\\)"
+    ]
+  },
+  {
+    "name": "newlines_and_formatting",
+    "description": "Test multi-line content with various formatting",
+    "args": ["--version", "2.0.0", "--changelog", "### Added\n- New feature\n\n### Fixed\n- Bug fix\n\n### Changed\n- Updated behavior"],
+    "expected_exit_code": 0,
+    "expected_patterns": [
+      "### Added",
+      "### Fixed",
+      "### Changed",
+      "New feature",
+      "Bug fix"
+    ]
+  },
+  {
+    "name": "empty_changelog",
+    "description": "Test with empty changelog content",
+    "args": ["--version", "1.0.0", "--changelog", ""],
+    "expected_exit_code": 0,
+    "expected_patterns": [
+      "VERSION=1.0.0",
+      "CHANGELOG \\(length: 0 chars\\):"
+    ]
+  },
+  {
+    "name": "long_content_truncation",
+    "description": "Test content truncation with max-chars",
+    "args": ["--version", "1.0.0", "--changelog", "This is a very long changelog entry that should be truncated when displayed because it exceeds the maximum character limit that we have set for the preview", "--max-chars", "50"],
+    "expected_exit_code": 0,
+    "expected_patterns": [
+      "--- First 50 chars ---",
+      "This is a very long changelog entry that should be"
+    ]
+  },
+  {
+    "name": "custom_title",
+    "description": "Test custom title functionality",
+    "args": ["--version", "1.0.0", "--changelog", "### Fixed\n- Bug fixes", "--title", "CUSTOM TITLE"],
+    "expected_exit_code": 0,
+    "expected_patterns": [
+      "=== CUSTOM TITLE ===",
+      "VERSION=1.0.0"
+    ]
+  },
+  {
+    "name": "verbose_mode",
+    "description": "Test verbose output functionality",
+    "args": ["--version", "1.0.0", "--changelog", "### Fixed\n- Bug fixes", "--verbose"],
+    "expected_exit_code": 0,
+    "expected_patterns": [
+      "=== VARIABLES ===",
+      "VERSION=1.0.0"
+    ],
+    "stderr_patterns": [
+      "Debug: VERSION='1.0.0'",
+      "Debug: CHANGELOG length=23",
+      "Debug: MAX_CHARS=800",
+      "Debug: TITLE='VARIABLES'"
+    ]
+  },
+  {
+    "name": "unicode_content",
+    "description": "Test content with unicode characters",
+    "args": ["--version", "1.0.0", "--changelog", "### Fixed 🐛\n- Fixed émojis and accénts\n- Resolved ñoñó issues"],
+    "expected_exit_code": 0,
+    "expected_patterns": [
+      "### Fixed 🐛",
+      "émojis and accénts",
+      "ñoñó issues"
+    ]
+  },
+  {
+    "name": "missing_version_error",
+    "description": "Test error when version is missing",
+    "args": ["--changelog", "### Fixed\n- Bug fixes"],
+    "expected_exit_code": 1,
+    "stderr_patterns": [
+      "Error: --version is required"
+    ]
+  },
+  {
+    "name": "missing_changelog_error",
+    "description": "Test error when changelog is missing",
+    "args": ["--version", "1.0.0"],
+    "expected_exit_code": 1,
+    "stderr_patterns": [
+      "Error: --changelog is required"
+    ]
+  },
+  {
+    "name": "invalid_max_chars",
+    "description": "Test error with invalid max-chars value",
+    "args": ["--version", "1.0.0", "--changelog", "content", "--max-chars", "invalid"],
+    "expected_exit_code": 1,
+    "stderr_patterns": [
+      "Error: --max-chars must be a positive integer"
+    ]
+  },
+  {
+    "name": "help_message",
+    "description": "Test help message display",
+    "args": ["--help"],
+    "expected_exit_code": 0,
+    "expected_patterns": [
+      "Usage:",
+      "Debug version and changelog variables safely",
+      "OPTIONS:",
+      "--version VALUE",
+      "--changelog VALUE"
+    ]
+  },
+  {
+    "name": "unknown_option_error",
+    "description": "Test error with unknown option",
+    "args": ["--unknown-option", "value"],
+    "expected_exit_code": 1,
+    "stderr_patterns": [
+      "Error: Unknown option '--unknown-option'"
+    ]
+  },
+  {
+    "name": "zero_max_chars",
+    "description": "Test with zero max chars",
+    "args": ["--version", "1.0.0", "--changelog", "Some content", "--max-chars", "0"],
+    "expected_exit_code": 0,
+    "expected_patterns": [
+      "--- First 0 chars ---"
+    ]
+  },
+  {
+    "name": "large_max_chars",
+    "description": "Test with very large max chars value",
+    "args": ["--version", "1.0.0", "--changelog", "Short content", "--max-chars", "10000"],
+    "expected_exit_code": 0,
+    "expected_patterns": [
+      "--- First 10000 chars ---",
+      "Short content"
+    ]
+  },
+  {
+    "name": "backslashes_content",
+    "description": "Test content with backslashes",
+    "args": ["--version", "1.0.0", "--changelog", "### Fixed\n- Fixed \\escaped\\values\n- Updated file\\path\\handling"],
+    "expected_exit_code": 0,
+    "expected_patterns": [
+      "Fixed \\\\escaped\\\\values",
+      "file\\\\path\\\\handling"
+    ]
+  },
+  {
+    "name": "json_like_content",
+    "description": "Test content that looks like JSON",
+    "args": ["--version", "1.0.0", "--changelog", "### Fixed\n- Updated {\"key\": \"value\"} handling\n- Fixed [\"array\", \"processing\"]"],
+    "expected_exit_code": 0,
+    "expected_patterns": [
+      "\\{\"key\": \"value\"\\}",
+      "\\[\"array\", \"processing\"\\]"
+    ]
+  },
+  {
+    "name": "markdown_formatting",
+    "description": "Test complex markdown formatting",
+    "args": ["--version", "1.0.0", "--changelog", "### Fixed\n- **Bold** and *italic* text\n- `Code blocks` and [links](http://example.com)\n- > Blockquotes\n- - Nested lists"],
+    "expected_exit_code": 0,
+    "expected_patterns": [
+      "\\*\\*Bold\\*\\* and \\*italic\\*",
+      "\\`Code blocks\\`",
+      "\\[links\\]\\(http://example.com\\)",
+      "> Blockquotes"
+    ]
+  },
+  {
+    "name": "performance_large_content",
+    "description": "Test performance with large content",
+    "args": ["--version", "1.0.0", "--changelog", "{{ large_changelog_content }}", "--max-chars", "100"],
+    "expected_exit_code": 0,
+    "expected_patterns": [
+      "CHANGELOG \\(length: [0-9]+ chars\\):",
+      "--- First 100 chars ---"
+    ],
+    "content_files": {
+      "large_changelog_content": "large_changelog_content.txt"
+    }
+  }
+]
