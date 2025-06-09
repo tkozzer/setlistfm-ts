@@ -12,7 +12,7 @@ set -euo pipefail
 # Test configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
-FIXTURES_DIR="$PROJECT_ROOT/.github/tests/fixtures/release-notes"
+FIXTURES_DIR="$PROJECT_ROOT/.github/tests/fixtures/workflows/release-notes"
 SCRIPT_UNDER_TEST="$PROJECT_ROOT/.github/scripts/release-notes/manage-github-release.sh"
 
 # Colors for output
@@ -176,7 +176,7 @@ test_missing_required_args() {
 }
 
 test_invalid_version_format() {
-    local notes_file="$FIXTURES_DIR/valid-release-notes.md"
+    local notes_file="$FIXTURES_DIR/validate-release-notes/valid-release-notes.md"
     local output
     local exit_code=0
     
@@ -208,7 +208,7 @@ test_missing_notes_file() {
 }
 
 test_missing_github_token() {
-    local notes_file="$FIXTURES_DIR/valid-release-notes.md"
+    local notes_file="$FIXTURES_DIR/validate-release-notes/valid-release-notes.md"
     local output
     local exit_code=0
     
@@ -224,7 +224,7 @@ test_missing_github_token() {
 }
 
 test_invalid_release_notes_content() {
-    local notes_file="$FIXTURES_DIR/invalid-release-notes.md"
+    local notes_file="$FIXTURES_DIR/validate-release-notes/invalid-release-notes.md"
     local output
     local exit_code=0
     
@@ -240,7 +240,7 @@ test_invalid_release_notes_content() {
 }
 
 test_empty_release_notes() {
-    local notes_file="$FIXTURES_DIR/empty-release-notes.md"
+    local notes_file="$FIXTURES_DIR/validate-release-notes/empty-release-notes.md"
     local output
     local exit_code=0
     
@@ -256,7 +256,7 @@ test_empty_release_notes() {
 }
 
 test_dry_run_create_new_release() {
-    local notes_file="$FIXTURES_DIR/valid-release-notes.md"
+    local notes_file="$FIXTURES_DIR/validate-release-notes/valid-release-notes.md"
     local output
     local exit_code=0
     
@@ -272,7 +272,7 @@ test_dry_run_create_new_release() {
 }
 
 test_dry_run_update_existing_release() {
-    local notes_file="$FIXTURES_DIR/valid-release-notes.md"
+    local notes_file="$FIXTURES_DIR/validate-release-notes/valid-release-notes.md"
     local output
     local exit_code=0
     
@@ -288,7 +288,7 @@ test_dry_run_update_existing_release() {
 }
 
 test_successful_create_new_release() {
-    local notes_file="$FIXTURES_DIR/valid-release-notes.md"
+    local notes_file="$FIXTURES_DIR/validate-release-notes/valid-release-notes.md"
     local output
     local exit_code=0
     
@@ -304,7 +304,7 @@ test_successful_create_new_release() {
 }
 
 test_successful_update_existing_release() {
-    local notes_file="$FIXTURES_DIR/valid-release-notes.md"
+    local notes_file="$FIXTURES_DIR/validate-release-notes/valid-release-notes.md"
     local output
     local exit_code=0
     
@@ -320,7 +320,7 @@ test_successful_update_existing_release() {
 }
 
 test_create_fail_fallback_to_update() {
-    local notes_file="$FIXTURES_DIR/valid-release-notes.md"
+    local notes_file="$FIXTURES_DIR/validate-release-notes/valid-release-notes.md"
     local output
     local exit_code=0
     
@@ -336,7 +336,7 @@ test_create_fail_fallback_to_update() {
 }
 
 test_version_formats() {
-    local notes_file="$FIXTURES_DIR/valid-release-notes.md"
+    local notes_file="$FIXTURES_DIR/validate-release-notes/valid-release-notes.md"
     
     setup_mock_gh "not_exists"
     export GH_TOKEN="$TEST_GH_TOKEN"
@@ -356,6 +356,160 @@ test_version_formats() {
     done
     
     return 0
+}
+
+test_unreadable_notes_file() {
+    local temp_notes="$TEMP_DIR/unreadable.md"
+    local output
+    local exit_code=0
+    
+    # Create a file and make it unreadable
+    echo "# Test notes" > "$temp_notes"
+    chmod 000 "$temp_notes"
+    
+    setup_mock_gh "not_exists"
+    export GH_TOKEN="$TEST_GH_TOKEN"
+    
+    output=$("$SCRIPT_UNDER_TEST" --version "$TEST_VERSION" --notes-file "$temp_notes" --dry-run 2>&1) || exit_code=$?
+    
+    # Restore permissions for cleanup
+    chmod 644 "$temp_notes" 2>/dev/null || true
+    
+    if [[ $exit_code -ne 0 ]] && echo "$output" | grep -q "Release notes file is not readable"; then
+        return 0
+    fi
+    return 1
+}
+
+test_verify_tag_success() {
+    local notes_file="$FIXTURES_DIR/validate-release-notes/valid-release-notes.md"
+    local output
+    local exit_code=0
+    local test_repo="$TEMP_DIR/verify-tag-success-test"
+    
+    # Create isolated git repo with the tag
+    mkdir -p "$test_repo"
+    cd "$test_repo"
+    git init --quiet
+    git config user.email "test@example.com"
+    git config user.name "Test User"
+    echo "test" > test.txt
+    git add test.txt
+    git commit --quiet -m "initial commit"
+    git tag "v$TEST_VERSION"
+    
+    setup_mock_gh "not_exists"
+    export GH_TOKEN="$TEST_GH_TOKEN"
+    
+    output=$("$SCRIPT_UNDER_TEST" --version "$TEST_VERSION" --notes-file "$notes_file" --verify-tag --dry-run --verbose 2>&1) || exit_code=$?
+    
+    cd "$PROJECT_ROOT"
+    
+    if [[ $exit_code -eq 0 ]] && echo "$output" | grep -q "Git tag v$TEST_VERSION exists"; then
+        return 0
+    fi
+    return 1
+}
+
+test_verify_tag_failure() {
+    local notes_file="$FIXTURES_DIR/validate-release-notes/valid-release-notes.md"
+    local output
+    local exit_code=0
+    local test_repo="$TEMP_DIR/verify-tag-test"
+    
+    # Create isolated git repo without the tag
+    mkdir -p "$test_repo"
+    cd "$test_repo"
+    git init --quiet
+    git config user.email "test@example.com"
+    git config user.name "Test User"
+    echo "test" > test.txt
+    git add test.txt
+    git commit --quiet -m "initial commit"
+    
+    setup_mock_gh "not_exists"
+    export GH_TOKEN="$TEST_GH_TOKEN"
+    
+    output=$("$SCRIPT_UNDER_TEST" --version "$TEST_VERSION" --notes-file "$notes_file" --verify-tag --dry-run 2>&1) || exit_code=$?
+    
+    cd "$PROJECT_ROOT"
+    
+    if [[ $exit_code -ne 0 ]] && echo "$output" | grep -q "Git tag v$TEST_VERSION does not exist"; then
+        return 0
+    fi
+    return 1
+}
+
+test_missing_markdown_headers() {
+    local temp_notes="$TEMP_DIR/no-headers.md"
+    local output
+    local exit_code=0
+    
+    # Create notes without markdown headers
+    echo "Release notes without headers for setlistfm-ts $TEST_VERSION" > "$temp_notes"
+    echo "Just plain text content" >> "$temp_notes"
+    
+    setup_mock_gh "not_exists"
+    export GH_TOKEN="$TEST_GH_TOKEN"
+    
+    output=$("$SCRIPT_UNDER_TEST" --version "$TEST_VERSION" --notes-file "$temp_notes" --dry-run --verbose 2>&1) || exit_code=$?
+    
+    if [[ $exit_code -eq 0 ]] && echo "$output" | grep -q "Release notes may not have proper markdown headers"; then
+        return 0
+    fi
+    return 1
+}
+
+test_version_not_in_notes() {
+    local temp_notes="$TEMP_DIR/no-version.md"
+    local output
+    local exit_code=0
+    
+    # Create notes without version mention
+    echo "# Release Notes for setlistfm-ts" > "$temp_notes"
+    echo "Some changes were made" >> "$temp_notes"
+    
+    setup_mock_gh "not_exists"
+    export GH_TOKEN="$TEST_GH_TOKEN"
+    
+    output=$("$SCRIPT_UNDER_TEST" --version "$TEST_VERSION" --notes-file "$temp_notes" --dry-run --verbose 2>&1) || exit_code=$?
+    
+    if [[ $exit_code -eq 0 ]] && echo "$output" | grep -q "Version $TEST_VERSION not found in release notes"; then
+        return 0
+    fi
+    return 1
+}
+
+test_github_token_via_argument() {
+    local notes_file="$FIXTURES_DIR/validate-release-notes/valid-release-notes.md"
+    local output
+    local exit_code=0
+    
+    setup_mock_gh "not_exists"
+    unset GH_TOKEN  # Remove environment variable
+    
+    output=$("$SCRIPT_UNDER_TEST" --version "$TEST_VERSION" --notes-file "$notes_file" --github-token "$TEST_GH_TOKEN" --dry-run --verbose 2>&1) || exit_code=$?
+    
+    if [[ $exit_code -eq 0 ]] && echo "$output" | grep -q "DRY RUN: Would execute"; then
+        return 0
+    fi
+    return 1
+}
+
+test_update_operation_failure() {
+    local notes_file="$FIXTURES_DIR/validate-release-notes/valid-release-notes.md"
+    local output
+    local exit_code=0
+    
+    setup_mock_gh "update_fail"
+    export GH_TOKEN="$TEST_GH_TOKEN"
+    
+    output=$("$SCRIPT_UNDER_TEST" --version "$TEST_VERSION" --notes-file "$notes_file" --verbose 2>&1) || exit_code=$?
+    
+    if [[ $exit_code -ne 0 ]] && echo "$output" | grep -q "Failed to update GitHub release"; then
+        return 0
+    fi
+    return 1
 }
 
 print_test_summary() {
@@ -412,6 +566,13 @@ main() {
     run_test "successful_update_existing_release" "test_successful_update_existing_release" "Successfully updates existing GitHub release"
     run_test "create_fail_fallback_to_update" "test_create_fail_fallback_to_update" "Falls back to update when create fails"
     run_test "version_formats" "test_version_formats" "Accepts various valid semver formats"
+    run_test "unreadable_notes_file" "test_unreadable_notes_file" "Script fails when notes file is not readable"
+    run_test "verify_tag_success" "test_verify_tag_success" "Script succeeds with --verify-tag when tag exists"
+    run_test "verify_tag_failure" "test_verify_tag_failure" "Script fails with --verify-tag when tag doesn't exist"
+    run_test "missing_markdown_headers" "test_missing_markdown_headers" "Script warns about missing markdown headers"
+    run_test "version_not_in_notes" "test_version_not_in_notes" "Script warns when version not found in notes"
+    run_test "github_token_via_argument" "test_github_token_via_argument" "Script accepts GitHub token via --github-token argument"
+    run_test "update_operation_failure" "test_update_operation_failure" "Script handles update operation failures"
     
     # Print summary and exit
     print_test_summary

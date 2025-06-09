@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),  
 
+## [0.7.2] - 2025-06-09
+
+### Added
+
+- Introduced --body-base64 parameter in manage-release-pr.sh script for safe handling of multiline content in release PRs.
+- Enhanced release-notes-generate.yml workflow with a four-stage data collection pipeline for improved changelog generation.
+
+### Changed
+
+- Updated release-pr.yml workflow to utilize base64 encoding for multiline content, improving compatibility with AI-generated PR descriptions.
+- Refactored entrypoint.sh to handle multiline variable parsing correctly, ensuring comprehensive variable substitution in templates.
+- Updated README.md to reflect accurate script counts and testing status for all automation scripts, enhancing documentation clarity.
+
+### Fixed
+
+- Resolved command parsing errors in release PRs caused by special characters, ensuring PR body text is processed correctly.
+- Fixed GitHub Actions workflow failures related to multiline content parsing, preventing generic AI responses in release notes.
+- Redirected debug output to stderr in multiple scripts to prevent unexpected output interference during command parsing.
+
+### Security
+
+- Improved error handling and validation in workflows to ensure robustness against malformed input and potential security issues.
+
+---
+
+
 ## [0.7.1] - 2025-06-08
 
 ### Added

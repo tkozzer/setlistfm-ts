@@ -8,17 +8,23 @@ on:
       version:
         description: Target version
         required: true
-  workflow_run:
-    workflows: [🔄 Release Preparation]
-    types: [completed]
-    branches: [preview]
+      dry_run:
+        description: Generate notes without creating GitHub release
+        type: boolean
+        default: false
+      temperature:
+        description: AI creativity level (0.0-1.0)
+        default: "0.2"
+      debug:
+        description: Enable debug output
+        type: boolean
+        default: false
 
 permissions:
   contents: write
 
 jobs:
   generate:
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -29,6 +35,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: main
 
       - name: 🛠️ Setup Node & pnpm
         uses: ./.github/actions/setup-node-pnpm
@@ -39,15 +46,84 @@ jobs:
         id: version
         run: |
           VERSION=$(.github/scripts/release-notes/determine-version.sh \
-            --trigger-type "${{ github.event_name }}" \
-            --manual-version "${{ github.event.inputs.version || '' }}" \
+            --trigger-type "workflow_dispatch" \
+            --manual-version "${{ github.event.inputs.version }}" \
             --verbose)
           echo "ver=$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: 📝 Prepare basic variables
-        id: vars
+      - name: 📊 Collect git history
+        id: git_history
         run: |
-          TEMPLATE_VARS="VERSION=${{ steps.version.outputs.ver }}"
+          SINCE_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [[ -n "$SINCE_TAG" ]]; then
+            echo "Collecting git history since tag: $SINCE_TAG"
+            GIT_COMMITS=$(.github/scripts/release-notes/collect-git-history.sh \
+              --since-tag "$SINCE_TAG" \
+              --output-format json \
+              ${{ github.event.inputs.debug == 'true' && '--verbose' || '' }})
+          else
+            echo "No previous tags found, collecting all history"
+            GIT_COMMITS=$(.github/scripts/release-notes/collect-git-history.sh \
+              --since-tag HEAD~10 \
+              --output-format json \
+              ${{ github.event.inputs.debug == 'true' && '--verbose' || '' }})
+          fi
+
+          # Base64 encode for safe GitHub Actions variable passing
+          GIT_COMMITS_B64=$(echo "$GIT_COMMITS" | base64 -w 0)
+          echo "git_commits_b64=$GIT_COMMITS_B64" >> "$GITHUB_OUTPUT"
+          echo "since_tag=$SINCE_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: 📈 Extract commit statistics
+        id: commit_stats
+        run: |
+          SINCE_TAG="${{ steps.git_history.outputs.since_tag }}"
+          if [[ -n "$SINCE_TAG" ]]; then
+            COMMIT_STATS=$(.github/scripts/release-notes/extract-commit-stats.sh \
+              --since-tag "$SINCE_TAG" \
+              --output-format json \
+              ${{ github.event.inputs.debug == 'true' && '--verbose' || '' }})
+          else
+            COMMIT_STATS=$(.github/scripts/release-notes/extract-commit-stats.sh \
+              --since-tag HEAD~10 \
+              --output-format json \
+              ${{ github.event.inputs.debug == 'true' && '--verbose' || '' }})
+          fi
+
+          # Base64 encode for safe GitHub Actions variable passing
+          COMMIT_STATS_B64=$(echo "$COMMIT_STATS" | base64 -w 0)
+          echo "commit_stats_b64=$COMMIT_STATS_B64" >> "$GITHUB_OUTPUT"
+
+      - name: 📋 Extract changelog entry
+        id: changelog
+        run: |
+          if [[ -f "CHANGELOG.md" ]]; then
+            # Use existing changelog extraction script
+            CHANGELOG_ENTRY=$(.github/scripts/release-pr/extract-changelog-entry.sh \
+              --version "${{ steps.version.outputs.ver }}" \
+              --changelog "CHANGELOG.md" \
+              ${{ github.event.inputs.debug == 'true' && '--verbose' || '' }})
+
+            # Base64 encode for safe GitHub Actions variable passing
+            CHANGELOG_ENTRY_B64=$(echo "$CHANGELOG_ENTRY" | base64 -w 0)
+            echo "changelog_entry_b64=$CHANGELOG_ENTRY_B64" >> "$GITHUB_OUTPUT"
+          else
+            echo "No CHANGELOG.md found, skipping changelog extraction"
+            echo "changelog_entry_b64=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 🎯 Prepare comprehensive AI context
+        id: ai_context
+        run: |
+          # Use our comprehensive context preparation script
+          TEMPLATE_VARS=$(.github/scripts/release-notes/prepare-ai-context.sh \
+            --version "${{ steps.version.outputs.ver }}" \
+            --git-commits-b64 "${{ steps.git_history.outputs.git_commits_b64 }}" \
+            --commit-stats-b64 "${{ steps.commit_stats.outputs.commit_stats_b64 }}" \
+            --changelog-entry-b64 "${{ steps.changelog.outputs.changelog_entry_b64 }}" \
+            --since-tag "${{ steps.git_history.outputs.since_tag }}" \
+            ${{ github.event.inputs.debug == 'true' && '--verbose' || '' }})
+
           echo "template_vars=$TEMPLATE_VARS" >> "$GITHUB_OUTPUT"
 
       - name: 🤖 Generate release notes
@@ -59,10 +135,10 @@ jobs:
           template-path: .github/prompts/release-notes.user.md
           schema-path: .github/schema/release-notes.schema.json
           output-path: .github/templates/release-notes.tmpl.md
-          vars: ${{ steps.vars.outputs.template_vars }}
+          vars: ${{ steps.ai_context.outputs.template_vars }}
           model: ${{ env.OPENAI_MODEL }}
-          temperature: 0.2
-          max-tokens: 1200
+          temperature: ${{ github.event.inputs.temperature || '0.2' }}
+          max-tokens: 1500
 
       - name: 📤 Save release notes
         run: |
@@ -75,9 +151,12 @@ jobs:
           echo "" >> release-notes.md
           echo "Automated release notes generation failed. Please refer to CHANGELOG.md for details." >> release-notes.md
 
-      - name: ✅ Validate notes
+      - name: ✅ Validate release notes
         run: |
-          grep -q "setlistfm-ts" release-notes.md
+          .github/scripts/release-notes/validate-release-notes.sh \
+            --notes-file "release-notes.md" \
+            --version "${{ steps.version.outputs.ver }}" \
+            ${{ github.event.inputs.debug == 'true' && '--verbose' || '' }}
 
       - name: 📤 Upload release notes
         uses: actions/upload-artifact@v4
@@ -86,11 +165,21 @@ jobs:
           path: release-notes.md
 
       - name: 🚀 Create/Update GitHub Release
-        if: env.GH_TOKEN != ''
+        if: env.GH_TOKEN != '' && github.event.inputs.dry_run != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           .github/scripts/release-notes/manage-github-release.sh \
             --version "${{ steps.version.outputs.ver }}" \
             --notes-file "release-notes.md" \
-            --verbose
+            ${{ github.event.inputs.debug == 'true' && '--verbose' || '' }}
+
+      - name: 🧪 Dry run summary
+        if: github.event.inputs.dry_run == 'true'
+        run: |
+          echo "🧪 DRY RUN MODE - No GitHub release created"
+          echo "📋 Generated release notes preview:"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          cat release-notes.md
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ Validation passed - Release notes ready for publication"

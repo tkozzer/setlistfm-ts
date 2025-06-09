@@ -70,17 +70,67 @@ process_template_vars() {
     decoded_vars="$vars"
   fi
   
-  # Process each KEY=VALUE pair
-  while IFS='=' read -r KEY VALUE; do
-    [[ -z $KEY ]] && continue
-    # Decode escaped newlines from GitHub Actions variable passing
-    local decoded_value
-    decoded_value=$(printf '%s' "$VALUE" | tr '\020' '\n')
-    
-    # Use bash parameter substitution for multi-line content
-    local pattern="{{${KEY}}}"
-    content="${content//$pattern/$decoded_value}"
+  # Parse variables using a more robust approach that handles multiline values
+  local current_key=""
+  local current_value=""
+  
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    # Check if this line starts a new KEY=VALUE pair
+    if [[ "$line" =~ ^[A-Za-z_][A-Za-z0-9_]*= ]]; then
+      # Process previous key-value pair if we have one
+      if [[ -n "$current_key" ]]; then
+        # Handle base64-encoded variables (those ending with _B64)
+        if [[ $current_key == *_B64 ]]; then
+          # Decode base64 content and remove _B64 suffix from variable name
+          if decoded_b64_value=$(echo "$current_value" | base64 -d 2>/dev/null); then
+            template_key="${current_key%_B64}"
+            local pattern="{{${template_key}}}"
+            content="${content//$pattern/$decoded_b64_value}"
+          fi
+        else
+          # Regular variable processing
+          # Decode escaped newlines from GitHub Actions variable passing
+          local decoded_value
+          decoded_value=$(printf '%s' "$current_value" | tr '\020' '\n')
+          
+          # Use bash parameter substitution for multi-line content
+          local pattern="{{${current_key}}}"
+          content="${content//$pattern/$decoded_value}"
+        fi
+      fi
+      
+      # Start processing new key-value pair
+      current_key="${line%%=*}"
+      current_value="${line#*=}"
+    else
+      # This line is part of the current value (multiline content)
+      if [[ -n "$current_key" ]]; then
+        current_value="$current_value"$'\n'"$line"
+      fi
+    fi
   done <<< "$decoded_vars"
+  
+  # Process the final key-value pair
+  if [[ -n "$current_key" ]]; then
+    # Handle base64-encoded variables (those ending with _B64)
+    if [[ $current_key == *_B64 ]]; then
+      # Decode base64 content and remove _B64 suffix from variable name
+      if decoded_b64_value=$(echo "$current_value" | base64 -d 2>/dev/null); then
+        template_key="${current_key%_B64}"
+        local pattern="{{${template_key}}}"
+        content="${content//$pattern/$decoded_b64_value}"
+      fi
+    else
+      # Regular variable processing
+      # Decode escaped newlines from GitHub Actions variable passing
+      local decoded_value
+      decoded_value=$(printf '%s' "$current_value" | tr '\020' '\n')
+      
+      # Use bash parameter substitution for multi-line content
+      local pattern="{{${current_key}}}"
+      content="${content//$pattern/$decoded_value}"
+    fi
+  fi
   
   echo "$content"
 }

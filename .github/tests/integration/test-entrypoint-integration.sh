@@ -265,6 +265,103 @@ EOF
         --vars "$b64_vars"
 }
 
+test_multiline_changelog_variables() {
+    echo -e "${BLUE}=== Testing Multiline CHANGELOG Variables (Release PR Scenario) ===${NC}"
+    
+    # Create template that matches the pr-description template structure
+    local pr_template="$TEST_OUTPUT_DIR/pr-multiline.tmpl.md"
+    cat > "$pr_template" << 'EOF'
+# Release v{{VERSION}}
+
+## Changelog
+
+{{CHANGELOG}}
+
+## End
+EOF
+    
+    # Create multiline changelog content that matches the exact format from the failing workflow
+    local changelog_content="### Added
+- Introduced comprehensive testing for release management, enhancing reliability and validation of workflows.
+- Created AGENTS.md documentation to guide AI agents in adhering to project standards and patterns.
+### Changed
+- Refactored GitHub automation into modular scripts for improved maintainability and testability.
+- Updated README.md to accurately reflect script counts and testing status for all automation scripts.
+- Enhanced release-notes generation workflow with a four-stage data collection pipeline for better changelog integration.
+### Fixed
+- Resolved command parsing errors in release PR management, ensuring complex content no longer breaks command execution.
+- Fixed GitHub Actions workflow failures by redirecting debug output to stderr, preventing unexpected output capture.
+- Corrected conventional commit counting logic to prevent double-counting of commits in PR metadata.
+---"
+    
+    # Create variables in the exact newline-separated format used by release PR workflow
+    local vars_content="VERSION=0.7.2
+CHANGELOG=$changelog_content"
+    
+    run_test "Multiline CHANGELOG - newline format (now works)" true \
+        "$ENTRYPOINT" \
+        --template "$pr_template" \
+        --output "$pr_template" \
+        --model "gpt-4" \
+        --vars "$vars_content"
+    
+    # Test what should work - base64 encoded multiline content
+    local vars_b64=$(echo "$vars_content" | base64 -w 0)
+    
+    run_test "Multiline CHANGELOG - base64 encoded (should work)" true \
+        "$ENTRYPOINT" \
+        --template "$pr_template" \
+        --output "$pr_template" \
+        --model "gpt-4" \
+        --vars "$vars_b64"
+}
+
+test_release_pr_exact_scenario() {
+    echo -e "${BLUE}=== Testing Exact Release PR Scenario ===${NC}"
+    
+    # Use the actual pr-description template if it exists
+    local pr_template=".github/prompts/pr-description.user.md"
+    if [[ ! -f "$pr_template" ]]; then
+        # Fallback to test template
+        pr_template="$TEST_OUTPUT_DIR/pr-exact.tmpl.md"
+        cat > "$pr_template" << 'EOF'
+Please generate a professional GitHub Pull Request description for releasing version {{VERSION}} of the setlistfm-ts SDK.
+
+## Release Information
+
+**Version:** {{VERSION}}
+
+**Changelog:**
+{{CHANGELOG}}
+
+## Instructions
+
+Create a comprehensive PR description that helps reviewers understand the changes.
+EOF
+    fi
+    
+    # Test with the exact variables format from the failing release PR workflow logs
+    local exact_vars="VERSION=0.7.2
+CHANGELOG=### Added
+- Introduced comprehensive testing for release management, enhancing reliability and validation of workflows.
+- Created AGENTS.md documentation to guide AI agents in adhering to project standards and patterns.
+### Changed
+- Refactored GitHub automation into modular scripts for improved maintainability and testability.
+- Updated README.md to accurately reflect script counts and testing status for all automation scripts.
+- Enhanced release-notes generation workflow with a four-stage data collection pipeline for better changelog integration.
+### Fixed
+- Resolved command parsing errors in release PR management, ensuring complex content no longer breaks command execution.
+- Fixed GitHub Actions workflow failures by redirecting debug output to stderr, preventing unexpected output capture.
+- Corrected conventional commit counting logic to prevent double-counting of commits in PR metadata.
+---"
+    
+    run_test "Exact Release PR scenario (now fixed)" true \
+        "$ENTRYPOINT" \
+        --template "$pr_template" \
+        --model "gpt-4" \
+        --vars "$exact_vars"
+}
+
 test_mock_file_selection() {
     echo -e "${BLUE}=== Testing Mock File Selection ===${NC}"
     
@@ -320,6 +417,8 @@ main() {
     test_error_scenarios
     test_template_variable_substitution
     test_base64_variable_handling
+    test_multiline_changelog_variables
+    test_release_pr_exact_scenario
     test_mock_file_selection
     
     cleanup_test
@@ -352,6 +451,8 @@ if [[ $# -gt 0 ]]; then
         errors) setup_test; test_error_scenarios; cleanup_test ;;
         variables) setup_test; test_template_variable_substitution; cleanup_test ;;
         base64) setup_test; test_base64_variable_handling; cleanup_test ;;
+        multiline) setup_test; test_multiline_changelog_variables; cleanup_test ;;
+        release-pr) setup_test; test_release_pr_exact_scenario; cleanup_test ;;
         mock-selection) setup_test; test_mock_file_selection; cleanup_test ;;
         *) echo "Unknown test: $1"; exit 1 ;;
     esac
