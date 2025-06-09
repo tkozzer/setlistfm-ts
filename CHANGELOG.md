@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),  
 
+## [0.7.3] - 2025-06-09
+
+### Fixed
+
+- Resolved shell parsing errors in GitHub Actions workflows by extracting debug scripts and improving handling of special characters in AI-generated PR descriptions.
+- Fixed command parsing errors in the release PR workflow by replacing eval-based execution with direct GitHub CLI calls, ensuring complex content is handled correctly.
+- Improved the release-prepare workflow's changelog update logic with comprehensive tests covering special character handling, multi-line content, and proper insertion order.
+
+---
+
+
 ## [0.7.2] - 2025-06-09
 
 ### Added
