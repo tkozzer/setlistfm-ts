@@ -26,10 +26,13 @@
     {
       "name": "missing_body_parameter",
       "description": "Test missing required body parameter",
-      "args": ["--version", "1.2.3"],
+      "args": [
+        "--version",
+        "1.2.3"
+      ],
       "expected_exit_code": 1,
       "expected_stderr_contains": [
-        "PR body is required"
+        "PR body or body-base64 is required"
       ],
       "mock_gh_responses": {}
     },
@@ -396,6 +399,34 @@
       "expected_exit_code": 0,
       "expected_stdout_contains": [
         "action_taken=created"
+      ],
+      "mock_gh_responses": {
+        "pr_list": ""
+      }
+    },
+    {
+      "name": "multiline_body_with_special_characters",
+      "description": "Test multiline body content with special characters that could break command parsing",
+      "args": [
+        "--version",
+        "0.7.2",
+        "--body-base64",
+        "IyMg8J+agSBSZWxlYXNlIHYwLjcuMgoKVGhpcyByZWxlYXNlIGZvY3VzZXMgb24gZW5oYW5jaW5nIHRoZSBzdGFiaWxpdHkgYW5kIG1haW50YWluYWJpbGl0eSBvZiB0aGUgc2V0bGlzdGZtLXRzIFNESyB0aHJvdWdoIGNvbXByZWhlbnNpdmUgdGVzdGluZyBhbmQgaW1wcm92ZWQgYXV0b21hdGlvbiB3b3JrZmxvd3MuCgojIyDwn5OR77iPIE92ZXJ2aWV3CgpWZXJzaW9uIDAuNy4yIGludHJvZHVjZXMgc2lnbmlmaWNhbnQgaW1wcm92ZW1lbnRzIHRvIG91ciBjb250aW51b3VzIGludGVncmF0aW9uIChDSSkgcHJvY2Vzc2VzIGFuZCBkb2N1bWVudGF0aW9uIGFjY3VyYWN5LiBCeSBpbXBsZW1lbnRpbmcgYSBjb21wcmVoZW5zaXZlIHRlc3Qgc3VpdGUgYW5kIGVuaGFuY2luZyBvdXIgcmVsZWFzZS1ub3RlcyBnZW5lcmF0aW9uIHdvcmtmbG93LCB3ZSBhaW0gdG8gZW5zdXJlIGEgbW9yZSByZWxpYWJsZSBhbmQgdXNlci1mcmllbmRseSBleHBlcmllbmNlIGZvciBkZXZlbG9wZXJzIHV0aWxpemluZyB0aGUgU0RLLiBUaGVzZSB1cGRhdGVzIG5vdCBvbmx5IHN0cmVhbWxpbmUgb3VyIGRldmVsb3BtZW50IHByb2Nlc3NlcyBidXQgYWxzbyBwcm92aWRlIGNsZWFyZXIgaW5zaWdodHMgaW50byB0aGUgcHJvamVjdCdzIHN0YXR1cyBhbmQgY2FwYWJpbGl0aWVzLgoKIyMg8J+To++4jyBXaGF0J3MgTmV3CgotIEludHJvZHVjZWQgYSBjb21wcmVoZW5zaXZlIHRlc3Qgc3VpdGUgZm9yIG11bHRpbGluZSB2YXJpYWJsZSBzY2VuYXJpb3MgaW4gQ0kgd29ya2Zsb3dzLgotIEVuaGFuY2VkIHJlbGVhc2Utbm90ZXMgZ2VuZXJhdGlvbiB3b3JrZmxvdyB3aXRoIGEgZm91ci1zdGFnZSBkYXRhIGNvbGxlY3Rpb24gcGlwZWxpbmUsIGltcHJvdmluZyBjaGFuZ2Vsb2cgaW50ZWdyYXRpb24gYW5kIEFJIGNvbnRleHQgcHJlcGFyYXRpb24uCgojIyDwn5SD77iPIENoYW5nZXMgYnkgQ2F0ZWdvcnkKCi0g4pyoICoqRmVhdHVyZXMqKjoKICAtICJJbnRyb2R1Y2VkIGEgY29tcHJlaGVuc2l2ZSB0ZXN0IHN1aXRlIGZvciBtdWx0aWxpbmUgdmFyaWFibGUgc2NlbmFyaW9zIGluIENJIHdvcmtmbG93cy4iCiAgLSAiRW5oYW5jZWQgcmVsZWFzZS1ub3RlcyBnZW5lcmF0aW9uIHdvcmtmbG93IHdpdGggYSBmb3VyLXN0YWdlIGRhdGEgY29sbGVjdGlvbiBwaXBlbGluZSwgaW1wcm92aW5nIGNoYW5nZWxvZyBpbnRlZ3JhdGlvbiBhbmQgQUkgY29udGV4dCBwcmVwYXJhdGlvbi4iCgotIPCfloYgKipJbXByb3ZlbWVudHMqKjoKICAtICJVcGRhdGVkIFJFQURNRS5tZCB0byBhY2N1cmF0ZWx5IHJlZmxlY3Qgc2NyaXB0IGNvdW50cyBhbmQgdGVzdGluZyBzdGF0dXMgZm9yIGFsbCBhdXRvbWF0aW9uIHNjcmlwdHMuIgogIC0gIlJlb3JnYW5pemVkIEdpdEh1YiBhdXRvbWF0aW9uIGludG8gbW9kdWxhciBzY3JpcHRzIGZvciBiZXR0ZXIgbWFpbnRhaW5hYmlsaXR5IGFuZCB0ZXN0YWJpbGl0eS4iCiAgLSAiRW5oYW5jZWQgdGhlIHJlbGVhc2Utbm90ZXMgZ2VuZXJhdGlvbiB3b3JrZmxvdyB3aXRoIGRlYnVnIGxvZ2dpbmcgZm9yIEFJIGlucHV0cyBhbmQgb3V0cHV0cy4iCiAgLSAiSW1wcm92ZWQgZG9jdW1lbnRhdGlvbiBhY2N1cmFjeSwgcmVmbGVjdGluZyAxMDAlIHRlc3QgY292ZXJhZ2UgYWNyb3NzIHRoZSBmcmFtZXdvcmsuIgoKLSDwn5CbICoqQnVnIEZpeGVzKio6CiAgLSAiUmVzb2x2ZWQgY29tbWFuZCBwYXJzaW5nIGVycm9ycyBpbiB0aGUgcmVsZWFzZSBQUiBwcm9jZXNzLCBlbnN1cmluZyBjb21wbGV4IGNvbnRlbnQgZG9lcyBub3QgYnJlYWsgY29tbWFuZCBleGVjdXRpb24uIgogIC0gIkZpeGVkIG11bHRpbGluZSB2YXJpYWJsZSBwYXJzaW5nIGlzc3VlcyBpbiBDSSB3b3JrZmxvd3MsIGFsbG93aW5nIGZvciBjb21wbGV0ZSB2YXJpYWJsZSBzdWJzdGl0dXRpb24gaW4gdGVtcGxhdGVzLiIKICAtICJSZWRpcmVjdGVkIGRlYnVnIG91dHB1dCB0byBzdGRlcnIgaW4gbXVsdGlwbGUgc2NyaXB0cyB0byBwcmV2ZW50IHdvcmtmbG93IGZhaWx1cmVzIGR1ZSB0byB1bmV4cGVjdGVkIG91dHB1dC4iCiAgLSAiQWRkZWQgY29tcHJlaGVuc2l2ZSB0ZXN0cyB0byB2YWxpZGF0ZSB0aGUgcmVsZWFzZS1wcmVwYXJlIGNoYW5nZWxvZyB1cGRhdGUgbG9naWMsIGVuc3VyaW5nIHByb3BlciBoYW5kbGluZyBvZiBzcGVjaWFsIGNoYXJhY3RlcnMgYW5kIG11bHRpLWxpbmUgY29udGVudC4iCgojIyDwn6e6IFRlc3RpbmcgJiBRdWFsaXR5CgpUaGUgcmVsZWFzZSBpbmNsdWRlcyBhIHJvYnVzdCB0ZXN0aW5nIGFwcHJvYWNoIHdpdGggYSBuZXdseSBpbnRyb2R1Y2VkIGNvbXByZWhlbnNpdmUgdGVzdCBzdWl0ZSBzcGVjaWZpY2FsbHkgZGVzaWduZWQgZm9yIG11bHRpbGluZSB2YXJpYWJsZSBzY2VuYXJpb3MuIFRoaXMgc2V0dXAgdXNlcyB0aGF0IG91ciBDSSB3b3JrZmxvd3MgYXJlIHJlbGlhYmxlIGFuZCB0aGF0IGFueSBwb3RlbnRpYWwgaXNzdWVzIHdpdGggdmFyaWFibGUgcGFyc2luZyBhcmUgZWZmZWN0aXZlbHkgYWRkcmVzc2VkLgoKIyMg8J+TmiAgRG9jdW1lbnRhdGlvbgoKRG9jdW1lbnRhdGlvbiBoYXMgYmVlbiB1cGRhdGVkIHRvIHJlZmxlY3QgdGhlIGxhdGVzdCBjaGFuZ2VzLCBwYXJ0aWN1bGFybHkgaW4gdGhlIFJFQURNRS5tZCwgd2hpY2ggbm93IGFjY3VyYXRlbHkgZGVzY3JpYmVzIHNjcmlwdCBjb3VudHMgYW5kIHRlc3Rpbmcgc3RhdHVzIGZvciBhbGwgYXV0b21hdGlvbiBzY3JpcHRzLiBBZGRpdGlvbmFsbHksIHRoZSBkb2N1bWVudGF0aW9uIG5vdyBoaWdobGlnaHRzIHRoZSBhY2hpZXZlbWVudCBvZiAxMDAlIHRlc3QgY292ZXJhZ2UgYWNyb3NzIHRoZSBmcmFtZXdvcmsuCgojIyDihaDvuI8gQnJlYWtpbmcgQ2hhbmdlcwoKTm9uZSBpbiB0aGlzIHJlbGVhc2UuCgojIyDwn5OXIE1lcmdlIEluc3RydWN0aW9ucwoKUGxlYXNlIGZvbGxvdyB0aGUgc3RhbmRhcmQgbWVyZ2UgcHJvY2VzcyB0byB0cmFuc2l0aW9uIGZyb20gdGhlIHByZXZpZXcgYnJhbmNoIHRvIHRoZSBtYWluIGJyYW5jaC4gRW5zdXJlIGFsbCB0ZXN0cyBwYXNzIHN1Y2Nlc3NmdWxseSBiZWZvcmUgbWVyZ2luZyB0byBtYWludGFpbiB0aGUgaW50ZWdyaXR5IG9mIHRoZSByZWxlYXNlLg==",
+        "--repository",
+        "test-owner/test-repo",
+        "--dry-run",
+        "--debug"
+      ],
+      "expected_exit_code": 0,
+      "expected_stdout_contains": [
+        "pr_number=999",
+        "pr_url=https://github.com/test-owner/test-repo/pull/999",
+        "action_taken=created",
+        "exists=false"
+      ],
+      "expected_stderr_contains": [
+        "[DRY RUN] Would create PR with:",
+        "Title: 🚀 Release v0.7.2"
       ],
       "mock_gh_responses": {
         "pr_list": ""
