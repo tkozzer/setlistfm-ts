@@ -3,7 +3,7 @@
 # --------------------------------------------------------------------------- #
 name: 🚀 Create Release PR
 
-# Trigger as soon as the “Release Preparation” workflow finishes successfully
+# Trigger as soon as the "Release Preparation" workflow finishes successfully
 on:
   workflow_run:
     workflows: [🔄 Release Preparation]
@@ -105,9 +105,12 @@ jobs:
           max-tokens: 1000
 
       - name: 🔍 Debug - AI response
+        env:
+          AI_RESPONSE_CONTENT: ${{ steps.body.outputs.content }}
         run: |
+          # Pass content via environment variable to avoid shell parsing issues
           ./.github/scripts/release-pr/debug-ai-response.sh \
-            --content "${{ steps.body.outputs.content }}" \
+            --content "$AI_RESPONSE_CONTENT" \
             --title "AI RESPONSE" \
             --max-chars 500
 
@@ -125,11 +128,23 @@ jobs:
       # --------------------------------------------------------------------- #
       - name: 🚀 Manage Release PR
         id: pr
+        env:
+          PR_BODY_CONTENT: ${{ steps.body.outputs.content }}
         run: |
+          # Write content to temporary file to avoid shell parsing issues
+          printf '%s' "$PR_BODY_CONTENT" > /tmp/pr_body_content.txt
+
+          # Encode to base64 from file (completely safe from shell parsing)
+          BODY_BASE64=$(base64 -w 0 /tmp/pr_body_content.txt)
+
+          # Call script with base64 content
           ./.github/scripts/release-pr/manage-release-pr.sh \
             --version "${{ steps.version.outputs.ver }}" \
-            --body-base64 "$(echo '${{ steps.body.outputs.content }}' | base64 -w 0)" \
+            --body-base64 "$BODY_BASE64" \
             --assignee "${{ github.repository_owner }}" >> "$GITHUB_OUTPUT"
+
+          # Clean up temporary file
+          rm -f /tmp/pr_body_content.txt
 
       # --------------------------------------------------------------------- #
       # 7️⃣  Summary                                                          #
