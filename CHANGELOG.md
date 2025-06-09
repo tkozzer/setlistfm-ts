@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),  
 
+## [0.7.4] - 2025-06-09
+
+### Added
+
+- Introduced support for base64 encoded parameters in the prepare-ai-context script, enhancing workflow data handling.
+
+### Changed
+
+- Updated release-pr workflow to use base64 encoding for managing multiline content, improving compatibility with special characters.
+- Restructured automation scripts into modular components for better maintainability and testability.
+
+### Fixed
+
+- Resolved EOF errors in workflows caused by special characters in AI-generated content, ensuring robust handling of quotes and apostrophes.
+- Fixed command parsing errors in the release PR workflow, preventing failures when processing complex content.
+- Corrected workflow parameter support in various scripts to prevent 'Unknown parameter' errors.
+
+### Security
+
+- Enhanced error handling and validation in scripts to prevent unexpected behavior and improve overall stability.
+
+---
+
+
 ## [0.7.3] - 2025-06-09
 
 ### Added
