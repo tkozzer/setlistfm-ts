@@ -71,6 +71,30 @@ jobs:
       # --------------------------------------------------------------------- #
       # 4️⃣  Generate (or regenerate) PR body with OpenAI                     #
       # --------------------------------------------------------------------- #
+      - name: 🔍 Debug - System prompt
+        run: |
+          echo "=== SYSTEM PROMPT ==="
+          cat .github/prompts/pr-description.sys.md
+          echo "====================="
+
+      - name: 🔍 Debug - User template
+        run: |
+          echo "=== USER TEMPLATE ==="
+          cat .github/prompts/pr-description.user.md
+          echo "====================="
+
+      - name: 🔍 Debug - Variables
+        run: |
+          echo "=== VARIABLES ==="
+          echo "VERSION=${{ steps.version.outputs.ver }}"
+          echo ""
+          echo "CHANGELOG (length: $(echo '${{ steps.changelog.outputs.entry }}' | wc -c) chars):"
+          echo "--- First 800 chars ---"
+          echo "${{ steps.changelog.outputs.entry }}" | head -c 800
+          echo ""
+          echo "--- End of preview ---"
+          echo "=================="
+
       - name: 🤖 Compose PR description
         id: body
         uses: ./.github/actions/openai-chat
@@ -83,7 +107,14 @@ jobs:
             CHANGELOG=${{ steps.changelog.outputs.entry }}
           model: ${{ secrets.OPENAI_MODEL || 'gpt-4o-mini' }}
           temperature: 0.3
-          max-tokens: 1000 # note the hyphen
+          max-tokens: 1000
+
+      - name: 🔍 Debug - AI response
+        run: |
+          echo "=== AI RESPONSE ==="
+          echo "Content length: $(echo '${{ steps.body.outputs.content }}' | wc -c) chars"
+          echo "First 500 chars: $(echo '${{ steps.body.outputs.content }}' | head -c 500)"
+          echo "=================="
 
       # --------------------------------------------------------------------- #
       # 5️⃣  Ensure required labels exist                                     #
