@@ -1,0 +1,221 @@
+{
+  "test_cases": [
+    {
+      "name": "help_message",
+      "description": "Test help command display",
+      "args": ["--help"],
+      "expected_exit_code": 0,
+      "expected_output_contains": [
+        "Debug AI Response Script",
+        "USAGE:",
+        "content TEXT",
+        "title TEXT",
+        "max-chars NUM"
+      ]
+    },
+    {
+      "name": "missing_content_parameter",
+      "description": "Test missing required content parameter",
+      "args": ["--title", "TEST"],
+      "expected_exit_code": 1,
+      "expected_stderr_contains": [
+        "Error: --content is required"
+      ]
+    },
+    {
+      "name": "invalid_max_chars_parameter",
+      "description": "Test invalid max-chars parameter",
+      "args": ["--content", "test", "--max-chars", "invalid"],
+      "expected_exit_code": 1,
+      "expected_stderr_contains": [
+        "Error: --max-chars must be a positive integer"
+      ]
+    },
+    {
+      "name": "basic_content_display",
+      "description": "Test basic content display functionality",
+      "args": ["--content", "Hello, world!"],
+      "expected_exit_code": 0,
+      "expected_output_contains": [
+        "=== AI RESPONSE ===",
+        "Content length:",
+        "Hello, world!"
+      ]
+    },
+    {
+      "name": "content_with_apostrophes_original_error",
+      "description": "Test content with apostrophes/single quotes (the original error case)",
+      "content_file": "apostrophe_content.txt",
+      "args": ["--content", "CONTENT_FROM_FILE"],
+      "expected_exit_code": 0,
+      "expected_output_contains": [
+        "What's New",
+        "SDK's automation"
+      ]
+    },
+    {
+      "name": "content_with_double_quotes",
+      "description": "Test content with double quotes",
+      "content_file": "double_quotes_content.txt",
+      "args": ["--content", "CONTENT_FROM_FILE"],
+      "expected_exit_code": 0,
+      "expected_output_contains": [
+        "enhanced",
+        "improved"
+      ]
+    },
+    {
+      "name": "content_with_backticks",
+      "description": "Test content with backticks",
+      "content_file": "backticks_content.txt",
+      "args": ["--content", "CONTENT_FROM_FILE"],
+      "expected_exit_code": 0,
+      "expected_output_contains": [
+        "npm install"
+      ]
+    },
+    {
+      "name": "content_with_backslashes",
+      "description": "Test content with backslashes",
+      "content_file": "backslash_content.txt",
+      "args": ["--content", "CONTENT_FROM_FILE"],
+      "expected_exit_code": 0,
+      "expected_output_contains": [
+        "Users"
+      ]
+    },
+    {
+      "name": "mixed_special_characters",
+      "description": "Test mixed special characters (extreme case)",
+      "content_file": "mixed_special_content.txt",
+      "args": ["--content", "CONTENT_FROM_FILE"],
+      "expected_exit_code": 0,
+      "expected_output_contains": [
+        "What's"
+      ]
+    },
+    {
+      "name": "multiline_content",
+      "description": "Test multiline content with newlines",
+      "content_file": "multiline_content.txt",
+      "args": ["--content", "CONTENT_FROM_FILE"],
+      "expected_exit_code": 0,
+      "expected_output_contains": [
+        "Release v1.0.0"
+      ]
+    },
+    {
+      "name": "json_content_detection",
+      "description": "Test JSON content detection in verbose mode",
+      "content_file": "json_content.json",
+      "args": ["--content", "CONTENT_FROM_FILE", "--verbose"],
+      "expected_exit_code": 0,
+      "expected_output_contains": [
+        "Content type: JSON"
+      ]
+    },
+    {
+      "name": "markdown_content_detection",
+      "description": "Test Markdown content detection in verbose mode",
+      "content_file": "markdown_content.md",
+      "args": ["--content", "CONTENT_FROM_FILE", "--verbose"],
+      "expected_exit_code": 0,
+      "expected_output_contains": [
+        "Content type: Markdown"
+      ]
+    },
+    {
+      "name": "single_quotes_detection",
+      "description": "Test single quotes detection in verbose mode",
+      "args": ["--content", "What's new", "--verbose"],
+      "expected_exit_code": 0,
+      "expected_output_contains": [
+        "single-quotes"
+      ]
+    },
+    {
+      "name": "multiple_special_chars_detection",
+      "description": "Test multiple special characters detection",
+      "args": ["--content", "Text with \"quotes\" and `backticks`", "--verbose"],
+      "expected_exit_code": 0,
+      "expected_output_contains": [
+        "double-quotes"
+      ]
+    },
+    {
+      "name": "empty_content",
+      "description": "Test empty content (should fail)",
+      "args": ["--content", ""],
+      "expected_exit_code": 1,
+      "expected_stderr_contains": [
+        "Error: --content is required"
+      ]
+    },
+    {
+      "name": "long_content_truncation",
+      "description": "Test very long content truncation",
+      "content_file": "long_content.txt",
+      "args": ["--content", "CONTENT_FROM_FILE", "--max-chars", "100"],
+      "expected_exit_code": 0,
+      "expected_output_contains": [
+        "truncated"
+      ]
+    },
+    {
+      "name": "custom_title",
+      "description": "Test custom title parameter",
+      "args": ["--content", "test", "--title", "CUSTOM TITLE"],
+      "expected_exit_code": 0,
+      "expected_output_contains": [
+        "=== CUSTOM TITLE ==="
+      ]
+    },
+    {
+      "name": "zero_max_chars",
+      "description": "Test zero max-chars (should fail)",
+      "args": ["--content", "test", "--max-chars", "0"],
+      "expected_exit_code": 1,
+      "expected_stderr_contains": [
+        "Error: --max-chars must be a positive integer"
+      ]
+    },
+    {
+      "name": "custom_max_chars",
+      "description": "Test custom max-chars parameter",
+      "args": ["--content", "This is a test content that is longer than 50 characters", "--max-chars", "50"],
+      "expected_exit_code": 0,
+      "expected_output_contains": [
+        "First 50 chars"
+      ]
+    },
+    {
+      "name": "original_error_reproduction",
+      "description": "Test exact content that caused the original error",
+      "content_file": "original_error_content.txt",
+      "args": ["--content", "CONTENT_FROM_FILE", "--max-chars", "1200"],
+      "expected_exit_code": 0,
+      "expected_output_contains": [
+        "What's New"
+      ]
+    },
+    {
+      "name": "large_content_performance",
+      "description": "Test large content performance",
+      "content_file": "large_content.txt",
+      "args": ["--content", "CONTENT_FROM_FILE", "--max-chars", "200"],
+      "expected_exit_code": 0,
+      "expected_output_contains": [
+        "=== AI RESPONSE ==="
+      ]
+    },
+    {
+      "name": "github_actions_variable_simulation",
+      "description": "Test simulation of GitHub Actions variable substitution",
+      "args": ["--content", "Content from ${steps.body.outputs.content} with what's new"],
+      "expected_exit_code": 0,
+      "expected_output_contains": [
+        "what's new"
+      ]
+    }
+  ]
+}

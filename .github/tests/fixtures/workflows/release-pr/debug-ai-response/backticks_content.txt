@@ -1,0 +1,5 @@
+## Code Examples
+Use `npm install` to install the package.
+```bash
+npm run build
+``` 

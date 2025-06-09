@@ -111,10 +111,10 @@ jobs:
 
       - name: 🔍 Debug - AI response
         run: |
-          echo "=== AI RESPONSE ==="
-          echo "Content length: $(echo '${{ steps.body.outputs.content }}' | wc -c) chars"
-          echo "First 500 chars: $(echo '${{ steps.body.outputs.content }}' | head -c 500)"
-          echo "=================="
+          ./.github/scripts/release-pr/debug-ai-response.sh \
+            --content "${{ steps.body.outputs.content }}" \
+            --title "AI RESPONSE" \
+            --max-chars 500
 
       # --------------------------------------------------------------------- #
       # 5️⃣  Ensure required labels exist                                     #

@@ -1,0 +1,2 @@
+Path: C:\Users\Example\file.txt
+Regex: \d+\.\d+\.\d+ 

@@ -1,0 +1,12 @@
+## Release v1.0.0
+
+### Added
+- New feature A
+- New feature B
+
+### Fixed
+- Bug fix 1
+- Bug fix 2
+
+### What's Changed
+- Important updates 

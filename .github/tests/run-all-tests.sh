@@ -443,6 +443,9 @@ main() {
             if ! ./workflows/release-pr/test-manage-release-pr.sh >/dev/null 2>&1; then
                 workflow_exit=1
             fi
+            if ! ./workflows/release-pr/test-debug-ai-response.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
             if ! ./workflows/release-notes/test-collect-git-history.sh >/dev/null 2>&1; then
                 workflow_exit=1
             fi
@@ -599,6 +602,12 @@ main() {
                 "Release PR Management" \
                 "$SCRIPT_DIR/workflows/release-pr/test-manage-release-pr.sh" \
                 "Testing release PR creation and update logic with comprehensive mocking and error handling" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "Debug AI Response" \
+                "$SCRIPT_DIR/workflows/release-pr/test-debug-ai-response.sh" \
+                "Testing safe AI response debugging that handles special characters, quotes, and multiline content" \
                 "Workflow Testing"
 
             run_test_suite \
