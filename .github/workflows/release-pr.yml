@@ -105,9 +105,12 @@ jobs:
           max-tokens: 1000
 
       - name: 🔍 Debug - AI response
+        env:
+          AI_RESPONSE_CONTENT: ${{ steps.body.outputs.content }}
         run: |
+          # Pass content via environment variable to avoid shell parsing issues
           ./.github/scripts/release-pr/debug-ai-response.sh \
-            --content "${{ steps.body.outputs.content }}" \
+            --content "$AI_RESPONSE_CONTENT" \
             --title "AI RESPONSE" \
             --max-chars 500
 
