@@ -3,7 +3,7 @@
 # --------------------------------------------------------------------------- #
 name: 🚀 Create Release PR
 
-# Trigger as soon as the “Release Preparation” workflow finishes successfully
+# Trigger as soon as the "Release Preparation" workflow finishes successfully
 on:
   workflow_run:
     workflows: [🔄 Release Preparation]
