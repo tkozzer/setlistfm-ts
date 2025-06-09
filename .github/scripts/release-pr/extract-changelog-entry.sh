@@ -11,10 +11,13 @@
 #   ./extract-changelog-entry.sh [OPTIONS]
 #
 # Options:
-#   --file <path>     Path to changelog file (default: CHANGELOG.md)
-#   --output-format   Format: 'github-actions' (default) or 'plain'
-#   --debug          Enable debug output
-#   --help           Show this help message
+#   --file <path>      Path to changelog file (default: CHANGELOG.md)
+#   --changelog <path> Alias for --file (for compatibility)
+#   --version <ver>    Specific version to extract (default: latest)
+#   --output-format    Format: 'github-actions' (default) or 'plain'
+#   --debug           Enable debug output
+#   --verbose         Alias for --debug (for compatibility)
+#   --help            Show this help message
 #
 # GitHub Actions Output:
 #   When --output-format=github-actions (default), outputs in the format:
@@ -38,6 +41,7 @@ set -euo pipefail
 
 # Default configuration
 CHANGELOG_FILE="CHANGELOG.md"
+VERSION=""
 OUTPUT_FORMAT="github-actions"
 DEBUG=false
 
@@ -69,8 +73,12 @@ show_help() {
 parse_args() {
     while [[ $# -gt 0 ]]; do
         case $1 in
-            --file)
+            --file|--changelog)
                 CHANGELOG_FILE="$2"
+                shift 2
+                ;;
+            --version)
+                VERSION="$2"
                 shift 2
                 ;;
             --output-format)
@@ -81,7 +89,7 @@ parse_args() {
                 fi
                 shift 2
                 ;;
-            --debug)
+            --debug|--verbose)
                 DEBUG=true
                 shift
                 ;;
@@ -122,27 +130,61 @@ extract_changelog_entry() {
     temp_file=$(mktemp)
     
     debug "Extracting changelog entry from: $CHANGELOG_FILE"
+    if [[ -n "$VERSION" ]]; then
+        debug "Looking for specific version: $VERSION"
+    else
+        debug "Extracting latest version entry"
+    fi
     
     # Check if file has any version headers
     if ! grep -q "^## \[" "$CHANGELOG_FILE"; then
         debug "No version headers found in changelog"
-        echo "No changelog entries found for the latest version" > "$temp_file"
-    else
-        debug "Using AWK to extract content between first and second version headers"
-        
-        # Extract content between first and second ## [ headers, remove empty lines
-        awk '
-            /^## \[/ { 
-                if (++count == 2) exit
-                next 
-            }
-            count == 1 { print }
-        ' "$CHANGELOG_FILE" | sed '/^$/d' > "$temp_file"
-        
-        # If no content was extracted, provide default message
-        if [[ ! -s "$temp_file" ]]; then
-            debug "No content found between version headers"
+        if [[ -n "$VERSION" ]]; then
+            echo "No changelog entries found for version $VERSION" > "$temp_file"
+        else
             echo "No changelog entries found for the latest version" > "$temp_file"
+        fi
+    else
+        if [[ -n "$VERSION" ]]; then
+            debug "Using AWK to extract content for specific version: $VERSION"
+            
+            # Extract content for specific version
+            awk -v target_version="$VERSION" '
+                /^## \[/ { 
+                    if ($0 ~ "\\[" target_version "\\]") {
+                        found = 1
+                        next
+                    } else if (found) {
+                        exit
+                    } else {
+                        next
+                    }
+                }
+                found { print }
+            ' "$CHANGELOG_FILE" | sed '/^$/d' > "$temp_file"
+            
+            # If no content was extracted for the specific version
+            if [[ ! -s "$temp_file" ]]; then
+                debug "No content found for version: $VERSION"
+                echo "No changelog entries found for version $VERSION" > "$temp_file"
+            fi
+        else
+            debug "Using AWK to extract content between first and second version headers"
+            
+            # Extract content between first and second ## [ headers, remove empty lines
+            awk '
+                /^## \[/ { 
+                    if (++count == 2) exit
+                    next 
+                }
+                count == 1 { print }
+            ' "$CHANGELOG_FILE" | sed '/^$/d' > "$temp_file"
+            
+            # If no content was extracted, provide default message
+            if [[ ! -s "$temp_file" ]]; then
+                debug "No content found between version headers"
+                echo "No changelog entries found for the latest version" > "$temp_file"
+            fi
         fi
     fi
     
@@ -176,6 +218,7 @@ main() {
     
     debug "Starting changelog entry extraction"
     debug "Changelog file: $CHANGELOG_FILE"
+    debug "Version: ${VERSION:-latest}"
     debug "Output format: $OUTPUT_FORMAT"
     
     # Validate inputs

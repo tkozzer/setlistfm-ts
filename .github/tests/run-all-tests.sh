@@ -431,6 +431,15 @@ main() {
             if ! ./workflows/release-pr/test-extract-changelog-entry.sh >/dev/null 2>&1; then
                 workflow_exit=1
             fi
+            if ! ./workflows/release-pr/test-extract-changelog-entry-interface.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
+            if ! ./workflows/release-pr/test-extract-changelog-entry-versioning.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
+            if ! ./workflows/release-pr/test-workflow-integration.sh >/dev/null 2>&1; then
+                workflow_exit=1
+            fi
             if ! ./workflows/release-pr/test-manage-release-pr.sh >/dev/null 2>&1; then
                 workflow_exit=1
             fi
@@ -566,6 +575,24 @@ main() {
                 "Changelog Entry Extraction" \
                 "$SCRIPT_DIR/workflows/release-pr/test-extract-changelog-entry.sh" \
                 "Testing changelog entry extraction logic with various formats and edge cases" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "Changelog Extraction Interface Compatibility" \
+                "$SCRIPT_DIR/workflows/release-pr/test-extract-changelog-entry-interface.sh" \
+                "Testing interface compatibility with release-notes-generate workflow (--version, --changelog, --verbose)" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "Changelog Version-Specific Extraction" \
+                "$SCRIPT_DIR/workflows/release-pr/test-extract-changelog-entry-versioning.sh" \
+                "Testing version-specific changelog extraction functionality and edge cases" \
+                "Workflow Testing"
+
+            run_test_suite \
+                "Workflow Integration Fix Verification" \
+                "$SCRIPT_DIR/workflows/release-pr/test-workflow-integration.sh" \
+                "Testing complete fix for release-notes-generate.yml workflow integration issue" \
                 "Workflow Testing"
 
             run_test_suite \
