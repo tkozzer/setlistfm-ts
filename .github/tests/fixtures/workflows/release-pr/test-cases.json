@@ -266,6 +266,140 @@
         "pr_list": "123",
         "pr_edit_fail": true
       }
+    },
+    {
+      "name": "pr_body_with_special_characters",
+      "description": "Test PR body with special characters that previously caused eval errors",
+      "args": [
+        "--version",
+        "1.0.0",
+        "--body",
+        "Release v1.0.0 - This release includes new functionality. This release is aimed at providing developers with more tools to effectively interact with the setlist.fm API, ultimately enhancing the overall integration process. Users can expect a smoother experience with the latest updates. Changes: Feature A: Added functionality, Bug fix: Fixed special chars: !@#$%^&*(), Quality improvements. Documentation: Updated README, Added API docs. Breaking Changes: None",
+        "--repository",
+        "test-owner/test-repo",
+        "--dry-run",
+        "--debug"
+      ],
+      "expected_exit_code": 0,
+      "expected_stdout_contains": [
+        "pr_number=999",
+        "action_taken=created",
+        "exists=false"
+      ],
+      "expected_stderr_contains": [
+        "[DRY RUN] Would create PR with:"
+      ],
+      "mock_gh_responses": {
+        "pr_list": ""
+      }
+    },
+    {
+      "name": "pr_body_with_quotes_and_spaces",
+      "description": "Test PR body with quotes, spaces, and complex text that triggered the original error",
+      "args": [
+        "--version",
+        "2.1.0",
+        "--body",
+        "This is a \"complex\" release with 'single quotes' and multiple spaces    between words. It includes functionality. This release is aimed at providing developers with more tools to effectively interact with the setlist.fm API.",
+        "--repository",
+        "test-owner/test-repo",
+        "--dry-run"
+      ],
+      "expected_exit_code": 0,
+      "expected_stdout_contains": [
+        "pr_number=999",
+        "action_taken=created"
+      ],
+      "mock_gh_responses": {
+        "pr_list": ""
+      }
+    },
+    {
+      "name": "pr_body_with_markdown_and_symbols",
+      "description": "Test PR body with markdown formatting and various symbols",
+      "args": [
+        "--version",
+        "1.5.0",
+        "--body",
+        "Release Notes: Bold text with italics, Code: const api = new SetlistFM(), Links: GitHub(https://github.com), Symbols: @mentions #hashtags $variables %percentages ^carets &ampersands, Brackets: [square] {curly} (parentheses) <angle>",
+        "--repository",
+        "test-owner/test-repo",
+        "--dry-run"
+      ],
+      "expected_exit_code": 0,
+      "expected_stdout_contains": [
+        "action_taken=created"
+      ],
+      "mock_gh_responses": {
+        "pr_list": ""
+      }
+    },
+    {
+      "name": "pr_body_with_newlines_and_multiline",
+      "description": "Test PR body with complex multiline-style content flattened to single line",
+      "args": [
+        "--version",
+        "3.0.0",
+        "--body",
+        "Line 1 and Line 2. Paragraph with multiple sentences. Each sentence is important. Section Header: 1. Numbered item 2. Another item. Blockquote text continues here",
+        "--repository",
+        "test-owner/test-repo",
+        "--dry-run"
+      ],
+      "expected_exit_code": 0,
+      "expected_stdout_contains": [
+        "action_taken=created"
+      ],
+      "mock_gh_responses": {
+        "pr_list": ""
+      }
+    },
+    {
+      "name": "update_pr_with_special_characters",
+      "description": "Test updating existing PR with body containing special characters",
+      "args": [
+        "--version",
+        "1.1.0",
+        "--body",
+        "Updated release with special chars: !@#$%^&*()[]{}\"'`,./;:<>?\\|+=_-~` - This functionality. This release is aimed at providing developers with enhanced tools.",
+        "--repository",
+        "test-owner/test-repo",
+        "--mock-existing-pr",
+        "555",
+        "--dry-run"
+      ],
+      "expected_exit_code": 0,
+      "expected_stdout_contains": [
+        "pr_number=555",
+        "action_taken=updated",
+        "exists=true"
+      ],
+      "expected_stderr_contains": [
+        "[DRY RUN] Would update PR #555"
+      ],
+      "mock_gh_responses": {
+        "pr_list": "555"
+      }
+    },
+    {
+      "name": "pr_body_with_exact_error_text",
+      "description": "Test PR body with the exact text pattern that caused the original error",
+      "args": [
+        "--version",
+        "1.2.3",
+        "--body",
+        "functionality. This release is aimed at providing developers with more tools to effectively interact with the setlist.fm API, ultimately enhancing the overall integration process. Users can expect a smoother experience with the latest updates.",
+        "--repository",
+        "test-owner/test-repo",
+        "--dry-run"
+      ],
+      "expected_exit_code": 0,
+      "expected_stdout_contains": [
+        "action_taken=created"
+      ],
+      "mock_gh_responses": {
+        "pr_list": ""
+      }
     }
   ]
 }
