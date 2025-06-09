@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),  
 
+## [0.7.2] - 2025-06-09
+
+### Added
+
+- Introduced a comprehensive 'Automated Workflows' section in the README.md to document development workflows and release automation processes, enhancing visibility for contributors.
+- Created AGENTS.md to provide complete guidance for AI agents working with the setlistfm-ts codebase, ensuring adherence to established patterns and quality standards.
+
+### Changed
+
+- Updated README.md with accurate script counts and testing status for all automation scripts, improving documentation accuracy.
+- Restructured GitHub automation into modular scripts for better maintainability and testability, enhancing the overall CI/CD process.
+- Enhanced release-notes-generate.yml workflow with a 4-stage data collection pipeline, improving changelog generation and integration.
+
+### Fixed
+
+- Fixed GitHub Actions workflow failures by redirecting debug output to stderr in various scripts, preventing unexpected errors during the release process.
+- Added comprehensive tests for stdout/stderr separation in the OpenAI vars script, ensuring proper output handling and preventing workflow failures.
+- Implemented tests to validate the changelog update logic in the release preparation workflow, ensuring accurate and reliable changelog generation.
+
+---
+
+
 ## [0.7.1] - 2025-06-08
 
 ### Added
