@@ -159,6 +159,66 @@ jobs:
           echo "--- End Variables Preview ---"
           echo "=========================="
 
+      - name: 🔍 Debug - Decoded template variables
+        if: github.event.inputs.debug == 'true'
+        run: |
+          echo "=== DECODED TEMPLATE VARIABLES ==="
+          echo "${{ steps.ai_context.outputs.template_vars }}" | base64 -d | jq -r '
+            "VERSION: " + .VERSION,
+            "VERSION_TYPE: " + .VERSION_TYPE,
+            "HAS_BREAKING_CHANGES: " + .HAS_BREAKING_CHANGES,
+            "",
+            "CHANGELOG_ENTRY (first 200 chars):",
+            (.CHANGELOG_ENTRY_B64 // "" | if length > 0 then @base64d else "Not available" end | .[0:200]),
+            "",
+            "COMMIT_STATS:",
+            (.COMMIT_STATS_B64 // "" | if length > 0 then @base64d else "{}" end),
+            "",
+            "GIT_COMMITS (count):",
+            (.GIT_COMMITS_B64 // "" | if length > 0 then (@base64d | fromjson | length | tostring) else "0" end)
+          '
+          echo "=================================="
+
+      - name: 🔍 Debug - Final substituted user prompt
+        if: github.event.inputs.debug == 'true'
+        run: |
+          echo "=== FINAL USER PROMPT SENT TO AI ==="
+          # Temporarily substitute template variables to show what AI receives
+          TEMP_PROMPT=$(cat .github/prompts/release-notes.user.md)
+          VARS_JSON=$(echo "${{ steps.ai_context.outputs.template_vars }}" | base64 -d)
+
+          # Extract variables from JSON
+          VERSION=$(echo "$VARS_JSON" | jq -r '.VERSION // "N/A"')
+          VERSION_TYPE=$(echo "$VARS_JSON" | jq -r '.VERSION_TYPE // "N/A"')
+          HAS_BREAKING=$(echo "$VARS_JSON" | jq -r '.HAS_BREAKING_CHANGES // "false"')
+
+          # Decode base64 content with size limits for display
+          CHANGELOG_CONTENT="$(echo "$VARS_JSON" | jq -r '.CHANGELOG_ENTRY_B64 // ""' | if [ -s /dev/stdin ]; then base64 -d | head -c 300; echo "..."; else echo "Not available"; fi)"
+          COMMIT_STATS="$(echo "$VARS_JSON" | jq -r '.COMMIT_STATS_B64 // ""' | if [ -s /dev/stdin ]; then base64 -d; else echo "{}"; fi)"
+          GIT_COMMITS_COUNT="$(echo "$VARS_JSON" | jq -r '.GIT_COMMITS_B64 // ""' | if [ -s /dev/stdin ]; then base64 -d | jq -r 'length'; else echo "0"; fi)"
+          PREVIOUS_RELEASE="$(echo "$VARS_JSON" | jq -r '.PREVIOUS_RELEASE_B64 // ""' | if [ -s /dev/stdin ]; then base64 -d | head -c 200; echo "..."; else echo "Not available"; fi)"
+
+          # Show the substituted prompt
+          echo "Generate structured release notes for version $VERSION ($VERSION_TYPE release) of the setlistfm-ts SDK."
+          echo ""
+          echo "## Context Data"
+          echo ""
+          echo "**Changelog Entry:**"
+          echo "$CHANGELOG_CONTENT"
+          echo ""
+          echo "**Git Commits:** $GIT_COMMITS_COUNT commits (full JSON data passed to AI)"
+          echo ""
+          echo "**Commit Statistics:**"
+          echo "$COMMIT_STATS"
+          echo ""
+          echo "**Breaking Changes Detected:** $HAS_BREAKING"
+          echo ""
+          echo "**Previous Release Notes:**"
+          echo "$PREVIOUS_RELEASE"
+          echo ""
+          echo "[... rest of template instructions follow ...]"
+          echo "====================================="
+
       - name: 🤖 Generate release notes
         id: ai
         uses: ./.github/actions/openai-chat
