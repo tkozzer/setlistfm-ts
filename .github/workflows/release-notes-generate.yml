@@ -192,11 +192,36 @@ jobs:
           VERSION_TYPE=$(echo "$VARS_JSON" | jq -r '.VERSION_TYPE // "N/A"')
           HAS_BREAKING=$(echo "$VARS_JSON" | jq -r '.HAS_BREAKING_CHANGES // "false"')
 
-          # Decode base64 content with size limits for display
-          CHANGELOG_CONTENT="$(echo "$VARS_JSON" | jq -r '.CHANGELOG_ENTRY_B64 // ""' | if [ -s /dev/stdin ]; then base64 -d | head -c 300; echo "..."; else echo "Not available"; fi)"
-          COMMIT_STATS="$(echo "$VARS_JSON" | jq -r '.COMMIT_STATS_B64 // ""' | if [ -s /dev/stdin ]; then base64 -d; else echo "{}"; fi)"
-          GIT_COMMITS_COUNT="$(echo "$VARS_JSON" | jq -r '.GIT_COMMITS_B64 // ""' | if [ -s /dev/stdin ]; then base64 -d | jq -r 'length'; else echo "0"; fi)"
-          PREVIOUS_RELEASE="$(echo "$VARS_JSON" | jq -r '.PREVIOUS_RELEASE_B64 // ""' | if [ -s /dev/stdin ]; then base64 -d | head -c 200; echo "..."; else echo "Not available"; fi)"
+          # Decode base64 content with size limits for display - avoid broken pipes
+          CHANGELOG_B64=$(echo "$VARS_JSON" | jq -r '.CHANGELOG_ENTRY_B64 // ""')
+          if [[ -n "$CHANGELOG_B64" && "$CHANGELOG_B64" != "null" ]]; then
+            CHANGELOG_CONTENT=$(echo "$CHANGELOG_B64" | base64 -d 2>/dev/null | head -c 300 || echo "Decode error")
+            CHANGELOG_CONTENT="${CHANGELOG_CONTENT}..."
+          else
+            CHANGELOG_CONTENT="Not available"
+          fi
+
+          COMMIT_STATS_B64=$(echo "$VARS_JSON" | jq -r '.COMMIT_STATS_B64 // ""')
+          if [[ -n "$COMMIT_STATS_B64" && "$COMMIT_STATS_B64" != "null" ]]; then
+            COMMIT_STATS=$(echo "$COMMIT_STATS_B64" | base64 -d 2>/dev/null || echo "{}")
+          else
+            COMMIT_STATS="{}"
+          fi
+
+          GIT_COMMITS_B64=$(echo "$VARS_JSON" | jq -r '.GIT_COMMITS_B64 // ""')
+          if [[ -n "$GIT_COMMITS_B64" && "$GIT_COMMITS_B64" != "null" ]]; then
+            GIT_COMMITS_COUNT=$(echo "$GIT_COMMITS_B64" | base64 -d 2>/dev/null | jq -r 'length' 2>/dev/null || echo "0")
+          else
+            GIT_COMMITS_COUNT="0"
+          fi
+
+          PREVIOUS_RELEASE_B64=$(echo "$VARS_JSON" | jq -r '.PREVIOUS_RELEASE_B64 // ""')
+          if [[ -n "$PREVIOUS_RELEASE_B64" && "$PREVIOUS_RELEASE_B64" != "null" ]]; then
+            PREVIOUS_RELEASE=$(echo "$PREVIOUS_RELEASE_B64" | base64 -d 2>/dev/null | head -c 200 || echo "Decode error")
+            PREVIOUS_RELEASE="${PREVIOUS_RELEASE}..."
+          else
+            PREVIOUS_RELEASE="Not available"
+          fi
 
           # Show the substituted prompt
           echo "Generate structured release notes for version $VERSION ($VERSION_TYPE release) of the setlistfm-ts SDK."
