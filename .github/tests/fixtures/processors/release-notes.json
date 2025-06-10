@@ -1,13 +1,12 @@
 {
-  "version": "0.1.0",
-  "summary": "This release focuses on infrastructure improvements and bug fixes—there are no user-facing or API changes.",
+  "summary": "This patch focuses on CI/DevOps improvements and bug fixes—there are no user-facing or API changes.",
   "primary_section": {
-    "title": "Infrastructure Improvements",
-    "emoji": "🛠️",
+    "title": "CI/DevOps Improvements",
+    "emoji": "🤖",
     "features": [
-      "**Enhanced CI pipeline** reduces build times by 25%",
-      "**Improved error handling** provides clearer debugging information",
-      "**Updated dependencies** ensure latest security patches"
+      "**Enhanced release notes generation** with improved version handling and AI processing",
+      "**Simplified template processing** by removing version dependencies from AI responses",
+      "**Improved error handling** in GitHub Actions workflows for better reliability"
     ]
   },
   "secondary_sections": [
@@ -15,16 +14,26 @@
       "title": "Bug Fixes",
       "emoji": "🐛",
       "features": [
-        "**Memory leak resolved** in long-running processes",
-        "**Race condition fixed** in concurrent requests"
+        "**Fixed version mismatch issues** in automated release notes generation",
+        "**Resolved template variable processing** for consistent output formatting"
       ]
     }
   ],
+  "bug_fixes": [
+    "**Fixed version mismatch** in release notes generation causing validation failures",
+    "**Resolved template processing** issues with version handling",
+    "**Fixed AI prompt consistency** between local and GitHub Actions environments"
+  ],
+  "ci_improvements": [
+    "**Enhanced AI processing pipeline** with better version handling and reduced dependencies",
+    "**Improved template variable system** supporting both JSON and legacy formats",
+    "**Streamlined release workflow** with more reliable version management"
+  ],
   "commit_analysis": {
-    "total_commits": 5,
-    "feat_count": 2,
-    "fix_count": 2,
-    "chore_count": 1,
+    "total_commits": 8,
+    "feat_count": 0,
+    "fix_count": 3,
+    "chore_count": 2,
     "ci_count": 3,
     "docs_count": 0,
     "breaking_changes_detected": false
