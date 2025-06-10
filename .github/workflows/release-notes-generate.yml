@@ -42,6 +42,10 @@ jobs:
         with:
           node-version: 22.x
 
+      - name: 🔧 Install jq for debugging
+        if: github.event.inputs.debug == 'true'
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       - name: 📦 Determine version
         id: version
         run: |
@@ -126,6 +130,35 @@ jobs:
 
           echo "template_vars=$TEMPLATE_VARS" >> "$GITHUB_OUTPUT"
 
+      - name: 🔍 Debug - System prompt
+        if: github.event.inputs.debug == 'true'
+        run: |
+          echo "=== SYSTEM PROMPT ==="
+          cat .github/prompts/release-notes.sys.md
+          echo "====================="
+
+      - name: 🔍 Debug - User template
+        if: github.event.inputs.debug == 'true'
+        run: |
+          echo "=== USER TEMPLATE ==="
+          cat .github/prompts/release-notes.user.md
+          echo "====================="
+
+      - name: 🔍 Debug - AI input variables
+        if: github.event.inputs.debug == 'true'
+        run: |
+          echo "=== AI INPUT VARIABLES ==="
+          echo "Temperature: ${{ github.event.inputs.temperature || '0.2' }}"
+          echo "Model: ${{ env.OPENAI_MODEL }}"
+          echo "Max tokens: 1500"
+          echo ""
+          echo "Template variables (first 1000 chars):"
+          echo "--- Variables Preview ---"
+          printf '%s' "${{ steps.ai_context.outputs.template_vars }}" | head -c 1000
+          echo ""
+          echo "--- End Variables Preview ---"
+          echo "=========================="
+
       - name: 🤖 Generate release notes
         id: ai
         uses: ./.github/actions/openai-chat
@@ -140,9 +173,31 @@ jobs:
           temperature: ${{ github.event.inputs.temperature || '0.2' }}
           max-tokens: 1500
 
+      - name: 🔍 Debug - AI JSON response
+        if: github.event.inputs.debug == 'true'
+        env:
+          AI_JSON_CONTENT: ${{ steps.ai.outputs.content }}
+        run: |
+          # Pass content via environment variable to avoid shell parsing issues
+          ./.github/scripts/release-pr/debug-ai-response.sh \
+            --content "$AI_JSON_CONTENT" \
+            --title "AI JSON RESPONSE" \
+            --max-chars 800
+
       - name: 📤 Save release notes
         run: |
           printf '%s' "${{ steps.ai.outputs.formatted_content }}" > release-notes.md
+
+      - name: 🔍 Debug - Final formatted release notes
+        if: github.event.inputs.debug == 'true'
+        env:
+          FORMATTED_CONTENT: ${{ steps.ai.outputs.formatted_content }}
+        run: |
+          # Pass content via environment variable to avoid shell parsing issues
+          ./.github/scripts/release-pr/debug-ai-response.sh \
+            --content "$FORMATTED_CONTENT" \
+            --title "FINAL FORMATTED RELEASE NOTES" \
+            --max-chars 1200
 
       - name: 📝 Fallback if AI fails
         if: steps.ai.outputs.formatted_content == '' && steps.ai.outputs.content == ''
