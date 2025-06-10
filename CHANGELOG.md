@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),  
 
+## [0.7.6] - 2025-06-10
+
+### Added
+
+- Introduced comprehensive error handling and validation in the release notes generation pipeline
+- Added support for new base64 encoded parameters in the prepare-ai-context script, enhancing compatibility with pre-collected workflow data
+
+### Changed
+
+- Updated the AI response schema by removing the version field to eliminate inconsistencies
+- Enhanced the release notes generation process with improved orchestration logic and variable substitution pipeline
+- Refined the handling of multiline content in GitHub Actions workflows to prevent parsing errors
+- Updated the documentation to reflect accurate script counts and testing status for all automation scripts
+
+### Fixed
+
+- Resolved all critical template variable and AI processing issues, ensuring accurate release notes generation
+- Fixed shell parsing errors in the release-pr workflow caused by special characters and multiline content
+- Corrected the version normalization issue to prevent double 'v' prefixes in generated release notes
+- Addressed command parsing errors in the manage-release-pr script, ensuring proper handling of complex content
+
+### Security
+
+- Implemented base64 encoding and decoding validation to enhance the security of handling AI-generated content
+
+---
+
+
 ## [0.7.5] - 2025-06-09
 
 ### Added
