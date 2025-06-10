@@ -82,11 +82,10 @@ Prioritize sections based on commit counts - the highest count should be the pri
 
 ## JSON Output Structure
 
-You must generate a JSON response with the following structure:
+You must generate a JSON response with the following structure (note: version is provided separately via template):
 
 ```json
 {
-  "version": "0.7.4",
   "summary": "One sentence describing the primary focus of this release.",
   "primary_section": {
     "title": "Section Title",
@@ -131,7 +130,6 @@ You must generate a JSON response with the following structure:
 
 ## Field-by-Field Content Guide
 
-- **version**: Use the provided VERSION (remove "v" prefix if present)
 - **summary**: One sentence describing the release focus, end with API impact statement
 - **primary_section**: The main theme with 2-4 bullet points, choose emoji based on focus area
 - **secondary_sections**: Additional grouped changes (0-3 sections), omit if no relevant content
@@ -140,6 +138,8 @@ You must generate a JSON response with the following structure:
 - **commit_analysis**: Use the provided COMMIT_STATS data exactly as given
 - **breaking_changes**: Description of breaking changes or empty string if none
 - **footer_links**: Always use the standard setlistfm-ts URLs shown above
+
+Note: The version number is handled separately via template processing - do not include a "version" field in your JSON response.
 
 ## Content Extraction Rules
 

@@ -52,10 +52,9 @@ run_test() {
 validate_json() {
     local json_file="$1"
     
-    # Simple validation using jq - check if all required fields exist
-    local has_version has_summary has_primary has_commit has_breaking has_footer has_bugs has_ci
+    # Simple validation using jq - check if all required fields exist (version no longer required)
+    local has_summary has_primary has_commit has_breaking has_footer has_bugs has_ci
     
-    has_version=$(jq -e '.version' "$json_file" >/dev/null 2>&1 && echo "yes" || echo "no")
     has_summary=$(jq -e '.summary' "$json_file" >/dev/null 2>&1 && echo "yes" || echo "no")
     has_primary=$(jq -e '.primary_section' "$json_file" >/dev/null 2>&1 && echo "yes" || echo "no")
     has_commit=$(jq -e '.commit_analysis' "$json_file" >/dev/null 2>&1 && echo "yes" || echo "no")
@@ -64,7 +63,7 @@ validate_json() {
     has_bugs=$(jq -e '.bug_fixes' "$json_file" >/dev/null 2>&1 && echo "yes" || echo "no")
     has_ci=$(jq -e '.ci_improvements' "$json_file" >/dev/null 2>&1 && echo "yes" || echo "no")
     
-    if [[ "$has_version" == "yes" && "$has_summary" == "yes" && "$has_primary" == "yes" && \
+    if [[ "$has_summary" == "yes" && "$has_primary" == "yes" && \
           "$has_commit" == "yes" && "$has_breaking" == "yes" && "$has_footer" == "yes" && \
           "$has_bugs" == "yes" && "$has_ci" == "yes" ]]; then
         echo "VALID"
@@ -96,7 +95,7 @@ test_schema_has_required_fields() {
     local required_fields
     required_fields=$(jq -r '.required[]' "$SCHEMA_FILE" | sort | tr '\n' ' ')
     
-    local expected_fields="breaking_changes bug_fixes ci_improvements commit_analysis footer_links primary_section summary version"
+    local expected_fields="breaking_changes bug_fixes ci_improvements commit_analysis footer_links primary_section summary"
     
     if [[ "$required_fields" == "$expected_fields " ]]; then
         return 0
@@ -111,7 +110,6 @@ test_schema_has_required_fields() {
 test_valid_complete_json_passes() {
     # Test that a complete, valid JSON structure passes validation
     local test_json='{
-        "version": "0.7.4",
         "summary": "This patch release focuses on improving CI/CD workflow stability.",
         "primary_section": {
             "title": "CI/DevOps Improvements",
@@ -151,7 +149,6 @@ test_valid_complete_json_passes() {
 test_missing_bug_fixes_fails() {
     # Test that missing bug_fixes field fails validation
     local test_json='{
-        "version": "0.7.4",
         "summary": "Test release",
         "primary_section": {
             "title": "Features",
@@ -190,7 +187,6 @@ test_missing_bug_fixes_fails() {
 test_missing_ci_improvements_fails() {
     # Test that missing ci_improvements field fails validation
     local test_json='{
-        "version": "0.7.4",
         "summary": "Test release",
         "primary_section": {
             "title": "Features",
@@ -229,7 +225,6 @@ test_missing_ci_improvements_fails() {
 test_empty_arrays_are_valid() {
     # Test that empty bug_fixes and ci_improvements arrays are valid
     local test_json='{
-        "version": "0.7.4",
         "summary": "Test release with no fixes or improvements",
         "primary_section": {
             "title": "Features",

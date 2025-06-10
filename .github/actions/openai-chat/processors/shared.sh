@@ -319,4 +319,37 @@ json_field_exists() {
 get_string_fields() {
   local json_content="$1"
   echo "$json_content" | jq -r 'to_entries[] | select(.value | type == "string") | "\(.key):\(.value)"' 2>/dev/null || true
+}
+
+# Extract a specific template variable from base64-encoded variables
+# Usage: extract_template_variable "$VARS" "VERSION"
+# Returns: Variable value via stdout, empty string if not found
+extract_template_variable() {
+  local vars="$1"
+  local key="$2"
+  
+  if [[ -z $vars || -z $key ]]; then
+    return 0
+  fi
+  
+  # Decode base64 template variables
+  local decoded_vars
+  if is_base64 "$vars"; then
+    decoded_vars=$(echo "$vars" | base64 -d 2>/dev/null || echo "")
+  else
+    decoded_vars="$vars"
+  fi
+  
+  if [[ -z $decoded_vars ]]; then
+    return 0
+  fi
+  
+  # Check if it's JSON format
+  if echo "$decoded_vars" | jq empty >/dev/null 2>&1; then
+    # JSON format - extract with jq
+    echo "$decoded_vars" | jq -r ".$key // \"\"" 2>/dev/null || echo ""
+  else
+    # Legacy format - parse KEY=value
+    echo "$decoded_vars" | grep "^${key}=" | cut -d'=' -f2- | head -1 || echo ""
+  fi
 } 

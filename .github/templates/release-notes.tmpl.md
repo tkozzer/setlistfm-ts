@@ -54,7 +54,8 @@
 
 ## 🔒 No Breaking Changes
 
-The SDK code, public APIs, and npm package contents remain exactly the same—upgrade with confidence, your existing integration will continue to work.
+The SDK code, public APIs, and npm package contents remain exactly the same—upgrade with
+confidence, your existing integration will continue to work.
 {{/if}}
 
 ---
