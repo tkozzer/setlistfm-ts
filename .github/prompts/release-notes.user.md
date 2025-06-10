@@ -1,6 +1,18 @@
 Generate structured release notes for version {{VERSION}} ({{VERSION_TYPE}} release) of the setlistfm-ts SDK.
 
-**🚨 CRITICAL: Use EXACTLY version "{{VERSION}}" in ALL outputs. Do NOT infer or use any other version number from the context below. The version MUST be exactly "{{VERSION}}" without any modifications.**
+**🚨🚨🚨 CRITICAL VERSION REQUIREMENT 🚨🚨🚨**
+**THE VERSION IS: {{VERSION}}**
+**YOU MUST USE EXACTLY: {{VERSION}}**
+**IGNORE ALL OTHER VERSION NUMBERS IN THE CONTEXT DATA BELOW**
+**DO NOT USE 0.7.4, 0.7.3, 0.7.2, or any other version you see in git commits or changelog**
+**THE ONLY CORRECT VERSION IS: {{VERSION}}**
+
+**EXPLICIT INSTRUCTIONS:**
+
+1. Set "version" field in JSON to: "{{VERSION}}" (without the v prefix)
+2. Set title to: "# 🎉 setlistfm-ts v{{VERSION}}"
+3. If you see other version numbers in the data below, COMPLETELY IGNORE THEM
+4. The data below may contain references to 0.7.4 or other versions - DO NOT USE THEM
 
 ## Context Data
 
@@ -59,4 +71,4 @@ Generate structured release notes for version {{VERSION}} ({{VERSION_TYPE}} rele
 
 Return JSON following the exact structure and field requirements from the system prompt.
 
-**🚨 FINAL REMINDER: The "version" field in your JSON response MUST be exactly "{{VERSION}}" (without "v" prefix). Do not use any other version number from git history or changelog data.**
+**🚨 FINAL REMINDER: The "version" field in your JSON response MUST be exactly "{{VERSION}}" (without "v" prefix). Do not use any other version number from git history or changelog data. Do NOT use template syntax like {{VERSION}} in your response - use the actual literal value.**
