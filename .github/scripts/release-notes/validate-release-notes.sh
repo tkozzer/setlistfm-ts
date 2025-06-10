@@ -35,7 +35,8 @@ declare -g PROJECT_NAME="setlistfm-ts"
 readonly MIN_CONTENT_LENGTH=200
 readonly MIN_SECTIONS=2
 readonly MIN_BULLET_POINTS=3
-readonly MAX_LINE_LENGTH=100
+readonly MIN_LINE_LENGTH=50
+readonly MAX_LINE_LENGTH=200
 
 # Required patterns for quality validation
 readonly VERSION_PATTERN='^v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$'
@@ -184,11 +185,24 @@ validate_format_consistency() {
   
   local format_issues=()
   
-  # Check line length (should not exceed maximum)
+  # Check line length for summary lines (should be meaningful, not too short or too long)
+  # Look for summary line (non-header, non-bullet point, non-empty line)
+  local summary_line
+  summary_line=$(echo "$content" | head -n 10 | grep -v '^#' | grep -v '^$' | grep -v '^[*-]' | head -n 1)
+  if [[ -n "$summary_line" ]]; then
+    if [[ ${#summary_line} -lt $MIN_LINE_LENGTH ]]; then
+      format_issues+=("summary line too short (${#summary_line} chars, minimum $MIN_LINE_LENGTH): ${summary_line}")
+    elif [[ ${#summary_line} -gt $MAX_LINE_LENGTH ]]; then
+      format_issues+=("summary line too long (${#summary_line} chars, maximum $MAX_LINE_LENGTH): ${summary_line:0:50}...")
+    fi
+  fi
+  # If no summary line found, that's OK - it's optional
+  
+  # Check for excessively long lines in general content (excluding URLs)
   while IFS= read -r line; do
     # Skip lines that start with URLs or contain markdown links with URLs
     if [[ ${#line} -gt $MAX_LINE_LENGTH ]] && [[ ! "$line" =~ ^https?:// ]] && [[ ! "$line" =~ \[.*\]\(https?:// ]]; then
-      format_issues+=("line too long (${#line} chars): ${line:0:50}...")
+      format_issues+=("line too long (${#line} chars, maximum $MAX_LINE_LENGTH): ${line:0:50}...")
       break  # Only report first occurrence
     fi
   done <<< "$content"

@@ -4,11 +4,6 @@
   "description": "Structured release notes format for setlistfm-ts",
   "type": "object",
   "properties": {
-    "version": {
-      "type": "string",
-      "description": "Version number",
-      "pattern": "^v?\\d+\\.\\d+\\.\\d+(?:[-a-z0-9.]+)?$"
-    },
     "summary": {
       "type": "string",
       "description": "One sentence summary of the release"
@@ -132,6 +127,6 @@
       "additionalProperties": false
     }
   },
-  "required": ["version", "summary", "primary_section", "commit_analysis", "breaking_changes", "footer_links", "bug_fixes", "ci_improvements"],
+  "required": ["summary", "primary_section", "commit_analysis", "breaking_changes", "footer_links", "bug_fixes", "ci_improvements"],
   "additionalProperties": false
 }

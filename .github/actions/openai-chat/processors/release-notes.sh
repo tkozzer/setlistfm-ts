@@ -101,23 +101,27 @@ FORMATTED_CONTENT=$(cat "$OUTPUT_TEMPLATE")
 FORMATTED_CONTENT=$(process_template_vars "$FORMATTED_CONTENT" "$VARS")
 
 # --------------------------------------------------------------------------- #
-#  Process simple JSON fields (version, summary, footer_links)                #
+#  Process version from template variables (not from AI response)             #
 # --------------------------------------------------------------------------- #
-# Handle version normalization to prevent double "v" prefix
-version=$(echo "$CONTENT" | jq -r '.version // ""')
-if [[ -n $version && $version != "null" ]]; then
+# Extract version from template variables rather than AI response
+version_from_template=$(extract_template_variable "$VARS" "VERSION" 2>/dev/null || echo "")
+
+if [[ -n $version_from_template && $version_from_template != "null" ]]; then
   # Remove existing "v" prefix if present, as template already has "v{{version}}"
-  version_without_v="${version#v}"
+  version_without_v="${version_from_template#v}"
   FORMATTED_CONTENT="${FORMATTED_CONTENT//\{\{version\}\}/$version_without_v}"
 fi
 
-# Process other string fields
+# --------------------------------------------------------------------------- #
+#  Process other JSON fields (summary, footer_links, etc.)                   #
+# --------------------------------------------------------------------------- #
+# Process other string fields (excluding version since we handle it above)
 string_fields=$(get_string_fields "$CONTENT")
 if [[ -n $string_fields ]]; then
   while IFS= read -r field; do
     [[ -z $field ]] && continue
     key=$(echo "$field" | cut -d':' -f1 | tr -d '"')
-    # Skip version as we handled it above
+    # Skip version as we handled it above from template variables
     [[ $key == "version" ]] && continue
     
     value=$(echo "$CONTENT" | jq -r ".$key // empty" 2>/dev/null || echo "")
